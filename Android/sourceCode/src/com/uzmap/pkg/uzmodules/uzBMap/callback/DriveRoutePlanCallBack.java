@@ -153,7 +153,7 @@ public class DriveRoutePlanCallBack {
 		List<DrivingStep> steps = plan.getAllStep();
 		for (DrivingStep step : steps) {
 			nodeJson = new JSONObject();
-			LatLng nodeLocation = step.getEntrace().getLocation();
+			LatLng nodeLocation = step.getEntrance().getLocation();
 			try {
 				nodeJson.put("lon", nodeLocation.longitude);
 				nodeJson.put("lat", nodeLocation.latitude);

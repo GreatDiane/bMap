@@ -8,8 +8,11 @@ package com.uzmap.pkg.uzmodules.uzBMap.methods;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.utils.DistanceUtil;
+import com.baidu.mapapi.utils.SpatialRelationUtil;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
 import com.uzmap.pkg.uzmodules.uzBMap.utils.JsParamsUtil;
 
@@ -32,11 +35,51 @@ public class MapSimple {
 		getDistanceBack(distance);
 	}
 
+	public void getCenter(BaiduMap baiduMap) {
+		LatLng latLng = baiduMap.getMapStatus().target;
+		getCenterBack(latLng);
+	}
+
+	public void isPolygonContantsPoint() {
+		float pointLat = mJsParamsUtil.lat(mModuleContext, "point");
+		float pointLon = mJsParamsUtil.lon(mModuleContext, "point");
+		boolean result = SpatialRelationUtil.isPolygonContainsPoint(
+				mJsParamsUtil.pointList(mModuleContext), new LatLng(pointLat,
+						pointLon));
+		isPolygonContantPointBack(result);
+	}
+
 	private void getDistanceBack(double distance) {
 		JSONObject ret = new JSONObject();
 		try {
 			ret.put("status", true);
 			ret.put("distance", distance);
+			mModuleContext.success(ret, false);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void getCenterBack(LatLng latLng) {
+		JSONObject ret = new JSONObject();
+		try {
+			if (latLng != null) {
+				ret.put("lon", latLng.longitude);
+				ret.put("lat", latLng.latitude);
+				ret.put("status", true);
+			} else {
+				ret.put("status", false);
+			}
+			mModuleContext.success(ret, false);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void isPolygonContantPointBack(boolean result) {
+		JSONObject ret = new JSONObject();
+		try {
+			ret.put("status", result);
 			mModuleContext.success(ret, false);
 		} catch (JSONException e) {
 			e.printStackTrace();

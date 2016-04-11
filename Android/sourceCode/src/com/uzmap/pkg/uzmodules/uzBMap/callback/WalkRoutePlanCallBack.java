@@ -153,7 +153,7 @@ public class WalkRoutePlanCallBack {
 		List<WalkingStep> steps = plan.getAllStep();
 		for (WalkingStep step : steps) {
 			nodeJson = new JSONObject();
-			LatLng nodeLocation = step.getEntrace().getLocation();
+			LatLng nodeLocation = step.getEntrance().getLocation();
 			try {
 				nodeJson.put("lon", nodeLocation.longitude);
 				nodeJson.put("lat", nodeLocation.latitude);

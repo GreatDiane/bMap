@@ -9,14 +9,18 @@ package com.uzmap.pkg.uzmodules.uzBMap.methods;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.view.View;
 import android.widget.ImageView;
+
 import com.baidu.mapapi.map.BaiduMap.OnMarkerClickListener;
+import com.baidu.mapapi.map.BaiduMap.OnMarkerDragListener;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.map.InfoWindow;
@@ -38,9 +42,11 @@ public class MapOverlay {
 	private JsParamsUtil mJsParamsUtil;
 	private MapOpen mMap;
 	private Map<Integer, Annotation> mMarkerMap;
+	private Map<Integer, Annotation> mMoveMarkerMap;
 	private Map<Integer, Bubble> mBubbleMap;
 	private Map<Integer, Billboard> mBillboardMap;
 	private InfoWindow mInfoWindow;
+	private OnMarkerClickListener mOnMarkerClickListener;
 
 	@SuppressLint("UseSparseArrays")
 	public MapOverlay(UzBMap mUzBMap, MapOpen mMap) {
@@ -48,18 +54,54 @@ public class MapOverlay {
 		this.mMap = mMap;
 		mJsParamsUtil = JsParamsUtil.getInstance();
 		mMarkerMap = new HashMap<Integer, Annotation>();
+		mMoveMarkerMap = new HashMap<Integer, Annotation>();
 		mBubbleMap = new HashMap<Integer, Bubble>();
 		mBillboardMap = new HashMap<Integer, Billboard>();
-		addMarkerClickListener();
 	}
 
 	public void addAnnotations(UZModuleContext moduleContext) {
+		addMarkerClickListener();
 		List<Annotation> annoList = mJsParamsUtil.annotations(moduleContext,
 				mUzBMap);
 		if (annoList != null) {
 			for (Annotation annotation : annoList) {
+				removeExistAnno(annotation);
 				addAnnotation(annotation);
 				mMarkerMap.put(annotation.getId(), annotation);
+			}
+		}
+	}
+
+	private void removeExistAnno(Annotation annotation) {
+		if (isAnnotationExist(annotation.getId())) {
+			mMarkerMap.get(annotation.getId()).getMarker().remove();
+			mMap.getBaiduMap().hideInfoWindow();
+		}
+	}
+
+	public boolean isAnnotationExist(int id) {
+		if (mMarkerMap != null) {
+			Annotation annotation = mMarkerMap.get(id);
+			if (annotation != null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void isAnnotationExist(UZModuleContext moduleContext) {
+		int id = moduleContext.optInt("id");
+		boolean isExist = isAnnotationExist(id);
+		isAnnoExistCallBack(moduleContext, isExist);
+	}
+
+	public void addMobileAnnotations(UZModuleContext moduleContext) {
+		List<Annotation> annoList = mJsParamsUtil.annotations(moduleContext,
+				mUzBMap);
+		if (annoList != null) {
+			for (Annotation annotation : annoList) {
+				addMoveAnnotation(annotation);
+				mMoveMarkerMap.put(annotation.getId(), annotation);
 			}
 		}
 	}
@@ -69,7 +111,7 @@ public class MapOverlay {
 		if (mMarkerMap != null) {
 			Annotation annotation = mMarkerMap.get(id);
 			if (annotation != null) {
-				LatLng latLng = annotation.getLatLng();
+				LatLng latLng = annotation.getMarker().getPosition();
 				new CallBackUtil().getAnnoCoordsCallBack(moduleContext, latLng);
 			}
 		}
@@ -105,6 +147,7 @@ public class MapOverlay {
 	}
 
 	public void addBillboard(UZModuleContext moduleContext) {
+		addMarkerClickListener();
 		boolean isNetIcon = mJsParamsUtil.isBillboardNetIcon(moduleContext);
 		Billboard billboard = createBillboard(moduleContext);
 		mBillboardMap.put(billboard.getId(), billboard);
@@ -202,11 +245,15 @@ public class MapOverlay {
 	}
 
 	private void addMarkerClickListener() {
-		mMap.getBaiduMap().setOnMarkerClickListener(markerClickListener());
+		if (mOnMarkerClickListener == null) {
+			markerClickListener();
+		}
+		mMap.getBaiduMap().setOnMarkerClickListener(mOnMarkerClickListener);
+		mMap.getBaiduMap().setOnMarkerDragListener(markerDragListener());
 	}
 
-	private OnMarkerClickListener markerClickListener() {
-		return new OnMarkerClickListener() {
+	private void markerClickListener() {
+		mOnMarkerClickListener = new OnMarkerClickListener() {
 			@Override
 			public boolean onMarkerClick(Marker marker) {
 				int id = marker.getZIndex();
@@ -219,6 +266,35 @@ public class MapOverlay {
 				return false;
 			}
 		};
+	}
+
+	private OnMarkerDragListener markerDragListener() {
+		return new OnMarkerDragListener() {
+			CallBackUtil callBackUtil = new CallBackUtil();
+
+			@Override
+			public void onMarkerDragStart(Marker marker) {
+				dragCallBack(marker, callBackUtil, "starting");
+			}
+
+			@Override
+			public void onMarkerDragEnd(Marker marker) {
+				dragCallBack(marker, callBackUtil, "ending");
+			}
+
+			@Override
+			public void onMarkerDrag(Marker marker) {
+				dragCallBack(marker, callBackUtil, "dragging");
+			}
+		};
+	}
+
+	private void dragCallBack(Marker marker, CallBackUtil callBackUtil,
+			String dragState) {
+		Annotation annotation = mMarkerMap.get(marker.getZIndex());
+		annotation.setMarker(marker);
+		callBackUtil.markerDragCallBack(annotation.getModuleContext(),
+				marker.getZIndex(), "drag", dragState);
 	}
 
 	private boolean isBillBord(Marker marker) {
@@ -246,7 +322,17 @@ public class MapOverlay {
 	private void addAnnotation(Annotation annotation) {
 		OverlayOptions options = new MarkerOptions()
 				.position(annotation.getLatLng()).icon(annotation.getIcon())
-				.zIndex(annotation.getId()).draggable(annotation.isDraggable());
+				.zIndex(annotation.getId()).draggable(annotation.isDraggable())
+				.anchor(0.5f, 0.5f);
+		Marker marker = (Marker) mMap.getBaiduMap().addOverlay(options);
+		annotation.setMarker(marker);
+	}
+
+	private void addMoveAnnotation(Annotation annotation) {
+		OverlayOptions options = new MarkerOptions()
+				.position(annotation.getLatLng()).icon(annotation.getIcon())
+				.zIndex(annotation.getId()).draggable(annotation.isDraggable())
+				.anchor(0.5f, 0.5f);
 		Marker marker = (Marker) mMap.getBaiduMap().addOverlay(options);
 		annotation.setMarker(marker);
 	}
@@ -257,6 +343,7 @@ public class MapOverlay {
 		try {
 			if (annotation != null) {
 				ret.put("id", annotation.getId());
+				ret.put("eventType", "click");
 				annotation.getModuleContext().success(ret, false);
 			}
 		} catch (JSONException e) {
@@ -287,5 +374,20 @@ public class MapOverlay {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void isAnnoExistCallBack(UZModuleContext moduleContext,
+			boolean status) {
+		JSONObject ret = new JSONObject();
+		try {
+			ret.put("status", status);
+			moduleContext.success(ret, false);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public Map<Integer, Annotation> getMoveMarkerMap() {
+		return mMoveMarkerMap;
 	}
 }

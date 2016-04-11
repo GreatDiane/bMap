@@ -8,23 +8,21 @@ package com.uzmap.pkg.uzmodules.uzBMap.methods;
 
 import java.util.List;
 import java.util.Map;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import android.graphics.Bitmap;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
-import com.baidu.mapapi.overlayutil.DrivingRouteOverlay;
-import com.baidu.mapapi.overlayutil.OverlayManager;
-import com.baidu.mapapi.overlayutil.TransitRouteOverlay;
-import com.baidu.mapapi.overlayutil.WalkingRouteOverlay;
 import com.baidu.mapapi.search.route.DrivingRouteLine;
 import com.baidu.mapapi.search.route.TransitRouteLine;
 import com.baidu.mapapi.search.route.WalkingRouteLine;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzmodules.uzBMap.DrivingRouteOverlay;
+import com.uzmap.pkg.uzmodules.uzBMap.OverlayManager;
+import com.uzmap.pkg.uzmodules.uzBMap.TransitRouteOverlay;
 import com.uzmap.pkg.uzmodules.uzBMap.UzBMap;
+import com.uzmap.pkg.uzmodules.uzBMap.WalkingRouteOverlay;
 import com.uzmap.pkg.uzmodules.uzBMap.utils.JsParamsUtil;
 
 public class MapDrawRoute {
@@ -75,7 +73,9 @@ public class MapDrawRoute {
 				routeOverlay.setData(carPlans.get(index));
 				mBaiduMap.setOnMarkerClickListener(routeOverlay);
 				routeOverlay.addToMap();
-				routeOverlay.zoomToSpan();
+				if (moduleContext.optBoolean("autoresizing", true)) {
+					routeOverlay.zoomToSpan();
+				}
 				return routeOverlay;
 			}
 		}
@@ -93,7 +93,9 @@ public class MapDrawRoute {
 				routeOverlay.setData(mBusPlans.get(index));
 				mBaiduMap.setOnMarkerClickListener(routeOverlay);
 				routeOverlay.addToMap();
-				routeOverlay.zoomToSpan();
+				if (moduleContext.optBoolean("autoresizing", true)) {
+					routeOverlay.zoomToSpan();
+				}
 				return routeOverlay;
 			}
 		}
@@ -111,7 +113,9 @@ public class MapDrawRoute {
 				routeOverlay.setData(walkPlans.get(index));
 				mBaiduMap.setOnMarkerClickListener(routeOverlay);
 				routeOverlay.addToMap();
-				routeOverlay.zoomToSpan();
+				if (moduleContext.optBoolean("autoresizing", true)) {
+					routeOverlay.zoomToSpan();
+				}
 				return routeOverlay;
 			}
 		}

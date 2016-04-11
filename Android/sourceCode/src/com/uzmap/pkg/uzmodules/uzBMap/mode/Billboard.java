@@ -30,7 +30,7 @@ import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapOverlay;
 
 public class Billboard {
-	private static final int width = 160;
+	private static final int width = 120;
 	private static final int height = 75;
 	private static final int iconSize = 40;
 	private static final int iconMarginLeft = 5;
@@ -91,11 +91,13 @@ public class Billboard {
 		billboardLayout.setLayoutParams(layoutParams);
 		billboardLayout.setOrientation(LinearLayout.HORIZONTAL);
 		if (getIconAlign().equals("left")) {
-			billboardLayout.addView(icon());
+			if (iconStr != null && !iconStr.isEmpty())
+				billboardLayout.addView(icon());
 			billboardLayout.addView(titleLayout());
 		} else {
 			billboardLayout.addView(titleLayout());
-			billboardLayout.addView(icon());
+			if (iconStr != null && !iconStr.isEmpty())
+				billboardLayout.addView(icon());
 		}
 		return billboardLayout;
 	}
@@ -117,11 +119,13 @@ public class Billboard {
 		billboardLayout.setLayoutParams(layoutParams);
 		billboardLayout.setOrientation(LinearLayout.HORIZONTAL);
 		if (getIconAlign().equals("left")) {
-			billboardLayout.addView(icon);
+			if (iconStr != null && !iconStr.isEmpty())
+				billboardLayout.addView(icon);
 			billboardLayout.addView(titleLayout());
 		} else {
 			billboardLayout.addView(titleLayout());
-			billboardLayout.addView(icon());
+			if (iconStr != null && !iconStr.isEmpty())
+				billboardLayout.addView(icon());
 		}
 		return billboardLayout;
 	}

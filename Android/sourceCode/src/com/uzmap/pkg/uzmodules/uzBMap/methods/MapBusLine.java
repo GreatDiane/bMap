@@ -9,12 +9,10 @@ package com.uzmap.pkg.uzmodules.uzBMap.methods;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import com.baidu.mapapi.map.BaiduMap;
-import com.baidu.mapapi.overlayutil.BusLineOverlay;
 import com.baidu.mapapi.search.busline.BusLineResult;
 import com.baidu.mapapi.search.busline.BusLineResult.BusStation;
 import com.baidu.mapapi.search.busline.BusLineSearch;
@@ -28,6 +26,7 @@ import com.baidu.mapapi.search.poi.PoiDetailResult;
 import com.baidu.mapapi.search.poi.PoiResult;
 import com.baidu.mapapi.search.poi.PoiSearch;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzmodules.uzBMap.BusLineOverlay;
 import com.uzmap.pkg.uzmodules.uzBMap.utils.JsParamsUtil;
 
 public class MapBusLine implements OnGetPoiSearchResultListener,
@@ -79,8 +78,10 @@ public class MapBusLine implements OnGetPoiSearchResultListener,
 			mBaiduMap.setOnMarkerClickListener(overlay);
 			overlay.setData(result);
 			overlay.addToMap();
-			overlay.zoomToSpan();
 			mBusLineMap.put(mBusLineId, overlay);
+			if (mDrawModuleContext.optBoolean("autoresizing", true)) {
+				overlay.zoomToSpan();
+			}
 			drawSuccessCallBack(result);
 		}
 	}

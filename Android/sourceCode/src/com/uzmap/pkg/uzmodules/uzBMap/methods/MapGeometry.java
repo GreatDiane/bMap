@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
-
 import com.baidu.mapapi.map.ArcOptions;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptor;

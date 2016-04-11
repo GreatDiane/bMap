@@ -18,6 +18,10 @@ import android.graphics.Point;
 import android.os.Handler;
 import android.os.Message;
 import android.view.View;
+import android.view.ViewParent;
+import android.view.ViewGroup.MarginLayoutParams;
+import android.widget.AbsoluteLayout;
+import android.widget.FrameLayout;
 import android.widget.RelativeLayout.LayoutParams;
 import com.baidu.location.BDLocation;
 import com.baidu.mapapi.map.BaiduMap;
@@ -40,8 +44,10 @@ import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.UiSettings;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.model.LatLngBounds;
+import com.uzmap.pkg.uzcore.UZCoreUtil;
 import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzkit.UZUtility;
 import com.uzmap.pkg.uzmodules.uzBMap.UzBMap;
 import com.uzmap.pkg.uzmodules.uzBMap.location.LocationInterface;
 import com.uzmap.pkg.uzmodules.uzBMap.location.LocationUtil;
@@ -66,6 +72,13 @@ public class MapOpen implements LocationInterface {
 	private InfoWindow mInfoWindow;
 	private HeatMap mHeatMap;
 	private UzOrientationListener mOrientationListener;
+	private String mFixedOn;
+	private boolean mFixed;
+	private LayoutParams mLayoutParams;
+	private int mX;
+	private int mY;
+	private int mW;
+	private int mH;
 
 	public MapOpen(UzBMap mUzBMap, UZModuleContext mModuleContext,
 			Context mContext) {
@@ -76,8 +89,17 @@ public class MapOpen implements LocationInterface {
 		mJsParamsUtil = JsParamsUtil.getInstance();
 	}
 
+	private void requestParentDisallowInterceptTouchEvent(
+			boolean disallowIntercept) {
+		final ViewParent parent = mMapView.getParent();
+		if (parent != null) {
+			parent.requestDisallowInterceptTouchEvent(disallowIntercept);
+		}
+	}
+
 	public void open() {
 		mMapView = new MapView(mContext);
+		requestParentDisallowInterceptTouchEvent(true);
 		mMapView.showScaleControl(false);
 		mMapView.showZoomControls(false);
 		initBaiduMap();
@@ -123,9 +145,42 @@ public class MapOpen implements LocationInterface {
 	}
 
 	private void insertView() {
-		String fixedOn = mModuleContext.optString("fixedOn");
-		boolean fixed = mModuleContext.optBoolean("fixed", true);
-		mUzBMap.insertViewToCurWindow(mMapView, layout(), fixedOn, fixed);
+		mFixedOn = mModuleContext.optString("fixedOn");
+		mFixed = mModuleContext.optBoolean("fixed", true);
+		mLayoutParams = layout();
+		mUzBMap.insertViewToCurWindow(mMapView, mLayoutParams, mFixedOn, mFixed);
+	}
+
+	@SuppressWarnings("deprecation")
+	public void setRect(UZModuleContext moduleContext) {
+		JSONObject rect = moduleContext.optJSONObject("rect");
+		int x = UZCoreUtil.pixToDip(mX);
+		int y = UZCoreUtil.pixToDip(mY);
+		int w = UZCoreUtil.pixToDip(mW);
+		int h = UZCoreUtil.pixToDip(mH);
+		if (rect != null) {
+			x = UZUtility.dipToPix(rect.optInt("x", x));
+			y = UZUtility.dipToPix(rect.optInt("y", y));
+			w = UZUtility.dipToPix(rect.optInt("w", w));
+			h = UZUtility.dipToPix(rect.optInt("h", h));
+			mX = x;
+			mY = y;
+			mW = w;
+			mH = h;
+		}
+		if (mMapView.getLayoutParams() instanceof FrameLayout.LayoutParams) {
+			FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(w, h);
+			p.setMargins(x, y, 0, 0);
+			mMapView.setLayoutParams(p);
+		} else if (mMapView.getLayoutParams() instanceof MarginLayoutParams) {
+			LayoutParams p = new LayoutParams(w, h);
+			p.setMargins(x, y, 0, 0);
+			mMapView.setLayoutParams(p);
+		} else {
+			AbsoluteLayout.LayoutParams p = new AbsoluteLayout.LayoutParams(w,
+					h, x, y);
+			mMapView.setLayoutParams(p);
+		}
 	}
 
 	private LayoutParams layout() {
@@ -133,6 +188,10 @@ public class MapOpen implements LocationInterface {
 		int y = mJsParamsUtil.y(mModuleContext);
 		int w = mJsParamsUtil.w(mModuleContext, mContext);
 		int h = mJsParamsUtil.h(mModuleContext, mContext);
+		mX = UZUtility.dipToPix(x);
+		mY = UZUtility.dipToPix(y);
+		mW = UZUtility.dipToPix(w);
+		mH = UZUtility.dipToPix(h);
 		LayoutParams layoutParams = new LayoutParams(w, h);
 		layoutParams.setMargins(x, y, 0, 0);
 		return layoutParams;
@@ -150,6 +209,7 @@ public class MapOpen implements LocationInterface {
 	private void showUserLocation(BDLocation location) {
 		if (mIsShowLoc) {
 			animateMove2Center(location.getLatitude(), location.getLongitude());
+			mIsShowLoc = false;
 		}
 	}
 
@@ -213,6 +273,7 @@ public class MapOpen implements LocationInterface {
 
 	public void onDestory() {
 		stopLocation();
+		mMapView.onPause();
 		mMapView.onDestroy();
 		mMapView = null;
 		if (mOrientationListener != null) {
@@ -228,10 +289,12 @@ public class MapOpen implements LocationInterface {
 
 	public void show() {
 		mMapView.setVisibility(View.VISIBLE);
+		mMapView.onResume();
 	}
 
 	public void hide() {
 		mMapView.setVisibility(View.GONE);
+		mMapView.onPause();
 	}
 
 	public void showUserLocation(UZModuleContext moduleContext) {
@@ -253,13 +316,8 @@ public class MapOpen implements LocationInterface {
 					@Override
 					public void onOrientationChanged(float x) {
 						if (mCurrLoc != null) {
+							System.out.println(x);
 							mXDirection = (int) x;
-							MyLocationData locData = new MyLocationData.Builder()
-									.accuracy(mCurrLoc.getRadius())
-									.direction(mXDirection)
-									.latitude(mCurrLoc.getLatitude())
-									.longitude(mCurrLoc.getLongitude()).build();
-							mBaiduMap.setMyLocationData(locData);
 							setLocationData(mCurrLoc);
 						}
 					}

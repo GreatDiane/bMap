@@ -25,6 +25,7 @@ public class LocationUtil implements LocationInterface {
 
 	public void startLocation() {
 		mLocClient.start();
+		mLocClient.requestLocation();
 	}
 
 	public void stopLocation() {

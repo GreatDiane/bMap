@@ -80,14 +80,16 @@ public class Bubble {
 			layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width),
 					UZCoreUtil.dipToPix(height));
 		} else {
-			bubbleLayout.setBackgroundResource(UZResourcesIDFinder
-					.getResDrawableID("mo_bmap_popupmap"));
+			if (moduleContext.isNull("bgImg")) {
+				bubbleLayout.setBackgroundResource(UZResourcesIDFinder
+						.getResDrawableID("mo_bmap_popupmap"));
+			}
 			layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width),
 					UZCoreUtil.dipToPix(height));
 		}
 		bubbleLayout.setLayoutParams(layoutParams);
 		bubbleLayout.setOrientation(LinearLayout.HORIZONTAL);
-		if (getIconAlign().equals("left")) {
+		if (!getIconAlign().equals("right")) {
 			if (!TextUtils.isEmpty(iconStr)) {
 				bubbleLayout.addView(icon());
 			}

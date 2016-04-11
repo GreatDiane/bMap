@@ -153,7 +153,7 @@ public class BusRoutePlanCallBack {
 		List<TransitStep> steps = plan.getAllStep();
 		for (TransitStep step : steps) {
 			nodeJson = new JSONObject();
-			LatLng nodeLocation = step.getEntrace().getLocation();
+			LatLng nodeLocation = step.getEntrance().getLocation();
 			try {
 				nodeJson.put("lon", nodeLocation.longitude);
 				nodeJson.put("lat", nodeLocation.latitude);

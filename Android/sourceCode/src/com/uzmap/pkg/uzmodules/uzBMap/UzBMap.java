@@ -9,28 +9,36 @@ package com.uzmap.pkg.uzmodules.uzBMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.annotation.SuppressLint;
 import android.view.View;
 
 import com.baidu.mapapi.SDKInitializer;
-import com.baidu.mapapi.overlayutil.BusLineOverlay;
-import com.baidu.mapapi.overlayutil.OverlayManager;
+import com.baidu.mapapi.model.LatLng;
 import com.uzmap.pkg.uzcore.UZWebView;
 import com.uzmap.pkg.uzcore.uzmodule.UZModule;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzmodules.uzBMap.methods.MapAnimationOverlay;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapBusLine;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapDrawRoute;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapEventListener;
+import com.uzmap.pkg.uzmodules.uzBMap.methods.MapGPSSignal;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapGeoCoder;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapGeometry;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapGoogleCoords;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapLocation;
+import com.uzmap.pkg.uzmodules.uzBMap.methods.MapOffLine;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapOpen;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapOverlay;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapPoi;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapSearchRoute;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapSetcenter;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapSimple;
+import com.uzmap.pkg.uzmodules.uzBMap.mode.Annotation;
+import com.uzmap.pkg.uzmodules.uzBMap.mode.MoveOverlay;
 import com.uzmap.pkg.uzmodules.uzBMap.utils.JsParamsUtil;
 
 public class UzBMap extends UZModule {
@@ -42,6 +50,9 @@ public class UzBMap extends UZModule {
 	private Map<Integer, MapSearchRoute> mSearchRouteMap;
 	private Map<Integer, OverlayManager> mRouteMap;
 	private Map<Integer, BusLineOverlay> mBusLineMap;
+	private MapAnimationOverlay mMapAnimationOverlay;
+	private MapGPSSignal mMapGPSSignal;
+	private MapOffLine mOffLine;
 
 	public UzBMap(UZWebView webView) {
 		super(webView);
@@ -49,17 +60,14 @@ public class UzBMap extends UZModule {
 
 	public void jsmethod_open(UZModuleContext moduleContext) {
 		if (mMap == null) {
-			if(!INITIALIZED){
-				SDKInitializer.initialize(mContext.getApplication());
-				INITIALIZED = true;
-			}
+			init();
 			mMap = new MapOpen(this, moduleContext, mContext);
 			mMap.open();
 			new MapEventListener(moduleContext, mMap, false)
 					.addDefaultEventListener();
 		} else {
-			if (mMap.getMapView().getVisibility() == View.GONE) {
-				mMap.getMapView().setVisibility(View.VISIBLE);
+			if (mMap != null) {
+				mMap.show();
 			}
 		}
 	}
@@ -69,6 +77,10 @@ public class UzBMap extends UZModule {
 			mMap.close();
 			mMap = null;
 			mMapOverlay = null;
+			mMapGeometry = null;
+		}
+		if (mMapAnimationOverlay != null) {
+			mMapAnimationOverlay.stop();
 		}
 	}
 
@@ -84,7 +96,14 @@ public class UzBMap extends UZModule {
 		}
 	}
 
+	public void jsmethod_setRect(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			mMap.setRect(moduleContext);
+		}
+	}
+
 	public void jsmethod_getLocation(UZModuleContext moduleContext) {
+		init();
 		if (mLocation != null) {
 			mLocation.stopLocation();
 		}
@@ -99,14 +118,17 @@ public class UzBMap extends UZModule {
 	}
 
 	public void jsmethod_getCoordsFromName(UZModuleContext moduleContext) {
+		init();
 		new MapGeoCoder(moduleContext).address2coord();
 	}
 
 	public void jsmethod_getNameFromCoords(UZModuleContext moduleContext) {
+		init();
 		new MapGeoCoder(moduleContext).coord2address();
 	}
 
 	public void jsmethod_getDistance(UZModuleContext moduleContext) {
+		init();
 		new MapSimple(moduleContext).getDistance();
 	}
 
@@ -119,6 +141,12 @@ public class UzBMap extends UZModule {
 	public void jsmethod_setCenter(UZModuleContext moduleContext) {
 		if (mMap != null) {
 			new MapSetcenter(moduleContext, mContext, mMap).setCenter();
+		}
+	}
+
+	public void jsmethod_getCenter(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			new MapSimple(moduleContext).getCenter(mMap.getMapView().getMap());
 		}
 	}
 
@@ -228,12 +256,60 @@ public class UzBMap extends UZModule {
 		}
 	}
 
+	public void jsmethod_startSearchGPS(UZModuleContext moduleContext) {
+		if (mMapGPSSignal == null) {
+			mMapGPSSignal = new MapGPSSignal();
+		}
+		mMapGPSSignal.getGPSSnr(moduleContext, mContext);
+	}
+
+	public void jsmethod_stopSearchGPS(UZModuleContext moduleContext) {
+		if (mMapGPSSignal != null) {
+			mMapGPSSignal.stop();
+		}
+	}
+
+	public void jsmethod_isPolygonContantsPoint(UZModuleContext moduleContext) {
+		init();
+		new MapSimple(moduleContext).isPolygonContantsPoint();
+	}
+
 	public void jsmethod_addAnnotations(UZModuleContext moduleContext) {
 		if (mMap != null) {
 			if (mMapOverlay == null) {
 				mMapOverlay = new MapOverlay(this, mMap);
 			}
 			mMapOverlay.addAnnotations(moduleContext);
+		}
+	}
+
+	public void jsmethod_addMobileAnnotations(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			if (mMapOverlay == null) {
+				mMapOverlay = new MapOverlay(this, mMap);
+			}
+			mMapOverlay.addMobileAnnotations(moduleContext);
+		}
+	}
+
+	public void jsmethod_moveAnnotation(UZModuleContext moduleContext) {
+		if (mMapOverlay != null) {
+			Map<Integer, Annotation> markerMap = mMapOverlay.getMoveMarkerMap();
+			int id = moduleContext.optInt("id");
+			Annotation anno = markerMap.get(id);
+			if (anno != null) {
+				JsParamsUtil jsParamsUtil = JsParamsUtil.getInstance();
+				float lat = jsParamsUtil.lat(moduleContext, "end");
+				float lon = jsParamsUtil.lon(moduleContext, "end");
+				double duration = moduleContext.optDouble("duration");
+				if (mMapAnimationOverlay == null) {
+					mMapAnimationOverlay = new MapAnimationOverlay();
+				}
+				mMapAnimationOverlay.addMoveOverlay(new MoveOverlay(
+						moduleContext, anno.getMarker(), duration, new LatLng(
+								lat, lon)));
+				mMapAnimationOverlay.startMove();
+			}
 		}
 	}
 
@@ -249,6 +325,18 @@ public class UzBMap extends UZModule {
 		if (mMap != null) {
 			if (mMapOverlay != null) {
 				mMapOverlay.setAnnotationCoords(moduleContext);
+			}
+		}
+	}
+
+	public void jsmethod_annotationExist(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			if (mMapOverlay != null) {
+				if (!moduleContext.isNull("id")) {
+					mMapOverlay.isAnnotationExist(moduleContext);
+				}
+			} else {
+				isAnnoExistCallBack(moduleContext, false);
 			}
 		}
 	}
@@ -342,6 +430,7 @@ public class UzBMap extends UZModule {
 
 	@SuppressLint("UseSparseArrays")
 	public void jsmethod_searchRoute(UZModuleContext moduleContext) {
+		init();
 		if (mSearchRouteMap == null) {
 			mSearchRouteMap = new HashMap<Integer, MapSearchRoute>();
 		}
@@ -381,6 +470,7 @@ public class UzBMap extends UZModule {
 	}
 
 	public void jsmethod_searchBusRoute(UZModuleContext moduleContext) {
+		init();
 		new MapBusLine().busLine(moduleContext);
 	}
 
@@ -412,19 +502,100 @@ public class UzBMap extends UZModule {
 	}
 
 	public void jsmethod_searchInCity(UZModuleContext moduleContext) {
+		init();
 		new MapPoi().searchInCity(moduleContext);
 	}
 
 	public void jsmethod_searchNearby(UZModuleContext moduleContext) {
+		init();
 		new MapPoi().searchNearby(moduleContext);
 	}
 
 	public void jsmethod_searchInBounds(UZModuleContext moduleContext) {
+		init();
 		new MapPoi().searchInBounds(moduleContext);
 	}
 
 	public void jsmethod_autocomplete(UZModuleContext moduleContext) {
+		init();
 		new MapPoi().autoComplete(moduleContext);
+	}
+
+	public void jsmethod_getHotCityList(UZModuleContext moduleContext) {
+		if (mOffLine == null) {
+			mOffLine = new MapOffLine(mContext);
+		}
+		mOffLine.getHotCityList(moduleContext);
+	}
+
+	public void jsmethod_getOfflineCityList(UZModuleContext moduleContext) {
+		if (mOffLine == null) {
+			mOffLine = new MapOffLine(mContext);
+		}
+		mOffLine.getOfflineCityList(moduleContext);
+	}
+
+	public void jsmethod_searchCityByName(UZModuleContext moduleContext) {
+		if (mOffLine == null) {
+			mOffLine = new MapOffLine(mContext);
+		}
+		mOffLine.searchCityByName(moduleContext);
+	}
+
+	public void jsmethod_getAllUpdateInfo(UZModuleContext moduleContext) {
+		if (mOffLine == null) {
+			mOffLine = new MapOffLine(mContext);
+		}
+		mOffLine.getAllUpdateInfo(moduleContext);
+	}
+
+	public void jsmethod_getUpdateInfoByID(UZModuleContext moduleContext) {
+		if (mOffLine == null) {
+			mOffLine = new MapOffLine(mContext);
+		}
+		mOffLine.getUpdateInfoByID(moduleContext);
+	}
+
+	public void jsmethod_start(UZModuleContext moduleContext) {
+		if (mOffLine == null) {
+			mOffLine = new MapOffLine(mContext);
+		}
+		mOffLine.startDownload(moduleContext);
+	}
+
+	public void jsmethod_update(UZModuleContext moduleContext) {
+		if (mOffLine == null) {
+			mOffLine = new MapOffLine(mContext);
+		}
+		mOffLine.updateOffLine(moduleContext);
+	}
+
+	public void jsmethod_pause(UZModuleContext moduleContext) {
+		if (mOffLine == null) {
+			mOffLine = new MapOffLine(mContext);
+		}
+		mOffLine.pauseDownload(moduleContext);
+	}
+
+	public void jsmethod_remove(UZModuleContext moduleContext) {
+		if (mOffLine == null) {
+			mOffLine = new MapOffLine(mContext);
+		}
+		mOffLine.removeDownload(moduleContext);
+	}
+
+	public void jsmethod_addOfflineListener(UZModuleContext moduleContext) {
+		if (mOffLine == null) {
+			mOffLine = new MapOffLine(mContext);
+		}
+		mOffLine.addOfflineListener(moduleContext);
+	}
+
+	public void jsmethod_removeOfflineListener(UZModuleContext moduleContext) {
+		if (mOffLine == null) {
+			mOffLine = new MapOffLine(mContext);
+		}
+		mOffLine.removeOfflineListener();
 	}
 
 	@Override
@@ -448,6 +619,13 @@ public class UzBMap extends UZModule {
 		}
 	}
 
+	private void init() {
+		if (!INITIALIZED) {
+			SDKInitializer.initialize(mContext.getApplication());
+			INITIALIZED = true;
+		}
+	}
+
 	// 解决当openWin，fixed为false时，部分手机地图不显示问题
 	@SuppressLint("NewApi")
 	private void makeMapShowSometimes() {
@@ -460,5 +638,16 @@ public class UzBMap extends UZModule {
 				}
 			}
 		});
+	}
+
+	private void isAnnoExistCallBack(UZModuleContext moduleContext,
+			boolean status) {
+		JSONObject ret = new JSONObject();
+		try {
+			ret.put("status", status);
+			moduleContext.success(ret, false);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
 	}
 }

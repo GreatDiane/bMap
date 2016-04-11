@@ -8,7 +8,9 @@ package com.uzmap.pkg.uzmodules.uzBMap.methods;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import android.content.Context;
+
 import com.baidu.location.BDLocation;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
 import com.uzmap.pkg.uzmodules.uzBMap.location.LocationInterface;
@@ -59,11 +61,13 @@ public class MapLocation implements LocationInterface {
 			if (location != null) {
 				if (location.getLocType() == BDLocation.TypeGpsLocation
 						|| location.getLocType() == BDLocation.TypeNetWorkLocation
-						|| location.getLocType() == BDLocation.TypeOffLineLocation) {
+						|| location.getLocType() == BDLocation.TypeOffLineLocation
+						|| location.getLocType() == BDLocation.TypeCacheLocation) {
 					ret.put("status", true);
-					ret.put("timestamp", location.getTime());
+					ret.put("timestamp", System.currentTimeMillis());
 					ret.put("lon", location.getLongitude());
 					ret.put("lat", location.getLatitude());
+					ret.put("locationType", getLocType(location));
 					moduleContext.success(ret, false);
 				} else {
 					ret.put("status", false);
@@ -75,11 +79,26 @@ public class MapLocation implements LocationInterface {
 				err.put("msg", -1);
 				moduleContext.error(ret, err, false);
 			}
+
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
+	private String getLocType(BDLocation location) {
+		String locType = "NetWork";
+		if (location.getLocType() == BDLocation.TypeGpsLocation) {
+			locType = "GPS";
+		} else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {
+			locType = "NetWork";
+		} else if (location.getLocType() == BDLocation.TypeOffLineLocation) {
+			locType = "OffLine";
+		} else if (location.getLocType() == BDLocation.TypeCacheLocation) {
+			locType = "Cache";
+		}
+		return locType;
+	}
+
 	public void onDestory() {
 		mLocationUtil.onDestory();
 	}

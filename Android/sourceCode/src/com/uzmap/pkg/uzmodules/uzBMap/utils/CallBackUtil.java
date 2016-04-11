@@ -50,4 +50,15 @@ public class CallBackUtil {
 		}
 	}
 
+	public void markerDragCallBack(UZModuleContext moduleContext, int id,
+			String eventType, String dragState) {
+		JSONObject ret = new JSONObject();
+		try {
+			ret.put("dragState", dragState);
+			ret.put("eventType", eventType);
+			moduleContext.success(ret, false);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
 }

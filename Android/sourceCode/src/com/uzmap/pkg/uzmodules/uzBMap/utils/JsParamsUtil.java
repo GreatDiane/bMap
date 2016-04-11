@@ -202,6 +202,32 @@ public class JsParamsUtil {
 				.include(new LatLng(rbLat, rbLon)).build();
 	}
 
+	public LatLngBounds pointsBounds(UZModuleContext moduleContext) {
+		LatLngBounds.Builder builder = new LatLngBounds.Builder();
+		JSONArray points = moduleContext.optJSONArray("points");
+		if (points != null) {
+			for (int i = 0; i < points.length(); i++) {
+				double lon = points.optJSONObject(i).optDouble("lon");
+				double lat = points.optJSONObject(i).optDouble("lat");
+				builder.include(new LatLng(lat, lon));
+			}
+		}
+		return builder.build();
+	}
+	
+	public List<LatLng> pointList(UZModuleContext moduleContext) {
+		JSONArray points = moduleContext.optJSONArray("points");
+		List<LatLng> list = new ArrayList<LatLng>();
+		if (points != null) {
+			for (int i = 0; i < points.length(); i++) {
+				double lon = points.optJSONObject(i).optDouble("lon");
+				double lat = points.optJSONObject(i).optDouble("lat");
+				list.add(new LatLng(lat, lon));
+			}
+		}
+		return list;
+	}
+
 	public boolean latLngBoundsAnimation(UZModuleContext moduleContext) {
 		return moduleContext.optBoolean("animation", true);
 	}
