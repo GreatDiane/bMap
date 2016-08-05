@@ -6,9 +6,14 @@
  */
 package com.uzmap.pkg.uzmodules.uzBMap.methods;
 
+import java.util.List;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.search.core.PoiInfo;
 import com.baidu.mapapi.search.core.SearchResult;
 import com.baidu.mapapi.search.geocode.GeoCodeResult;
 import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
@@ -115,6 +120,28 @@ public class MapGeoCoder implements GeoCoderInterface {
 			ret.put("district", address.district);
 			ret.put("streetName", address.street);
 			ret.put("streetNumber", address.streetNumber);
+			JSONArray poiListJson = new JSONArray();
+			List<PoiInfo> poiList = result.getPoiList();
+			if (poiList != null) {
+				ret.put("poiList", poiListJson);
+				PoiInfo p = null;
+				for (int i = 0; i < poiList.size(); i++) {
+					JSONObject poiInfo = new JSONObject();
+					p = poiList.get(i);
+					poiInfo.put("name", p.name);
+					poiInfo.put("uid", p.uid);
+					poiInfo.put("address", p.address);
+					poiInfo.put("city", p.city);
+					poiInfo.put("phone", p.phoneNum);
+					poiInfo.put("postcode", p.postCode);
+					poiInfo.put("epoitype", p.type);
+					JSONObject coord = new JSONObject();
+					poiInfo.put("coord", coord);
+					coord.put("lat", p.location.latitude);
+					coord.put("lon", p.location.longitude);
+					poiListJson.put(poiInfo);
+				}
+			}
 			mModuleContext.success(ret, false);
 		} catch (JSONException e) {
 			e.printStackTrace();

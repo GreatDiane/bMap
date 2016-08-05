@@ -47,7 +47,7 @@ typedef enum {
 @property (nonatomic) NSInteger degree;                           //annotation的图片旋转角度
 @property (nonatomic, assign) CLLocationCoordinate2D coordinate;  //annotation的位置坐标
 @property (nonatomic, strong) NSString *pinImg, *bubbleBgImg;     //annotation的图片和气泡背景图片
-@property (nonatomic, assign) NSInteger annoId, nodeIndex;        //annotation的id
+@property (nonatomic, assign) NSInteger annoId, nodeIndex, clickCbId;        //annotation的id
 @property (nonatomic, strong) NSString *title, *subtitle;         //annotation的标题和子标题
 @property (nonatomic, assign) BOOL isStyled, draggable, popBubble;//annotation是否自定义，是否可拖动
 @property (nonatomic, strong) NSDictionary *content, *styles;     //annotation自定义时的内容和样式

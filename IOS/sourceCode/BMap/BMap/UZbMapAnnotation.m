@@ -23,7 +23,7 @@ static CLLocationCoordinate2D interpolateCoordinate(CLLocationCoordinate2D from,
 
 @synthesize pinImg, bubbleBgImg;
 @synthesize coordinate;
-@synthesize annoId, nodeIndex;
+@synthesize annoId, nodeIndex, clickCbId;
 @synthesize title, subtitle;
 @synthesize isStyled, draggable, popBubble;
 @synthesize styles, content;

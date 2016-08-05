@@ -29,18 +29,6 @@ typedef enum {
     LOCATION_GET_SHOW    //获取位置信息和显示用户位置
 } LocationType;
 */
-//多边形由边界的坐标点所构成的数组组成，参数格式 该数组的count，  多边形边界点x坐标 的组成的数组，多边形边界点y坐标 的组成的数组，需要判断的点的x坐标，需要判断的点的y坐标
-BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
-    int i, j;
-    BOOL c = NO;
-    for (i = 0, j = nvert-1; i < nvert; j = i++) {
-        
-        if ( ( (verty[i]>testy) != (verty[j]>testy) ) &&
-            (testx <= (vertx[j]-vertx[i]) * (testy-verty[i]) / (verty[j]-verty[i]) + vertx[i]) )
-            c = !c;
-    }
-    return c;
-}
 
 @interface UZBMap ()
 <BMKGeneralDelegate, BMKMapViewDelegate, BMKLocationServiceDelegate, BMKGeoCodeSearchDelegate, BMKRouteSearchDelegate, BMKPoiSearchDelegate, BMKBusLineSearchDelegate, BMKSuggestionSearchDelegate, MovingAnimationDelegate, BMKOfflineMapDelegate> {
@@ -56,7 +44,7 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
     //监听地图事件
     NSInteger longPressCbid, viewChangeCbid, singleTapCbid, dubbleTapCbid;
     //大头针
-    NSInteger addAnnCbid, setBubbleCbid, addBillboardCbid;
+    NSInteger setBubbleCbid, addBillboardCbid;
     //覆盖物
     NSMutableDictionary *_allOverlays;
     //路线搜索
@@ -167,7 +155,6 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
         singleTapCbid = -1;
         dubbleTapCbid = -1;
         addBillboardCbid = -1;
-        addAnnCbid = -1;
         offlineListenerCbid = -1;
         _allOverlays = [NSMutableDictionary dictionaryWithCapacity:1];
         _allRoutes = [NSMutableDictionary dictionaryWithCapacity:1];
@@ -283,8 +270,11 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
 
 - (void)setCompass:(NSDictionary *)paramsDict_ {
     NSDictionary *position = [paramsDict_ dictValueForKey:@"position" defaultValue:@{}];
-    float x = [position floatValueForKey:@"x" defaultValue:0];
-    float y = [position floatValueForKey:@"y" defaultValue:0];
+    CGSize compassSize = _baiduMapView.compassSize;
+    float x = [position floatValueForKey:@"x" defaultValue:compassSize.width/2.0];
+    float y = [position floatValueForKey:@"y" defaultValue:compassSize.height/2.0];
+    x -= compassSize.width/2.0;
+    y -= compassSize.height/2.0;
     _baiduMapView.compassPosition = CGPointMake(x, y);
 }
 
@@ -322,9 +312,6 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
     if (_geoSearch) {
         _geoSearch.delegate = nil;
         self.geoSearch = nil;
-    }
-    if (addAnnCbid >= 0) {
-        [self deleteCallback:addAnnCbid];
     }
     if (setBubbleCbid >= 0) {
         [self deleteCallback:setBubbleCbid];
@@ -433,10 +420,7 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
     addrInfo.city = city;
     BOOL isSearch = [self.geoSearch geoCode:addrInfo];
     if (!isSearch) {
-        [self sendResultEventWithCallbackId:getLocFromAddrCbid
-                             dataDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"status"]
-                              errDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:-1] forKey:@"code"]
-                             doDelete:YES];
+        //[self sendResultEventWithCallbackId:getLocFromAddrCbid dataDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"status"] errDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:-1] forKey:@"code"] doDelete:YES];
     }
 }
 
@@ -559,6 +543,14 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
         zoomLevel = 3;
     }
     [_baiduMapView setZoomLevel:zoomLevel];
+}
+
+- (void)getZoomLevel:(NSDictionary *)paramsDict_ {
+    NSInteger getZoomLevelCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+    NSMutableDictionary *sendDict = [NSMutableDictionary dictionary];
+    float level = self.baiduMapView.zoomLevel;
+    [sendDict setObject:[NSNumber numberWithFloat:level] forKey:@"level"];
+    [self sendResultEventWithCallbackId:getZoomLevelCbid dataDict:sendDict errDict:nil doDelete:YES];
 }
 
 - (void)setMapAttr:(NSDictionary *)paramsDict_ {
@@ -789,18 +781,6 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
 
     CLLocationCoordinate2D targetPoint = CLLocationCoordinate2DMake(targetX, targetY);
     BOOL is = BMKPolygonContainsCoordinate(targetPoint, allPoint, pointCount);
-    /*
-    int n = (int) arrSome.count;
-    float vertx[n];
-    float verty[n];
-    for (int i=0; i<arrSome.count; i++) {
-        //MyPoint类存储的是经度和纬度
-        NSDictionary *pointInfo = [arrSome objectAtIndex:i];
-        vertx[i] = [pointInfo floatValueForKey:@"lat" defaultValue:360];
-        verty[i] = [pointInfo floatValueForKey:@"lon" defaultValue:360];
-    }
-    BOOL is = pnpoly(n, vertx, verty, targetX, targetY);
-     */
     [self sendResultEventWithCallbackId:cbcontantId dataDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:is] forKey:@"status"] errDict:nil doDelete:YES];
 }
 
@@ -868,10 +848,7 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
 #pragma mark-
 
 - (void)addAnnotations:(NSDictionary *)paramsDict_ {
-    if (addAnnCbid >= 0) {
-        [self deleteCallback:addAnnCbid];
-    }
-    addAnnCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+    NSInteger addAnnCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
     NSString *icon = [paramsDict_ stringValueForKey:@"icon" defaultValue:nil];
     BOOL draggable = [paramsDict_ boolValueForKey:@"draggable" defaultValue:NO];
     NSArray *annoAry = [paramsDict_ arrayValueForKey:@"annotations" defaultValue:nil];
@@ -896,6 +873,7 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
         coor.latitude = lat;
         annotation.coordinate = coor;
         annotation.annoId = annoId;
+        annotation.clickCbId = addAnnCbid;
         if ([pinIcon isKindOfClass:[NSString class]] && pinIcon.length>0) {
             annotation.pinImg = pinIcon;
         } else {
@@ -1013,6 +991,21 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
         if (annoElem.annoId == [setID intValue]) {
             annoElem.popBubble = YES;
             [self.baiduMapView selectAnnotation:annoElem animated:YES];
+            break;
+        }
+    }
+}
+
+- (void)closeBubble:(NSDictionary *)paramsDict_ {
+    NSString *setID = [paramsDict_ stringValueForKey:@"id" defaultValue:nil];
+    if (![setID isKindOfClass:[NSString class]] || setID.length==0) {
+        return;
+    }
+    NSArray *annos = [self.baiduMapView annotations];
+    for (UZbMapAnnotation *annoElem in annos){
+        if (annoElem.annoId == [setID intValue]) {
+            annoElem.popBubble = NO;
+            [self.baiduMapView deselectAnnotation:annoElem animated:YES];
             break;
         }
     }
@@ -2268,7 +2261,7 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
             [_allBusRoutes setObject:polyLine forKey:routeId];
             [_allBusNodeSet setObject:stationNode forKey:routeId];
         }
-        delete temppoints;
+        delete [] temppoints;
         //移动地图到合适的位置
         if (tempSearcher.autoFitVisible) {
             [self mapViewFitPolyLine:polyLine];
@@ -2528,6 +2521,8 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
 
 - (void)mapView:(BMKMapView *)mapView annotationView:(BMKAnnotationView *)view didChangeDragState:(BMKAnnotationViewDragState)newState
    fromOldState:(BMKAnnotationViewDragState)oldState {//标注拖动状态改变代理
+    UZbMapAnnotation *temp = (UZbMapAnnotation *)view.annotation;
+    NSInteger addAnnCbid = temp.clickCbId;
     NSString *state = @"none";
     switch (newState) {
         case BMKAnnotationViewDragStateNone:
@@ -2565,6 +2560,7 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
     } else {
         return;
     }
+    NSInteger addAnnCbid = temp.clickCbId;
     switch (temp.clikType) {
         case ANNOTATION_CLICK: {
             if (addAnnCbid >= 0) {
@@ -3219,9 +3215,9 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
                 addrInfo.address = temp.address;
                 addrInfo.city = temp.city;
                 BOOL isSearch = [self.geoSearch geoCode:addrInfo];
-                if (!isSearch) {
-                    [self sendResultEventWithCallbackId:getLocFromAddrCbid dataDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"status"] errDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:-1] forKey:@"code"] doDelete:YES];
-                }
+                //if (!isSearch) {
+                    //[self sendResultEventWithCallbackId:getLocFromAddrCbid dataDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"status"] errDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:-1] forKey:@"code"] doDelete:YES];
+                //}
                 return;
             }
                 break;
@@ -3315,6 +3311,52 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
             [cbDict setObject:streetNumber forKey:@"streetNumber"];
         }
         [cbDict setObject:[NSNumber numberWithBool:YES] forKey:@"status"];
+
+        NSArray *poiAry = result.poiList;
+        NSMutableArray *poiInfoAry = [NSMutableArray array];
+        for (BMKPoiInfo *poiInfo in poiAry) {
+            NSMutableDictionary *pointInfo = [NSMutableDictionary dictionary];
+            NSString *name = poiInfo.name;
+            if (![name isKindOfClass:[NSString class]] || name.length==0) {
+                name = @"";
+            }
+            [pointInfo setObject:name forKey:@"name"];
+            NSString *uid = poiInfo.uid;
+            if (![uid isKindOfClass:[NSString class]] || uid.length==0) {
+                uid = @"";
+            }
+            [pointInfo setObject:uid forKey:@"uid"];
+            NSString *address = poiInfo.address;
+            if (![address isKindOfClass:[NSString class]] || address.length==0) {
+                address = @"";
+            }
+            [pointInfo setObject:address forKey:@"address"];
+            NSString *city = poiInfo.city;
+            if (![city isKindOfClass:[NSString class]] || city.length==0) {
+                city = @"";
+            }
+            [pointInfo setObject:city forKey:@"city"];
+            NSString *phone = poiInfo.phone;
+            if (![phone isKindOfClass:[NSString class]] || phone.length==0) {
+                phone = @"";
+            }
+            [pointInfo setObject:phone forKey:@"phone"];
+            NSString *postcode = poiInfo.postcode;
+            if (![postcode isKindOfClass:[NSString class]] || postcode.length==0) {
+                postcode = @"";
+            }
+            [pointInfo setObject:postcode forKey:@"postcode"];
+            int epoitype = poiInfo.epoitype;
+            [pointInfo setObject:[NSNumber numberWithInt:epoitype] forKey:@"epoitype"];
+            NSMutableDictionary *pointPt = [NSMutableDictionary dictionary];
+            float lat = poiInfo.pt.latitude;
+            float lon = poiInfo.pt.longitude;
+            [pointPt setObject:[NSNumber numberWithFloat:lat] forKey:@"lat"];
+            [pointPt setObject:[NSNumber numberWithFloat:lon] forKey:@"lon"];
+            [pointInfo setObject:pointPt forKey:@"coord"];
+            [poiInfoAry addObject:pointInfo];
+        }
+        [cbDict setObject:poiInfoAry forKey:@"poiList"];
         [self sendResultEventWithCallbackId:getAddrFromLoc dataDict:cbDict errDict:nil  doDelete:YES];
     } else {
         int errCode = 0;
@@ -3458,6 +3500,7 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
     labelH = 20;
     labelW = 100;
     //插图
+    BOOL hasIllus = YES;
     if (illusPath.length > 0) {
         CGRect rect;
         if ([illusPath hasPrefix:@"http"]) {
@@ -3489,6 +3532,7 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
     } else {
         labelX = 10;
         labelW = 140;
+        hasIllus = NO;
     }
     //标题
     NSString *title = [contentInfo stringValueForKey:@"title" defaultValue:@""];
@@ -3497,6 +3541,9 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
     titleLab.backgroundColor = [UIColor clearColor];
     titleLab.font = [UIFont systemFontOfSize:titleSize];
     titleLab.textColor = [UZAppUtils colorFromNSString:titleColor];
+    if (!hasIllus) {
+        titleLab.textAlignment = NSTextAlignmentCenter;
+    }
     [pinAnnotationView addSubview:titleLab];
     //子标题
     NSString *subTitle = [contentInfo stringValueForKey:@"subTitle" defaultValue:nil];
@@ -3505,6 +3552,9 @@ BOOL pnpoly (int nvert, float *vertx, float *verty, float testx, float testy) {
     subTitleLab.backgroundColor = [UIColor clearColor];
     subTitleLab.font = [UIFont systemFontOfSize:subtitleSize];
     subTitleLab.textColor = [UZAppUtils colorFromNSString:subTitleColor];
+    if (!hasIllus) {
+        titleLab.textAlignment = NSTextAlignmentCenter;
+    }
     [pinAnnotationView addSubview:subTitleLab];
 }
 

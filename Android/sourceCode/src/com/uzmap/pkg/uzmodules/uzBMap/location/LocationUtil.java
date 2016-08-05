@@ -10,6 +10,7 @@ import android.content.Context;
 import com.baidu.location.BDLocation;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
+import com.baidu.location.LocationClientOption.LocationMode;
 
 public class LocationUtil implements LocationInterface {
 	private LocationClient mLocClient;
@@ -44,6 +45,7 @@ public class LocationUtil implements LocationInterface {
 		option.setOpenGps(true);
 		option.setCoorType("bd09ll");
 		option.setScanSpan(5000);
+		option.setLocationMode(LocationMode.Hight_Accuracy);
 		return option;
 	}
 

@@ -146,6 +146,17 @@ public class MapOverlay {
 		}
 	}
 
+	public void closeBubble(UZModuleContext moduleContext) {
+		int id = mJsParamsUtil.bubbleId(moduleContext);
+		if (mMarkerMap != null && mBubbleMap != null) {
+			Annotation annotation = mMarkerMap.get(id);
+			Bubble bubble = mBubbleMap.get(id);
+			if (annotation != null && bubble != null) {
+				closeBubble(annotation.getMarker());
+			}
+		}
+	}
+
 	public void addBillboard(UZModuleContext moduleContext) {
 		addMarkerClickListener();
 		boolean isNetIcon = mJsParamsUtil.isBillboardNetIcon(moduleContext);
@@ -184,6 +195,13 @@ public class MapOverlay {
 					billboard = mBillboardMap.get(i);
 					if (billboard != null) {
 						billboard.getMarker().remove();
+					}
+				}
+				if (mMoveMarkerMap != null) {
+					annotation = mMoveMarkerMap.get(i);
+					if (annotation != null) {
+						annotation.getMarker().remove();
+						mMap.getBaiduMap().hideInfoWindow();
 					}
 				}
 			}
@@ -313,9 +331,16 @@ public class MapOverlay {
 		Bubble bubble = mBubbleMap.get(id);
 		if (bubble != null) {
 			mInfoWindow = new InfoWindow(mBubbleMap.get(id).bubbleView(),
-					marker.getPosition(), -47);
+					marker.getPosition(), -10);
 			mMap.getBaiduMap().showInfoWindow(mInfoWindow);
+		}
+	}
 
+	private void closeBubble(Marker marker) {
+		int id = marker.getZIndex();
+		Bubble bubble = mBubbleMap.get(id);
+		if (bubble != null) {
+			mMap.getBaiduMap().hideInfoWindow();
 		}
 	}
 

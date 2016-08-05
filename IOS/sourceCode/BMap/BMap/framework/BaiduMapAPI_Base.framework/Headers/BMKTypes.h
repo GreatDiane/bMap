@@ -16,6 +16,7 @@ typedef enum
     BMK_COORDTYPE_COMMON,  ///google地图、soso地图、aliyun地图、mapabc地图和amap地图所用坐标
 } BMK_COORD_TYPE;
 enum {
+    BMKMapTypeNone       = 0,               ///< 空白地图
     BMKMapTypeStandard   = 1,               ///< 标准地图
     BMKMapTypeSatellite  = 2,               ///< 卫星地图
 };
@@ -58,6 +59,8 @@ typedef enum{
     BMK_SEARCH_NETWOKR_ERROR,///网络连接错误
     BMK_SEARCH_NETWOKR_TIMEOUT,///网络连接超时
     BMK_SEARCH_PERMISSION_UNFINISHED,///还未完成鉴权，请在鉴权通过后重试
+    BMK_SEARCH_INDOOR_ID_ERROR,///室内图ID错误
+    BMK_SEARCH_FLOOR_ERROR,///室内图检索楼层错误
 }BMKSearchErrorCode;
 
 //调起百度地图结果状态码
@@ -70,6 +73,11 @@ typedef enum{
     BMK_OPEN_POI_NEARBY_KEYWORD_NULL,///<poi周边 keyWord为空
     BMK_OPEN_ROUTE_START_ERROR,///<路线起点有误
     BMK_OPEN_ROUTE_END_ERROR,///<路线终点有误
+    BMK_OPEN_PANORAMA_UID_ERROR,///<调起全景 poiUid不正确
+    BMK_OPEN_PANORAMA_ABSENT,///<调起全景 此处不支持全景
+    BMK_OPEN_PERMISSION_UNFINISHED,///还未完成鉴权，请在鉴权通过后重试
+    BMK_OPEN_KEY_ERROR,///<app key错误
+    BMK_OPEN_NETWOKR_ERROR,///网络连接错误
 }BMKOpenErrorCode;
 
 ///表示一个经纬度范围
@@ -133,6 +141,8 @@ UIKIT_EXTERN const BMKMapRect BMKMapRectNull;
 
 ///节点所在城市
 @property (nonatomic, strong) NSString* cityName;
+///节点所在城市ID
+@property (nonatomic, assign) NSInteger cityID;
 ///节点名称
 @property (nonatomic, strong) NSString* name;
 ///节点坐标

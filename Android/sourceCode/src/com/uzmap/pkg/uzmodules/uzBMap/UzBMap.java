@@ -56,6 +56,8 @@ public class UzBMap extends UZModule {
 
 	public UzBMap(UZWebView webView) {
 		super(webView);
+		SDKInitializer.initialize(mContext.getApplication());
+		INITIALIZED = true;
 	}
 
 	public void jsmethod_open(UZModuleContext moduleContext) {
@@ -153,6 +155,12 @@ public class UzBMap extends UZModule {
 	public void jsmethod_setZoomLevel(UZModuleContext moduleContext) {
 		if (mMap != null) {
 			mMap.setZoomLevel(JsParamsUtil.getInstance().level(moduleContext));
+		}
+	}
+
+	public void jsmethod_getZoomLevel(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			getZoomCallBack(moduleContext, mMap.getZoomLevel());
 		}
 	}
 
@@ -354,6 +362,14 @@ public class UzBMap extends UZModule {
 		if (mMap != null) {
 			if (mMapOverlay != null) {
 				mMapOverlay.popupBubble(moduleContext);
+			}
+		}
+	}
+
+	public void jsmethod_closeBubble(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			if (mMapOverlay != null) {
+				mMapOverlay.closeBubble(moduleContext);
 			}
 		}
 	}
@@ -645,6 +661,16 @@ public class UzBMap extends UZModule {
 		JSONObject ret = new JSONObject();
 		try {
 			ret.put("status", status);
+			moduleContext.success(ret, false);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void getZoomCallBack(UZModuleContext moduleContext, float level) {
+		JSONObject ret = new JSONObject();
+		try {
+			ret.put("level", level);
 			moduleContext.success(ret, false);
 		} catch (JSONException e) {
 			e.printStackTrace();

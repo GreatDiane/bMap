@@ -344,6 +344,10 @@ public class MapOpen implements LocationInterface {
 		mBaiduMap.animateMapStatus(mapStatusUpdate);
 	}
 
+	public float getZoomLevel() {
+		return mBaiduMap.getMapStatus().zoom;
+	}
+
 	public void setMapType(String type) {
 		if (type.equals("standard")) {
 			mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);

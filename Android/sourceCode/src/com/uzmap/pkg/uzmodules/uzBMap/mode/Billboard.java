@@ -6,8 +6,12 @@
  */
 package com.uzmap.pkg.uzmodules.uzBMap.mode;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils.TruncateAt;
@@ -30,7 +34,7 @@ import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapOverlay;
 
 public class Billboard {
-	private static final int width = 120;
+	private static final int width = 165;
 	private static final int height = 75;
 	private static final int iconSize = 40;
 	private static final int iconMarginLeft = 5;
@@ -134,13 +138,20 @@ public class Billboard {
 		LinearLayout titleLayout = new LinearLayout(context);
 		LayoutParams layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width
 				- iconSize - 30), UZCoreUtil.dipToPix(height));
-		titleLayout.setGravity(Gravity.CENTER_VERTICAL);
 		layoutParams.setMargins(UZCoreUtil.dipToPix(10), 0,
 				UZCoreUtil.dipToPix(10), 0);
 		titleLayout.setLayoutParams(layoutParams);
 		titleLayout.setOrientation(LinearLayout.VERTICAL);
-		titleLayout.addView(title());
-		titleLayout.addView(subTitle());
+		
+		LinearLayout titleLayout2 = new LinearLayout(context);
+		LayoutParams layoutParams2 = new LayoutParams(UZCoreUtil.dipToPix(width
+				- iconSize - 30), UZCoreUtil.dipToPix(height-10));
+		titleLayout2.setGravity(Gravity.CENTER_VERTICAL);
+		titleLayout2.setOrientation(LinearLayout.VERTICAL);
+		titleLayout2.setLayoutParams(layoutParams2);
+		titleLayout.addView(titleLayout2);
+		titleLayout2.addView(title());
+		titleLayout2.addView(subTitle());
 		return titleLayout;
 	}
 
