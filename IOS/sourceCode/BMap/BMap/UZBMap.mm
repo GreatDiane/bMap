@@ -70,7 +70,7 @@ typedef enum {
 @property (nonatomic, strong) BMKLocationService *locService;
 @property (nonatomic, strong) UZBMKGeoCodeSearch *geoSearch;
 @property (nonatomic, strong) NSMutableDictionary *allOverlays, *allRoutes, *allBusRoutes, *routeNodeSet, *allBusNodeSet;
-@property (nonatomic, strong) NSDictionary *overlayStyles;
+@property (nonatomic, strong) NSDictionary *overlayLine, *overlayCircle, *overlayArc, *overlayPolygon;
 @property (nonatomic, strong) NSMutableDictionary *plans;
 @property (nonatomic, strong) UZBMKPoiSearch *poisearch;
 @property (nonatomic, strong) CADisplayLink *timerAnnoMove;
@@ -85,7 +85,7 @@ typedef enum {
 @synthesize locService = _locService;
 @synthesize geoSearch = _geoSearch;
 @synthesize allOverlays = _allOverlays;
-@synthesize overlayStyles;
+@synthesize overlayLine, overlayCircle, overlayArc, overlayPolygon;
 @synthesize plans = _plans;
 @synthesize allRoutes = _allRoutes;
 @synthesize poisearch = _poisearch;
@@ -383,9 +383,10 @@ typedef enum {
         _locService.desiredAccuracy = kCLLocationAccuracyBest;
     }
     _locService.distanceFilter = distanceFilter;
-    NSString *File = [[NSBundle mainBundle] pathForResource:@"Info" ofType:@"plist"];
-    NSMutableDictionary *dict = [[NSMutableDictionary alloc] initWithContentsOfFile:File];
-    NSArray *backAry = [dict objectForKey:@"UIBackgroundModes"];
+    //NSString *File = [[NSBundle mainBundle] pathForResource:@"Info" ofType:@"plist"];
+    //NSMutableDictionary *dict = [[NSMutableDictionary alloc] initWithContentsOfFile:File];
+    //NSArray *backAry = [dict objectForKey:@"UIBackgroundModes"];
+    NSArray* backAry  = [[NSBundle mainBundle].infoDictionary objectForKey:@"UIBackgroundModes"];
     if ([backAry containsObject:@"location"]) {
         _locService.allowsBackgroundLocationUpdates = YES;
         _locService.pausesLocationUpdatesAutomatically = NO;
@@ -397,6 +398,40 @@ typedef enum {
 - (void)stopLocation:(NSDictionary *)paramsDict_ {
     locationStarted = NO;
     [_locService stopUserLocationService];
+}
+
+- (void)getLocationServices:(NSDictionary *)paramsDict_  {
+    NSInteger servicesCbid = [paramsDict_ intValueForKey:@"cbId" defaultValue:-1];
+    BOOL serEnabled = [CLLocationManager locationServicesEnabled];
+    NSString *statusStr = nil;
+    CLAuthorizationStatus authStatus = [CLLocationManager authorizationStatus];
+    switch (authStatus) {
+        case kCLAuthorizationStatusNotDetermined:
+            statusStr = @"notDetermined";
+            break;
+        case kCLAuthorizationStatusRestricted:
+            statusStr = @"restricted";
+            break;
+        case kCLAuthorizationStatusDenied:
+            statusStr = @"denied";
+            break;
+        case kCLAuthorizationStatusAuthorizedAlways:
+            statusStr = @"always";
+            break;
+        case kCLAuthorizationStatusAuthorizedWhenInUse:
+            statusStr = @"whenInUse";
+            break;
+            
+        default:
+            statusStr = @"denied";
+            break;
+    }
+    NSDictionary *sendDict = @{@"enable":[NSNumber numberWithBool:serEnabled],@"authorizationStatus":statusStr};
+    [self sendResultEventWithCallbackId:servicesCbid dataDict:sendDict errDict:nil doDelete:YES];
+}
+
+- (void)setLocation:(NSDictionary *)paramsDict_ {
+
 }
 
 - (void)getCoordsFromName:(NSDictionary *)paramsDict_ {
@@ -1209,7 +1244,7 @@ typedef enum {
     if (target) {
         [self.baiduMapView removeOverlay:target];
     }
-    overlayStyles = [paramsDict_ dictValueForKey:@"styles" defaultValue:@{}];
+    self.overlayLine = [paramsDict_ dictValueForKey:@"styles" defaultValue:@{}];
     NSInteger pointCount = [pointAry count];
     CLLocationCoordinate2D coorAry[500] = {0};
     for (int i=0; i<pointCount; i++){
@@ -1244,7 +1279,7 @@ typedef enum {
     if (target) {
         [self.baiduMapView removeOverlay:target];
     }
-    overlayStyles = [paramsDict_ dictValueForKey:@"styles" defaultValue:@{}];
+    self.overlayPolygon = [paramsDict_ dictValueForKey:@"styles" defaultValue:@{}];
     NSInteger pointCount = [pointAry count];
     CLLocationCoordinate2D coorAry[200] = {0};
     for (int i=0; i<pointCount; i++){
@@ -1283,7 +1318,7 @@ typedef enum {
     if (target) {
         [self.baiduMapView removeOverlay:target];
     }
-    self.overlayStyles = [paramsDict_ dictValueForKey:@"styles" defaultValue:@{}];
+    self.overlayCircle = [paramsDict_ dictValueForKey:@"styles" defaultValue:@{}];
     CLLocationCoordinate2D coor;
     coor.longitude = lon;
     coor.latitude = lat;
@@ -1305,7 +1340,7 @@ typedef enum {
     if (target) {
         [self.baiduMapView removeOverlay:target];
     }
-    overlayStyles = [paramsDict_ dictValueForKey:@"styles" defaultValue:@{}];
+    self.overlayArc = [paramsDict_ dictValueForKey:@"styles" defaultValue:@{}];
     NSInteger pointCount = [pointAry count];
     CLLocationCoordinate2D coorAry[200] = {0};
     for (int i=0; i<pointCount; i++){
@@ -2336,7 +2371,7 @@ typedef enum {
 #pragma mark -
 
  - (BMKOverlayView *)mapView:(BMKMapView *)mapView viewForOverlay:(id <BMKOverlay>)overlay {//地图添加覆盖物代理
-     if ([overlay isKindOfClass:[BMKPolyline class]]) {
+     if ([overlay isKindOfClass:[BMKPolyline class]]) {//添加直线
          UZBMKPolyline *temp = (UZBMKPolyline *)overlay;
          if (temp.lineType != 0) {
              BMKPolylineView *polylineView = [[BMKPolylineView alloc] initWithOverlay:overlay];
@@ -2346,11 +2381,11 @@ typedef enum {
              return polylineView;
          }
          BMKPolylineView *polylineView = [[BMKPolylineView alloc] initWithOverlay:overlay];
-         NSString *color =[self.overlayStyles stringValueForKey:@"borderColor" defaultValue:@"#000"];
-         float width = [self.overlayStyles floatValueForKey:@"borderWidth" defaultValue:2];
+         NSString *color =[self.overlayLine stringValueForKey:@"borderColor" defaultValue:@"#000"];
+         float width = [self.overlayLine floatValueForKey:@"borderWidth" defaultValue:2];
          polylineView.lineWidth = width;
-         polylineView.lineDash = [self.overlayStyles boolValueForKey:@"lineDash" defaultValue:NO];
-         NSString *dashImg = [self.overlayStyles stringValueForKey:@"dashImg" defaultValue:nil];
+         polylineView.lineDash = [self.overlayLine boolValueForKey:@"lineDash" defaultValue:NO];
+         NSString *dashImg = [self.overlayLine stringValueForKey:@"dashImg" defaultValue:nil];
          if ([dashImg isKindOfClass:[NSString class]] && dashImg.length>0) {
              UIImage *dashImage = [UIImage imageWithContentsOfFile:[self getPathWithUZSchemeURL:dashImg]];
              [polylineView loadStrokeTextureImage:dashImage];
@@ -2359,36 +2394,36 @@ typedef enum {
          }
          return polylineView;
      }
-     if ([overlay isKindOfClass:[BMKPolygon class]]) {
+     if ([overlay isKindOfClass:[BMKPolygon class]]) {//添加多边形
          BMKPolygonView *polygonView = [[BMKPolygonView alloc] initWithOverlay:overlay];
-         NSString *borColor = [self.overlayStyles stringValueForKey:@"borderColor" defaultValue:@"#000"];
-         NSString *filColor = [self.overlayStyles stringValueForKey:@"fillColor" defaultValue:@"#000"];
+         NSString *borColor = [self.overlayPolygon stringValueForKey:@"borderColor" defaultValue:@"#000"];
+         NSString *filColor = [self.overlayPolygon stringValueForKey:@"fillColor" defaultValue:@"#000"];
          polygonView.strokeColor = [UZAppUtils colorFromNSString:borColor];
          polygonView.fillColor = [UZAppUtils colorFromNSString:filColor];
-         polygonView.lineWidth = [self.overlayStyles floatValueForKey:@"borderWidth" defaultValue:2];
-         polygonView.lineDash = [self.overlayStyles boolValueForKey:@"lineDash" defaultValue:NO];
+         polygonView.lineWidth = [self.overlayPolygon floatValueForKey:@"borderWidth" defaultValue:2];
+         polygonView.lineDash = [self.overlayPolygon boolValueForKey:@"lineDash" defaultValue:NO];
          return polygonView;
      }
-     if ([overlay isKindOfClass:[BMKCircle class]]) {
+     if ([overlay isKindOfClass:[BMKCircle class]]) {//添加圆圈儿
          BMKCircleView *circleView = [[BMKCircleView alloc] initWithOverlay:overlay];
-         NSString *borColor = [self.overlayStyles stringValueForKey:@"borderColor" defaultValue:@"#000"];
-         NSString *filColor = [self.overlayStyles stringValueForKey:@"fillColor" defaultValue:@"#000"];
+         NSString *borColor = [self.overlayCircle stringValueForKey:@"borderColor" defaultValue:@"#000"];
+         NSString *filColor = [self.overlayCircle stringValueForKey:@"fillColor" defaultValue:@"#000"];
          circleView.strokeColor = [UZAppUtils colorFromNSString:borColor];
          circleView.fillColor = [UZAppUtils colorFromNSString:filColor];
-         circleView.lineWidth = [self.overlayStyles floatValueForKey:@"borderWidth" defaultValue:2];
-         circleView.lineDash = [self.overlayStyles boolValueForKey:@"lineDash" defaultValue:NO];
+         circleView.lineWidth = [self.overlayCircle floatValueForKey:@"borderWidth" defaultValue:2];
+         circleView.lineDash = [self.overlayCircle boolValueForKey:@"lineDash" defaultValue:NO];
          return circleView;
      }
      if ([overlay isKindOfClass:[BMKGroundOverlay class]]) {
          BMKGroundOverlayView* groundView = [[BMKGroundOverlayView alloc] initWithOverlay:overlay];
          return groundView;
      }
-     if ([overlay isKindOfClass:[BMKArcline class]]) {
+     if ([overlay isKindOfClass:[BMKArcline class]]) {//添加弧形
          BMKArclineView *arclineView = [[BMKArclineView alloc] initWithArcline:overlay];
-         NSString *borColor = [self.overlayStyles stringValueForKey:@"borderColor" defaultValue:@"#000"];
+         NSString *borColor = [self.overlayArc stringValueForKey:@"borderColor" defaultValue:@"#000"];
          arclineView.strokeColor = [UZAppUtils colorFromNSString:borColor];
-         arclineView.lineDash = [self.overlayStyles boolValueForKey:@"lineDash" defaultValue:NO];;
-         arclineView.lineWidth = [self.overlayStyles floatValueForKey:@"borderWidth" defaultValue:2];
+         arclineView.lineDash = [self.overlayArc boolValueForKey:@"lineDash" defaultValue:NO];;
+         arclineView.lineWidth = [self.overlayArc floatValueForKey:@"borderWidth" defaultValue:2];
          return arclineView;
      }
      return nil;
@@ -3214,7 +3249,7 @@ typedef enum {
                 BMKGeoCodeSearchOption *addrInfo = [[BMKGeoCodeSearchOption alloc]init];
                 addrInfo.address = temp.address;
                 addrInfo.city = temp.city;
-                BOOL isSearch = [self.geoSearch geoCode:addrInfo];
+               [self.geoSearch geoCode:addrInfo];
                 //if (!isSearch) {
                     //[self sendResultEventWithCallbackId:getLocFromAddrCbid dataDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"status"] errDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:-1] forKey:@"code"] doDelete:YES];
                 //}
@@ -4174,8 +4209,10 @@ typedef enum {
     double lat = newLocation.coordinate.latitude;
     double lon = newLocation.coordinate.longitude;
     if ([self isValidLon:lon lat:lat]) {
+        double acur = newLocation.horizontalAccuracy;
         long long timestamp = (long long)([newLocation.timestamp timeIntervalSince1970] * 1000);
         NSMutableDictionary *info = [NSMutableDictionary dictionary];
+        [info setObject:@(acur) forKey:@"accuracy"];
         [info setObject:@(YES) forKey:@"status"];
         [info setObject:[NSNumber numberWithDouble:lat] forKey:@"lat"];
         [info setObject:[NSNumber numberWithDouble:lon] forKey:@"lon"];
