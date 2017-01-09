@@ -348,7 +348,7 @@ public class MapOverlay {
 		OverlayOptions options = new MarkerOptions()
 				.position(annotation.getLatLng()).icon(annotation.getIcon())
 				.zIndex(annotation.getId()).draggable(annotation.isDraggable())
-				.anchor(0.5f, 0.5f);
+				.anchor(0.5f, 1f);
 		Marker marker = (Marker) mMap.getBaiduMap().addOverlay(options);
 		annotation.setMarker(marker);
 	}

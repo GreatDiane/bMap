@@ -267,7 +267,7 @@ public class MapOpen implements LocationInterface {
 	}
 
 	private void stopLocation() {
-		mLocationUtil.onDestory();
+		mLocationUtil.stopLocation();
 		mBaiduMap.setMyLocationEnabled(false);
 	}
 
@@ -316,7 +316,6 @@ public class MapOpen implements LocationInterface {
 					@Override
 					public void onOrientationChanged(float x) {
 						if (mCurrLoc != null) {
-							System.out.println(x);
 							mXDirection = (int) x;
 							setLocationData(mCurrLoc);
 						}
@@ -398,9 +397,9 @@ public class MapOpen implements LocationInterface {
 	}
 
 	public void setCompassPosition(UZModuleContext moduleContext) {
-		getBaiduMap().getUiSettings().setCompassPosition(
-				new Point(mJsParamsUtil.controlX(moduleContext), mJsParamsUtil
-						.controlY(moduleContext)));
+		// getBaiduMap().getUiSettings().setCompassPosition(
+		// new Point(mJsParamsUtil.controlX(moduleContext), mJsParamsUtil
+		// .controlY(moduleContext)));
 	}
 
 	public void setRegion(UZModuleContext moduleContext) {
@@ -522,5 +521,9 @@ public class MapOpen implements LocationInterface {
 
 	public void setMapView(MapView mMapView) {
 		this.mMapView = mMapView;
+	}
+
+	public BDLocation getCurLoc() {
+		return mCurrLoc;
 	}
 }

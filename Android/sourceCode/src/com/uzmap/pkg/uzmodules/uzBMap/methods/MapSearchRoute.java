@@ -9,9 +9,12 @@ package com.uzmap.pkg.uzmodules.uzBMap.methods;
 import java.util.List;
 import com.baidu.mapapi.search.geocode.GeoCodeResult;
 import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
+import com.baidu.mapapi.search.route.BikingRouteResult;
 import com.baidu.mapapi.search.route.DrivingRouteLine;
 import com.baidu.mapapi.search.route.DrivingRoutePlanOption;
 import com.baidu.mapapi.search.route.DrivingRouteResult;
+import com.baidu.mapapi.search.route.IndoorRouteResult;
+import com.baidu.mapapi.search.route.MassTransitRouteResult;
 import com.baidu.mapapi.search.route.OnGetRoutePlanResultListener;
 import com.baidu.mapapi.search.route.PlanNode;
 import com.baidu.mapapi.search.route.RoutePlanSearch;
@@ -138,5 +141,20 @@ public class MapSearchRoute implements OnGetRoutePlanResultListener,
 		search.transitSearch(new TransitRoutePlanOption().from(mStart).to(mEnd)
 				.policy(mJsParamsUtil.getBusPolicy(mModuleContext))
 				.city(result.getAddressDetail().city));
+	}
+
+	@Override
+	public void onGetBikingRouteResult(BikingRouteResult arg0) {
+		
+	}
+
+	@Override
+	public void onGetIndoorRouteResult(IndoorRouteResult arg0) {
+		
+	}
+
+	@Override
+	public void onGetMassTransitRouteResult(MassTransitRouteResult arg0) {
+		
 	}
 }

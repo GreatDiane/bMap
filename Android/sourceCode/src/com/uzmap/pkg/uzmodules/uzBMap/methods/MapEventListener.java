@@ -8,6 +8,9 @@ package com.uzmap.pkg.uzmodules.uzBMap.methods;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.content.res.Configuration;
+
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.BaiduMap.OnMapClickListener;
 import com.baidu.mapapi.map.BaiduMap.OnMapDoubleClickListener;
@@ -23,6 +26,9 @@ public class MapEventListener {
 	private JsParamsUtil mJsParamsUtil;
 	private MapOpen mMap;
 	private boolean mIsCallBack;
+	private boolean mIsZoomCallBack;
+	private float mZoomLevel;
+	private boolean mIsStatusChangeLis;
 
 	public MapEventListener(UZModuleContext mModuleContext, MapOpen mMap,
 			boolean mIsCallBack) {
@@ -30,6 +36,7 @@ public class MapEventListener {
 		this.mMap = mMap;
 		this.mIsCallBack = mIsCallBack;
 		mJsParamsUtil = JsParamsUtil.getInstance();
+		mZoomLevel = mMap.getZoomLevel();
 	}
 
 	public void addEventListener() {
@@ -41,7 +48,16 @@ public class MapEventListener {
 		} else if (eventName.equals("longPress")) {
 			addMapLongClickListener();
 		} else if (eventName.equals("viewChange")) {
-			addMapStatusChangeListener();
+			mIsStatusChangeLis = true;
+			if (!mIsZoomCallBack) {
+				addMapStatusChangeListener();
+			}
+
+		} else if (eventName.equals("zoom")) {
+			mIsZoomCallBack = true;
+			if (!mIsStatusChangeLis) {
+				addMapStatusChangeListener();
+			}
 		}
 	}
 
@@ -120,13 +136,16 @@ public class MapEventListener {
 
 			@Override
 			public void onMapStatusChangeFinish(MapStatus mapStatus) {
-				if (mIsCallBack) {
+				if (mIsCallBack && mIsStatusChangeLis) {
 					callBack(mapStatus);
 				}
 				if (mapStatus.rotate != 0 || mapStatus.overlook != 0) {
 					mMap.getBaiduMap().getUiSettings().setCompassEnabled(true);
 				} else {
 					mMap.getBaiduMap().getUiSettings().setCompassEnabled(false);
+				}
+				if (mIsZoomCallBack && mIsCallBack) {
+					callBack(mapStatus.zoom);
 				}
 			}
 
@@ -164,5 +183,22 @@ public class MapEventListener {
 		double lat = mMap.getBaiduMap().getMapStatus().target.latitude;
 		double lon = mMap.getBaiduMap().getMapStatus().target.longitude;
 		callBack(new LatLng(lat, lon), mapStatus);
+	}
+
+	private void callBack(float zoomLevel) {
+		String zoomEvent = null;
+		if (zoomLevel > mZoomLevel) {
+			zoomEvent = "zoomIn";
+		} else {
+			zoomEvent = "zoomOut";
+		}
+		mZoomLevel = zoomLevel;
+		JSONObject ret = new JSONObject();
+		try {
+			ret.put("zoomEvent", zoomEvent);
+			mModuleContext.success(ret, false);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
 	}
 }

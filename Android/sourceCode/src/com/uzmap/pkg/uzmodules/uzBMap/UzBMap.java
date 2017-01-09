@@ -14,8 +14,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
+import android.app.PendingIntent;
+import android.app.PendingIntent.CanceledException;
+import android.content.Context;
+import android.content.Intent;
+import android.location.LocationManager;
+import android.net.Uri;
+import android.provider.Settings;
 import android.view.View;
 
+import com.baidu.location.BDLocation;
 import com.baidu.mapapi.SDKInitializer;
 import com.baidu.mapapi.model.LatLng;
 import com.uzmap.pkg.uzcore.UZWebView;
@@ -111,6 +119,13 @@ public class UzBMap extends UZModule {
 		}
 		mLocation = new MapLocation(moduleContext, mContext);
 		mLocation.startLocation();
+	}
+
+	public void jsmethod_getCurrentLocation(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			BDLocation loc = mMap.getCurLoc();
+			getCurLocation(moduleContext, loc);
+		}
 	}
 
 	public void jsmethod_stopLocation(UZModuleContext moduleContext) {
@@ -614,6 +629,19 @@ public class UzBMap extends UZModule {
 		mOffLine.removeOfflineListener();
 	}
 
+	public void jsmethod_getLocationServices(UZModuleContext moduleContext) {
+		boolean status = isLocationOPen();
+		getLocationPermissionCallBack(moduleContext, status);
+	}
+
+	private boolean isLocationOPen() {
+		LocationManager locationManager = (LocationManager) mContext
+				.getSystemService(Context.LOCATION_SERVICE);
+		boolean gps = locationManager
+				.isProviderEnabled(LocationManager.GPS_PROVIDER);
+		return gps;
+	}
+
 	@Override
 	protected void onClean() {
 		super.onClean();
@@ -671,6 +699,33 @@ public class UzBMap extends UZModule {
 		JSONObject ret = new JSONObject();
 		try {
 			ret.put("level", level);
+			moduleContext.success(ret, false);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void getLocationPermissionCallBack(UZModuleContext moduleContext,
+			boolean enable) {
+		JSONObject ret = new JSONObject();
+		try {
+			ret.put("enable", enable);
+			moduleContext.success(ret, false);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void getCurLocation(UZModuleContext moduleContext, BDLocation loc) {
+		JSONObject ret = new JSONObject();
+		try {
+			if (loc != null) {
+				ret.put("status", true);
+				ret.put("lon", loc.getLongitude());
+				ret.put("lat", loc.getLatitude());
+			} else {
+				ret.put("status", false);
+			}
 			moduleContext.success(ret, false);
 		} catch (JSONException e) {
 			e.printStackTrace();
