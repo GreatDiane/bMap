@@ -42,7 +42,7 @@ typedef enum {
     //搜索对象
     UZBMKGeoCodeSearch *_geoSearch;
     //监听地图事件
-    NSInteger longPressCbid, viewChangeCbid, singleTapCbid, dubbleTapCbid;
+    NSInteger longPressCbid, viewChangeCbid, singleTapCbid, dubbleTapCbid, zoomCbid;
     //大头针
     NSInteger setBubbleCbid, addBillboardCbid;
     //覆盖物
@@ -154,6 +154,7 @@ typedef enum {
         viewChangeCbid = -1;
         singleTapCbid = -1;
         dubbleTapCbid = -1;
+        zoomCbid = -1;
         addBillboardCbid = -1;
         offlineListenerCbid = -1;
         _allOverlays = [NSMutableDictionary dictionaryWithCapacity:1];
@@ -170,6 +171,39 @@ typedef enum {
 #pragma mark-
 #pragma mark 基础类接口
 #pragma mark-
+
+- (void)getCurrentLocation:(NSDictionary *)paramsDict_ {
+    NSInteger getClocCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+    [self initLocal];
+    
+    BMKUserLocation *curUserLoc = _locService.userLocation;
+    NSString *title = curUserLoc.title;
+    NSString *subtitle = curUserLoc.subtitle;
+    CLLocation *loc = curUserLoc.location;
+    BOOL updating = curUserLoc.updating;
+    if (!loc) {
+        [self sendResultEventWithCallbackId:getClocCbid dataDict:@{@"status":@(NO)} errDict:@{@"code":@(1)} doDelete:YES];
+        return;
+    }
+    if (![title isKindOfClass:[NSString class]] || title.length==0) {
+        title = @"";
+    }
+    if (![subtitle isKindOfClass:[NSString class]] || subtitle.length==0) {
+        subtitle = @"";
+    }
+    NSMutableDictionary *sendDict = [NSMutableDictionary dictionary];
+    CLHeading *head = curUserLoc.heading;
+    if (head) {
+        NSDictionary *headDict = @{@"magnetic":@(head.magneticHeading),@"trueHeading":@(head.trueHeading),@"accuracy":@(head.headingAccuracy)};
+        [sendDict setObject:headDict forKey:@"headInfo"];
+    }
+    [sendDict setObject:title forKey:@"title"];
+    [sendDict setObject:subtitle forKey:@"subtitle"];
+    [sendDict setObject:@(updating) forKey:@"updating"];
+    [sendDict setObject:@(loc.coordinate.longitude) forKey:@"lon"];
+    [sendDict setObject:@(loc.coordinate.latitude) forKey:@"lat"];
+    [self sendResultEventWithCallbackId:getClocCbid dataDict:sendDict errDict:nil doDelete:YES];
+}
 
 - (void)open:(NSDictionary *)paramsDict_ {
    if (_baiduMapView) {
@@ -438,7 +472,7 @@ typedef enum {
     getLocFromAddrCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
     NSString *city = [paramsDict_ stringValueForKey:@"city" defaultValue:nil];
     if (!city || city.length==0) {
-        return;
+        //return;
     }
     NSString *addr =[paramsDict_ stringValueForKey:@"address" defaultValue:nil];
     if (!addr || addr.length==0) {
@@ -847,9 +881,35 @@ typedef enum {
             [self deleteCallback:dubbleTapCbid];
         }
         dubbleTapCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+    } else if ([nameStr isEqualToString:@"zoom"]) {//双击监听
+        if (zoomCbid != -1) {
+            [self deleteCallback:zoomCbid];
+        }
+        zoomCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+        [self.baiduMapView addObserver:self forKeyPath:@"zoomLevel" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld context:nil];
     }
 }
 
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    float newv = [[change valueForKey:@"new"] floatValue];
+    float old = [[change valueForKey:@"old"] floatValue];
+    if (newv != old){
+        if ([keyPath isEqualToString:@"zoomLevel"]) {
+            if (zoomCbid >= 0) {
+                float lon = self.baiduMapView.region.center.longitude;
+                float lat = self.baiduMapView.region.center.latitude;
+                NSMutableDictionary *sendDict = [NSMutableDictionary dictionaryWithCapacity:3];
+                [sendDict setObject:[NSNumber numberWithBool:YES] forKey:@"status"];
+                [sendDict setObject:[NSNumber numberWithFloat:lon] forKey:@"lon"];
+                [sendDict setObject:[NSNumber numberWithFloat:lat] forKey:@"lat"];
+                [sendDict setObject:[NSNumber numberWithFloat:self.baiduMapView.zoomLevel] forKey:@"zoom"];
+                [sendDict setObject:[NSNumber numberWithInt:self.baiduMapView.rotation] forKey:@"rotate"];
+                [sendDict setObject:[NSNumber numberWithInt:self.baiduMapView.overlooking] forKey:@"overlook"];
+                [self sendResultEventWithCallbackId:zoomCbid dataDict:sendDict errDict:nil doDelete:NO];
+            }
+        }
+    }
+}
 - (void)removeEventListener:(NSDictionary *)paramsDict_ {
     NSString *nameStr = [paramsDict_ stringValueForKey:@"name" defaultValue:nil];
     if (nameStr.length == 0) {
@@ -875,6 +935,10 @@ typedef enum {
             [self deleteCallback:dubbleTapCbid];
         }
         dubbleTapCbid = -1;
+    } else if ([nameStr isEqualToString:@"zoom"]) {
+        if (zoomCbid != -1) {
+            [self deleteCallback:zoomCbid];
+        }
     }
 }
 
@@ -1794,7 +1858,7 @@ typedef enum {
     }
     NSString *city = [paramsDict_ stringValueForKey:@"city" defaultValue:nil];
     if (![city isKindOfClass:[NSString class]] || city.length==0) {
-        return;
+        //return;
     }
     autoCompleteCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
     BMKSuggestionSearch *suggestSearch = [[BMKSuggestionSearch alloc]init];
@@ -3442,7 +3506,7 @@ typedef enum {
 - (void)didUpdateBMKUserLocation:(BMKUserLocation *)userLocation {//用户位置更新后代理
     [_baiduMapView updateLocationData:userLocation];
     [self showCurrentLocation:userLocation];
-    [self getCurrentLocation:userLocation];
+    [self getCurrentLocations:userLocation];
 }
 
 - (void)didFailToLocateUserWithError:(NSError *)error {//定位失败代理
@@ -4204,7 +4268,7 @@ typedef enum {
     }
 }
 
-- (void)getCurrentLocation:(BMKUserLocation *)userLocation {
+- (void)getCurrentLocations:(BMKUserLocation *)userLocation {
     CLLocation *newLocation = userLocation.location;
     double lat = newLocation.coordinate.latitude;
     double lon = newLocation.coordinate.longitude;
