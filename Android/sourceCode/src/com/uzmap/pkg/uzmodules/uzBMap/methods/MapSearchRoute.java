@@ -145,16 +145,19 @@ public class MapSearchRoute implements OnGetRoutePlanResultListener,
 
 	@Override
 	public void onGetBikingRouteResult(BikingRouteResult arg0) {
+		// TODO Auto-generated method stub  新增方法
 		
 	}
 
 	@Override
 	public void onGetIndoorRouteResult(IndoorRouteResult arg0) {
+		// TODO Auto-generated method stub  新增方法
 		
 	}
 
 	@Override
 	public void onGetMassTransitRouteResult(MassTransitRouteResult arg0) {
+		// TODO Auto-generated method stub  新增方法
 		
 	}
 }

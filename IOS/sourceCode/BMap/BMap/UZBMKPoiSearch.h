@@ -12,7 +12,8 @@ typedef enum{
     UZSEARCH_BUS = 0,   //搜公交地铁路线
     UZSEARCH_INCITY,    //在城市里搜关键字
     UZSEARCH_NEARBY,    //在附近搜关键字
-    UZSEARCH_INBOUNDS   //在指定区域搜关键字
+    UZSEARCH_INBOUNDS,  //在指定区域搜关键字
+    UZSEARCH_INDOOR     //室内地图搜索
 } SEARCHTYPE;
 
 @interface UZBMKPoiSearch : BMKPoiSearch

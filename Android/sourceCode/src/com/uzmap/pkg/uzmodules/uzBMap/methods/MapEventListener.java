@@ -152,6 +152,12 @@ public class MapEventListener {
 			@Override
 			public void onMapStatusChange(MapStatus mapStatus) {
 			}
+
+			@Override
+			public void onMapStatusChangeStart(MapStatus arg0, int arg1) {
+				// TODO Auto-generated method stub  add by V4.5.0
+				
+			}
 		};
 	}
 

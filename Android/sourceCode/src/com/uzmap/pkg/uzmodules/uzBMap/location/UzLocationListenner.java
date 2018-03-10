@@ -24,4 +24,5 @@ public class UzLocationListenner implements BDLocationListener {
 
 	public void onReceivePoi(BDLocation poiLocation) {
 	}
+
 }

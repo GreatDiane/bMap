@@ -47,8 +47,7 @@ public class MapOffLine implements MKOfflineMapListener {
 
 	public void getOfflineCityList(UZModuleContext moduleContext) {
 		initOffLine();
-		ArrayList<MKOLSearchRecord> offlineCityList = mOffline
-				.getOfflineCityList();
+		ArrayList<MKOLSearchRecord> offlineCityList = mOffline.getOfflineCityList();
 		cityListCallBack(moduleContext, offlineCityList);
 	}
 
@@ -216,8 +215,7 @@ public class MapOffLine implements MKOfflineMapListener {
 		return city;
 	}
 
-	private void cityListCallBack(UZModuleContext moduleContext,
-			ArrayList<MKOLSearchRecord> hotCityList) {
+	private void cityListCallBack(UZModuleContext moduleContext, ArrayList<MKOLSearchRecord> hotCityList) {
 		JSONObject ret = new JSONObject();
 		try {
 			if (hotCityList != null) {
@@ -241,7 +239,7 @@ public class MapOffLine implements MKOfflineMapListener {
 		city.put("name", record.cityName);
 		city.put("cityType", record.cityType);
 		city.put("cityID", record.cityID);
-		city.put("size", record.size);
+		city.put("size", record.dataSize);
 		ArrayList<MKOLSearchRecord> childCities = record.childCities;
 		if (childCities != null) {
 			JSONArray childCityJson = new JSONArray();

@@ -219,6 +219,8 @@ public class MapBusLine implements OnGetPoiSearchResultListener,
 
 	@Override
 	public void onGetPoiIndoorResult(PoiIndoorResult arg0) {
+		// TODO Auto-generated method stub  多了一个方法
 		
 	}
+
 }

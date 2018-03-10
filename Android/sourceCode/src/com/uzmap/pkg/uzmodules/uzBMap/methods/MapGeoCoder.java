@@ -112,6 +112,7 @@ public class MapGeoCoder implements GeoCoderInterface {
 		LatLng location = result.getLocation();
 		try {
 			ret.put("status", true);
+			
 			ret.put("lon", location.longitude);
 			ret.put("lat", location.latitude);
 			ret.put("address", result.getAddress());
@@ -120,6 +121,12 @@ public class MapGeoCoder implements GeoCoderInterface {
 			ret.put("district", address.district);
 			ret.put("streetName", address.street);
 			ret.put("streetNumber", address.streetNumber);
+			ret.put("country", address.countryName);
+			ret.put("countryCode", address.countryCode);
+			ret.put("adCode", result.getAdcode());
+			ret.put("businessCircle", result.getBusinessCircle());
+			ret.put("sematicDescription", result.getSematicDescription());
+			ret.put("cityCode", result.getCityCode());
 			JSONArray poiListJson = new JSONArray();
 			List<PoiInfo> poiList = result.getPoiList();
 			if (poiList != null) {

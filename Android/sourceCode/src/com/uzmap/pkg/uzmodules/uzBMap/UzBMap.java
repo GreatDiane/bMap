@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -18,14 +19,29 @@ import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.view.View;
 
 import com.baidu.location.BDLocation;
-import com.baidu.mapapi.SDKInitializer;
+import com.baidu.mapapi.map.BaiduMap.OnBaseIndoorMapListener;
+import com.baidu.mapapi.map.BitmapDescriptor;
+import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.MapBaseIndoorMapInfo;
+import com.baidu.mapapi.map.MapBaseIndoorMapInfo.SwitchFloorError;
+import com.baidu.mapapi.map.MyLocationConfiguration;
+import com.baidu.mapapi.map.MyLocationConfiguration.LocationMode;
 import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
+import com.baidu.mapapi.search.poi.PoiDetailResult;
+import com.baidu.mapapi.search.poi.PoiIndoorInfo;
+import com.baidu.mapapi.search.poi.PoiIndoorOption;
+import com.baidu.mapapi.search.poi.PoiIndoorResult;
+import com.baidu.mapapi.search.poi.PoiResult;
+import com.baidu.mapapi.search.poi.PoiSearch;
 import com.uzmap.pkg.uzcore.UZWebView;
 import com.uzmap.pkg.uzcore.uzmodule.UZModule;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
@@ -50,7 +66,6 @@ import com.uzmap.pkg.uzmodules.uzBMap.mode.MoveOverlay;
 import com.uzmap.pkg.uzmodules.uzBMap.utils.JsParamsUtil;
 
 public class UzBMap extends UZModule {
-	public static boolean INITIALIZED = false;
 	private MapOpen mMap;
 	private MapLocation mLocation;
 	private MapOverlay mMapOverlay;
@@ -64,13 +79,10 @@ public class UzBMap extends UZModule {
 
 	public UzBMap(UZWebView webView) {
 		super(webView);
-		SDKInitializer.initialize(mContext.getApplication());
-		INITIALIZED = true;
 	}
 
 	public void jsmethod_open(UZModuleContext moduleContext) {
 		if (mMap == null) {
-			init();
 			mMap = new MapOpen(this, moduleContext, mContext);
 			mMap.open();
 			new MapEventListener(moduleContext, mMap, false)
@@ -113,7 +125,6 @@ public class UzBMap extends UZModule {
 	}
 
 	public void jsmethod_getLocation(UZModuleContext moduleContext) {
-		init();
 		if (mLocation != null) {
 			mLocation.stopLocation();
 		}
@@ -135,17 +146,14 @@ public class UzBMap extends UZModule {
 	}
 
 	public void jsmethod_getCoordsFromName(UZModuleContext moduleContext) {
-		init();
 		new MapGeoCoder(moduleContext).address2coord();
 	}
 
 	public void jsmethod_getNameFromCoords(UZModuleContext moduleContext) {
-		init();
 		new MapGeoCoder(moduleContext).coord2address();
 	}
 
 	public void jsmethod_getDistance(UZModuleContext moduleContext) {
-		init();
 		new MapSimple(moduleContext).getDistance();
 	}
 
@@ -185,6 +193,8 @@ public class UzBMap extends UZModule {
 			mMap.setMapType(jsParamsUtil.mapType(moduleContext));
 			mMap.setZoomEnable(jsParamsUtil.zoomEnable(moduleContext));
 			mMap.setScrollEnable(jsParamsUtil.scrollEnable(moduleContext));
+			mMap.setRotateEnabled(jsParamsUtil.rotateEnabled(moduleContext));
+			mMap.setOverlookEnabled(jsParamsUtil.overlookEnabled(moduleContext));
 		}
 	}
 
@@ -293,7 +303,6 @@ public class UzBMap extends UZModule {
 	}
 
 	public void jsmethod_isPolygonContantsPoint(UZModuleContext moduleContext) {
-		init();
 		new MapSimple(moduleContext).isPolygonContantsPoint();
 	}
 
@@ -461,7 +470,6 @@ public class UzBMap extends UZModule {
 
 	@SuppressLint("UseSparseArrays")
 	public void jsmethod_searchRoute(UZModuleContext moduleContext) {
-		init();
 		if (mSearchRouteMap == null) {
 			mSearchRouteMap = new HashMap<Integer, MapSearchRoute>();
 		}
@@ -501,7 +509,6 @@ public class UzBMap extends UZModule {
 	}
 
 	public void jsmethod_searchBusRoute(UZModuleContext moduleContext) {
-		init();
 		new MapBusLine().busLine(moduleContext);
 	}
 
@@ -533,22 +540,18 @@ public class UzBMap extends UZModule {
 	}
 
 	public void jsmethod_searchInCity(UZModuleContext moduleContext) {
-		init();
 		new MapPoi().searchInCity(moduleContext);
 	}
 
 	public void jsmethod_searchNearby(UZModuleContext moduleContext) {
-		init();
 		new MapPoi().searchNearby(moduleContext);
 	}
 
 	public void jsmethod_searchInBounds(UZModuleContext moduleContext) {
-		init();
 		new MapPoi().searchInBounds(moduleContext);
 	}
 
 	public void jsmethod_autocomplete(UZModuleContext moduleContext) {
-		init();
 		new MapPoi().autoComplete(moduleContext);
 	}
 
@@ -633,6 +636,189 @@ public class UzBMap extends UZModule {
 		boolean status = isLocationOPen();
 		getLocationPermissionCallBack(moduleContext, status);
 	}
+	
+	/**
+	 * @param moduleContext
+	 * @see add by 2017年10月10日 12:28:02  控制底图标注的显示隐藏
+	 */
+	public void jsmethod_setShowMapPoi(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			boolean showMapPoi = moduleContext.optBoolean("showMapPoi", true);
+			mMap.getBaiduMap().showMapPoi(showMapPoi);
+		}
+	}
+	/**
+	 * @param moduleContext
+	 * @see add by 2017年10月10日 12:28:02  设置最大缩放比例，取值范围：3-18级
+	 */
+	public void jsmethod_setMaxAndMinZoomLevel(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			int maxLevel = moduleContext.optInt("maxLevel", 15);
+			int minLevel = moduleContext.optInt("minLevel", 10);
+			mMap.getBaiduMap().setMaxAndMinZoomLevel(maxLevel,minLevel);
+		}
+	}
+	
+	/**
+	 * 打开关闭室内地图
+	 * @param moduleContext
+	 */
+	public void jsmethod_setIndoorMap(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			boolean draggable = moduleContext.optBoolean("draggable", true);
+			mMap.getBaiduMap().setIndoorEnable(draggable);
+		}
+	}
+	
+	/**
+	 * 
+	 * @param moduleContext
+	 */
+	public void jsmethod_addIndoorListener(final UZModuleContext moduleContext) {
+		if (mMap != null) {
+			mMap.getBaiduMap().setOnBaseIndoorMapListener(new OnBaseIndoorMapListener() {
+				
+				@Override
+				public void onBaseIndoorMapMode(boolean b, MapBaseIndoorMapInfo mapBaseIndoorMapInfo) {
+					try {
+						JSONObject result = new JSONObject();
+						result.put("enter", b);
+						result.put("strID", mapBaseIndoorMapInfo.getID());
+						result.put("strFloor", mapBaseIndoorMapInfo.getCurFloor());
+						moduleContext.success(result, false);
+					} catch (Exception e) {
+						// TODO: handle exception
+					}
+				}
+			});
+		}
+	}
+	
+	/**
+	 * 切换楼层
+	 * @param moduleContext
+	 */
+	public void jsmethod_switchIndoorMapFloor(UZModuleContext moduleContext) {
+		try {
+			if (mMap != null) {
+				String strID = moduleContext.optString("strID");
+				String strFloor = moduleContext.optString("strFloor");
+				if (!TextUtils.isEmpty(strID) && !TextUtils.isEmpty(strFloor)) {
+					SwitchFloorError switchFloorError = mMap.getBaiduMap().switchBaseIndoorMapFloor(strID, strFloor);
+					JSONObject success = new JSONObject();
+					JSONObject error = new JSONObject();
+					if (switchFloorError == SwitchFloorError.SWITCH_OK) {
+						success.put("status", true);
+					}else {
+						success.put("status", false);
+						if (switchFloorError == SwitchFloorError.FLOOR_INFO_ERROR) {
+							error.put("code", 1);
+						}else if (switchFloorError == SwitchFloorError.FLOOR_OVERLFLOW) {
+							error.put("code", 3);
+						}else if (switchFloorError == SwitchFloorError.FOCUSED_ID_ERROR) {
+							error.put("code", 2);
+						}else if (switchFloorError == SwitchFloorError.SWITCH_ERROR) {
+							error.put("code", 1);
+						}
+					}
+					moduleContext.error(success, success, false);
+				}
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
+	}
+	
+	/**
+	 * 搜索室内地图内容
+	 * @param moduleContext
+	 */
+	public void jsmethod_indoorSearch(final UZModuleContext moduleContext) {
+		try {
+			String strID = moduleContext.optString("strID");
+			String keyword = moduleContext.optString("keyword");
+			int pageIndex = moduleContext.optInt("pageIndex", 0);
+			int pageCapacity = moduleContext.optInt("pageCapacity", 10);
+			final PoiSearch poiSearch = PoiSearch.newInstance();
+			poiSearch.setOnGetPoiSearchResultListener(new OnGetPoiSearchResultListener() {
+				
+				@Override
+				public void onGetPoiResult(PoiResult poiResult) {
+					
+				}
+				
+				@Override
+				public void onGetPoiIndoorResult(PoiIndoorResult poiIndoorResult) {
+					try {
+						JSONObject result = new JSONObject();
+						JSONObject error = new JSONObject();
+						int status = poiIndoorResult.status;
+						
+						if (status == 0) {
+							result.put("status", true);
+							result.put("pageNum", poiIndoorResult.getPageNum());
+							result.put("totalPoiNum", poiIndoorResult.poiNum);
+							List<PoiIndoorInfo> list = poiIndoorResult.getmArrayPoiInfo();
+							if (list != null && list.size() > 0) {
+								JSONArray array = new JSONArray();
+								for(int i = 0; i < list.size(); i++) {
+									PoiIndoorInfo info = list.get(i);
+									JSONObject jsonInfo = new JSONObject();
+									jsonInfo.put("name", info.name);
+									jsonInfo.put("uid", info.uid);
+									jsonInfo.put("indoorId", info.bid);
+									jsonInfo.put("floor", info.floor);
+									jsonInfo.put("address", info.address);
+									jsonInfo.put("cid", info.cid);
+									jsonInfo.put("phone", info.phone);
+									LatLng latLng = info.latLng;
+									JSONObject ptJson = new JSONObject();
+									ptJson.put("latitude", latLng.latitude);
+									ptJson.put("longtitude", latLng.longitude);
+									jsonInfo.put("pt", ptJson);
+									jsonInfo.put("tag", info.tag);
+									jsonInfo.put("price", info.price);
+									jsonInfo.put("starLevel", info.starLevel);
+									jsonInfo.put("grouponFlag", info.isGroup);
+									jsonInfo.put("takeoutFlag", info.isTakeOut);
+									jsonInfo.put("waitedFlag", info.isWaited);
+									jsonInfo.put("grouponNum", info.groupNum);
+									array.put(jsonInfo);
+								}
+								result.put("poiIndoorInfoList", array);
+							}
+							moduleContext.error(result, error, false);
+						}else {
+							result.put("status", false);
+							result.put("code", poiIndoorResult.error.name());
+							moduleContext.error(result, error, false);
+						}
+						poiSearch.destroy();
+					} catch (Exception e) {
+						// TODO: handle exception
+					}
+					
+				}
+				
+				@Override
+				public void onGetPoiDetailResult(PoiDetailResult poiDetailResult) {
+					// TODO Auto-generated method stub
+					
+				}
+			});
+			PoiIndoorOption option = new PoiIndoorOption()
+					.poiIndoorBid(strID)
+					.poiIndoorWd(keyword)
+					.poiCurrentPage(pageIndex)
+					.poiPageSize(pageCapacity);
+			poiSearch.searchPoiIndoor(option);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
+	
 
 	private boolean isLocationOPen() {
 		LocationManager locationManager = (LocationManager) mContext
@@ -660,13 +846,6 @@ public class UzBMap extends UZModule {
 		if (mLocation != null) {
 			mLocation.onDestory();
 			mLocation = null;
-		}
-	}
-
-	private void init() {
-		if (!INITIALIZED) {
-			SDKInitializer.initialize(mContext.getApplication());
-			INITIALIZED = true;
 		}
 	}
 

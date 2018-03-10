@@ -58,6 +58,7 @@ typedef enum {
 @property (nonatomic, assign) CLLocationCoordinate2D toCoords, fromCoords;
 @property (nonatomic, assign) CFTimeInterval lastStep;
 @property (nonatomic, assign) NSTimeInterval timeOffset;
+@property (nonatomic, assign) NSInteger bubbleClickCbid;
 @property (nonatomic, assign) id <MovingAnimationDelegate> delegate;
 
 - (void)moveStep;

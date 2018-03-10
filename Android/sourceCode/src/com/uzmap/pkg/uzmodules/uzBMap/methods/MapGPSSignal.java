@@ -55,7 +55,7 @@ public class MapGPSSignal {
 				switch (event) {
 				case GpsStatus.GPS_EVENT_STARTED:
 					break;
-				case GpsStatus.GPS_EVENT_FIRST_FIX:
+				case GpsStatus.GPS_EVENT_FIRST_FIX: 
 					break;
 				case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
 					getMaxSnr(gpsStatus);
@@ -102,7 +102,7 @@ public class MapGPSSignal {
 		try {
 			ret.put("status", false);
 			if (mModuleContext != null)
-				mModuleContext.success(mRet, false);
+				mModuleContext.success(ret, false);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}

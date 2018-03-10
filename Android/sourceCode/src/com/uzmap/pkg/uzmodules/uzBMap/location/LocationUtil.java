@@ -25,12 +25,17 @@ public class LocationUtil implements LocationInterface {
 	}
 
 	public void startLocation() {
-		mLocClient.start();
-		mLocClient.requestLocation();
+		if (mLocClient != null) {
+			mLocClient.start();
+			mLocClient.requestLocation();
+		}
 	}
 
 	public void stopLocation() {
-		mLocClient.stop();
+		if (mLocClient != null) {
+			mLocClient.stop();
+			mLocClient = null;
+		}
 	}
 
 	private void initLocationClient() {

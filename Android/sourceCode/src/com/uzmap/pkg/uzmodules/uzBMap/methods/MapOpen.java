@@ -14,9 +14,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewParent;
 import android.view.ViewGroup.MarginLayoutParams;
@@ -254,10 +256,15 @@ public class MapOpen implements LocationInterface {
 		return locationMode;
 	}
 
-	private void setTrackingMode(LocationMode locationMode) {
+	private void setTrackingMode(UZModuleContext moduleContext, LocationMode locationMode) {
 		if (mBaiduMap != null) {
-			mBaiduMap.setMyLocationConfigeration(new MyLocationConfiguration(
-					locationMode, true, locIcon()));
+			//mBaiduMap.setMyLocationConfigeration(new MyLocationConfiguration(locationMode, true, locIcon()));
+			String image = moduleContext.makeRealPath(moduleContext.optString("imagePath", ""));
+			
+			Bitmap bitmap = UZUtility.getLocalImage(image);
+			BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromBitmap(bitmap);
+			MyLocationConfiguration locationConfiguration = new MyLocationConfiguration(locationMode, true, bitmapDescriptor);
+			mBaiduMap.setMyLocationConfiguration(locationConfiguration);
 		}
 	}
 
@@ -274,7 +281,7 @@ public class MapOpen implements LocationInterface {
 	public void onDestory() {
 		stopLocation();
 		mMapView.onPause();
-		mMapView.onDestroy();
+//		mMapView.onDestroy();
 		mMapView = null;
 		if (mOrientationListener != null) {
 			mOrientationListener.stop();
@@ -301,7 +308,7 @@ public class MapOpen implements LocationInterface {
 		boolean isShow = mJsParamsUtil.isShow(moduleContext);
 		if (isShow) {
 			initOritationListener();
-			setTrackingMode(getTrackingMode(moduleContext));
+			setTrackingMode(moduleContext, getTrackingMode(moduleContext));
 			mLocationUtil.startLocation();
 			mBaiduMap.setMyLocationEnabled(true);
 		} else {
@@ -525,5 +532,15 @@ public class MapOpen implements LocationInterface {
 
 	public BDLocation getCurLoc() {
 		return mCurrLoc;
+	}
+
+	public void setRotateEnabled(boolean rotateEnabled) {
+		UiSettings uiSettings = mBaiduMap.getUiSettings();
+		uiSettings.setRotateGesturesEnabled(rotateEnabled);
+	}
+
+	public void setOverlookEnabled(boolean overlookEnabled) {
+		UiSettings uiSettings = mBaiduMap.getUiSettings();
+		uiSettings.setOverlookingGesturesEnabled(overlookEnabled);
 	}
 }

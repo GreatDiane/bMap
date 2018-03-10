@@ -101,7 +101,7 @@ public class JsParamsUtil {
 	}
 
 	public String city(UZModuleContext moduleContext) {
-		return moduleContext.optString("city");
+		return moduleContext.optString("city","中国");
 	}
 
 	public String line(UZModuleContext moduleContext) {
@@ -166,6 +166,12 @@ public class JsParamsUtil {
 
 	public boolean scrollEnable(UZModuleContext moduleContext) {
 		return moduleContext.optBoolean("scrollEnable", true);
+	}
+	public boolean rotateEnabled(UZModuleContext moduleContext) {
+		return moduleContext.optBoolean("rotateEnabled", true);
+	}
+	public boolean overlookEnabled(UZModuleContext moduleContext) {
+		return moduleContext.optBoolean("overlookEnabled", true);
 	}
 
 	public int rotateDegree(UZModuleContext moduleContext) {

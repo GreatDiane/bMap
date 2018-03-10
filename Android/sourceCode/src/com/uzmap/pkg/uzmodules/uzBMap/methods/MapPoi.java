@@ -83,10 +83,11 @@ public class MapPoi implements OnGetPoiSearchResultListener,
 		mModuleContext = moduleContext;
 		String keyword = moduleContext.optString("keyword");
 		String city = mJsParamsUtil.city(moduleContext);
+		SuggestionSearchOption suggestionSearchOption  = 
+				new SuggestionSearchOption().keyword(keyword).city(city);
 		SuggestionSearch search = SuggestionSearch.newInstance();
 		search.setOnGetSuggestionResultListener(this);
-		search.requestSuggestion((new SuggestionSearchOption())
-				.keyword(keyword).city(city));
+		search.requestSuggestion(suggestionSearchOption);
 	}
 
 	@Override
@@ -163,7 +164,7 @@ public class MapPoi implements OnGetPoiSearchResultListener,
 					resultObj.put("city", poi.city);
 					resultObj.put("phone", poi.phoneNum);
 					resultObj.put("postCode", poi.postCode);
-					resultObj.put("poiType", poi.type.getInt());
+					resultObj.put("poiType", poi.type==null?null:poi.type.getInt());
 					results.put(resultObj);
 				}
 			}
@@ -201,6 +202,8 @@ public class MapPoi implements OnGetPoiSearchResultListener,
 
 	@Override
 	public void onGetPoiIndoorResult(PoiIndoorResult arg0) {
+		// TODO Auto-generated method stub  多了一个方法
 		
 	}
+
 }

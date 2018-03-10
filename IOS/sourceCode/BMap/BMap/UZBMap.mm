@@ -17,6 +17,8 @@
 #import "UZBMKPolyline.h"
 #import <BaiduMapAPI_Location/BMKLocationComponent.h>
 #import <BaiduMapAPI_Utils/BMKUtilsComponent.h>
+#import <objc/runtime.h>
+
 
 #define MYBUNDLE_NAME @ "mapapi.bundle"
 #define MYBUNDLE_PATH [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent: MYBUNDLE_NAME]
@@ -32,6 +34,8 @@ typedef enum {
 
 @interface UZBMap ()
 <BMKGeneralDelegate, BMKMapViewDelegate, BMKLocationServiceDelegate, BMKGeoCodeSearchDelegate, BMKRouteSearchDelegate, BMKPoiSearchDelegate, BMKBusLineSearchDelegate, BMKSuggestionSearchDelegate, MovingAnimationDelegate, BMKOfflineMapDelegate> {
+    //初始化的回调
+    NSInteger initMapSDKcbId;
     //基础地图
     BMKMapView *_baiduMapView;
     //定位
@@ -44,7 +48,7 @@ typedef enum {
     //监听地图事件
     NSInteger longPressCbid, viewChangeCbid, singleTapCbid, dubbleTapCbid, zoomCbid;
     //大头针
-    NSInteger setBubbleCbid, addBillboardCbid;
+    NSInteger addBillboardCbid;
     //覆盖物
     NSMutableDictionary *_allOverlays;
     //路线搜索
@@ -63,9 +67,13 @@ typedef enum {
     //离线地图功能
     BMKOfflineMap *_offlineMap;
     NSInteger offlineListenerCbid;
+
+    BOOL isopened;
+    //室内地图
+    NSInteger indoorListenerCbid, indoorSearchCbid;
 }
 
-@property (nonatomic, strong) BMKOfflineMap *offlineMap;
+//@property (nonatomic, strong) BMKOfflineMap *offlineMap;
 @property (nonatomic, strong) BMKMapView *baiduMapView;
 @property (nonatomic, strong) BMKLocationService *locService;
 @property (nonatomic, strong) UZBMKGeoCodeSearch *geoSearch;
@@ -75,26 +83,23 @@ typedef enum {
 @property (nonatomic, strong) UZBMKPoiSearch *poisearch;
 @property (nonatomic, strong) CADisplayLink *timerAnnoMove;
 @property (nonatomic, strong) NSMutableDictionary *allMovingAnno;
+@property (nonatomic, strong) NSMutableArray *allAnnotation;
+@property (nonatomic, strong) BMKLocationViewDisplayParam * locationViewDisplayParam;
 
 @end
 
 @implementation UZBMap
 
-@synthesize offlineMap = _offlineMap;
-@synthesize baiduMapView = _baiduMapView;
-@synthesize locService = _locService;
-@synthesize geoSearch = _geoSearch;
-@synthesize allOverlays = _allOverlays;
-@synthesize overlayLine, overlayCircle, overlayArc, overlayPolygon;
-@synthesize plans = _plans;
-@synthesize allRoutes = _allRoutes;
-@synthesize poisearch = _poisearch;
-@synthesize allBusRoutes = _allBusRoutes;
-@synthesize routeNodeSet = _routeNodeSet;
-@synthesize allBusNodeSet = _allBusNodeSet;
-@synthesize timerAnnoMove;
-@synthesize allMovingAnno = _allMovingAnno;
+static char extendButtonKey;
 
+- (BMKLocationViewDisplayParam *)locationViewDisplayParam {
+    if (!_locationViewDisplayParam) {
+        _locationViewDisplayParam = [[BMKLocationViewDisplayParam alloc]init];
+        _locationViewDisplayParam.locationViewOffsetX=0;
+        _locationViewDisplayParam.locationViewOffsetY=0;
+    }
+    return _locationViewDisplayParam;
+}
 #pragma mark -
 #pragma mark lifCycle
 #pragma mark -
@@ -103,28 +108,37 @@ typedef enum {
     [self close:nil];
 }
 
-- (void)initMapSDK {
-    if (![UZAppUtils globalValueForKey:@"BMKMapManager"]) {
-        NSDictionary *feature_location = [self getFeatureByName:@"bMap"];
-        NSString *ios_api_key = [feature_location stringValueForKey:@"ios_api_key" defaultValue:nil];
-        if (!ios_api_key || ios_api_key.length==0) {
-            NSDictionary *feature_map = [self getFeatureByName:@"baiduLocation"];
-            ios_api_key = [feature_map stringValueForKey:@"ios_api_key" defaultValue:nil];
-        }
-        if (!ios_api_key || ios_api_key.length==0) {
-            NSDictionary *feature_map = [self getFeatureByName:@"baiduMap"];
-            ios_api_key = [feature_map stringValueForKey:@"ios_api_key" defaultValue:nil];
-        }
-        if (!ios_api_key) {
-            ios_api_key = [feature_location stringValueForKey:@"apiKey" defaultValue:nil];
-        }
-        if (!ios_api_key) {
-            ios_api_key = @"key";
-        }
+- (void)initMapSDK:(NSDictionary *)paramsDict_ {
+    initMapSDKcbId = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+    NSString *ios_api_key = [self getIOSkey];
+    BMKMapManager *g_mapSDKManager = [UZAppUtils globalValueForKey:@"BMKMapManager"];
+    if (!g_mapSDKManager) {
         BMKMapManager *g_mapSDKManager = [[BMKMapManager alloc] init];
         [g_mapSDKManager start:ios_api_key generalDelegate:self];
         [UZAppUtils setGlobalValue:g_mapSDKManager forKey:@"BMKMapManager"];
+    } else {
+        [g_mapSDKManager start:ios_api_key generalDelegate:self];
     }
+}
+
+- (NSString *)getIOSkey {
+    NSDictionary *feature_location = [self getFeatureByName:@"bMap"];
+    NSString *ios_api_key = [feature_location stringValueForKey:@"ios_api_key" defaultValue:nil];
+    if (!ios_api_key || ios_api_key.length==0) {
+        NSDictionary *feature_map = [self getFeatureByName:@"baiduLocation"];
+        ios_api_key = [feature_map stringValueForKey:@"ios_api_key" defaultValue:nil];
+    }
+    if (!ios_api_key || ios_api_key.length==0) {
+        NSDictionary *feature_map = [self getFeatureByName:@"baiduMap"];
+        ios_api_key = [feature_map stringValueForKey:@"ios_api_key" defaultValue:nil];
+    }
+    if (!ios_api_key) {
+        ios_api_key = [feature_location stringValueForKey:@"apiKey" defaultValue:nil];
+    }
+    if (!ios_api_key) {
+        ios_api_key = @"key";
+    }
+    return ios_api_key;
 }
 
 - (void)initLocal {
@@ -146,7 +160,8 @@ typedef enum {
     self = [super initWithUZWebView:webView_];
     if (self != nil) {
         //打开地图管理器
-        [self initMapSDK];
+        [self initMapSDK:nil];
+        indoorListenerCbid = -1;
         startLocationCbid = -1;
         openShow = NO;
         openSetCenter = NO;
@@ -164,6 +179,8 @@ typedef enum {
         _routeNodeSet = [NSMutableDictionary dictionaryWithCapacity:1];
         _allBusNodeSet = [NSMutableDictionary dictionaryWithCapacity:1];
         self.timerAnnoMove = nil;
+        _baiduMapView = [[BMKMapView alloc]initWithFrame:CGRectZero];
+        isopened = NO;
     }
     return self;
 }
@@ -197,20 +214,23 @@ typedef enum {
         NSDictionary *headDict = @{@"magnetic":@(head.magneticHeading),@"trueHeading":@(head.trueHeading),@"accuracy":@(head.headingAccuracy)};
         [sendDict setObject:headDict forKey:@"headInfo"];
     }
+    [sendDict setObject:@(YES) forKey:@"status"];
     [sendDict setObject:title forKey:@"title"];
     [sendDict setObject:subtitle forKey:@"subtitle"];
     [sendDict setObject:@(updating) forKey:@"updating"];
     [sendDict setObject:@(loc.coordinate.longitude) forKey:@"lon"];
     [sendDict setObject:@(loc.coordinate.latitude) forKey:@"lat"];
+    [sendDict setObject:@(loc.altitude) forKey:@"altitude"];
     [self sendResultEventWithCallbackId:getClocCbid dataDict:sendDict errDict:nil doDelete:YES];
 }
 
 - (void)open:(NSDictionary *)paramsDict_ {
-   if (_baiduMapView) {
+    if (isopened) {
         [[_baiduMapView superview] bringSubviewToFront:_baiduMapView];
        _baiduMapView.hidden = NO;
         return;
     }
+    isopened = YES;
     NSString *fixedOnName = [paramsDict_ stringValueForKey:@"fixedOn" defaultValue:nil];
     UIView *superView = [self getViewByName:fixedOnName];
     NSDictionary *rectInfo = [paramsDict_ dictValueForKey:@"rect" defaultValue:@{}];
@@ -224,7 +244,9 @@ typedef enum {
     
     //打开地图视图
     CGRect viewRect = CGRectMake(orgX, orgY, viewW, viewH);
-    _baiduMapView = [[BMKMapView alloc]init];
+    if (!_baiduMapView) {
+        _baiduMapView = [[BMKMapView alloc]init];
+    }
     _baiduMapView.frame = viewRect;
     _baiduMapView.delegate = self;
     _baiduMapView.showsUserLocation = isShow;
@@ -273,6 +295,15 @@ typedef enum {
     } else {
         [self sendResultEventWithCallbackId:openCbid dataDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"status"] errDict:nil doDelete:YES];
     }
+    ///***动态定制我的位置样式https://www.jianshu.com/p/b2d030e5608f*/
+    //BMKLocationViewDisplayParam *displayParam = [[BMKLocationViewDisplayParam alloc] init];
+    //displayParam.locationViewOffsetX=0;//定位偏移量(经度)
+    //displayParam.locationViewOffsetY=0;//定位偏移量（纬度）
+    //displayParam.isAccuracyCircleShow=NO;//经度圈是否显示
+    ////这里替换自己的图标路径，必须把图片放到百度地图SDK的Resources/mapapi.bundle/images 下面
+    ////还有一种方法就是获取到_locationView之后直接设置图片
+    //displayParam.locationViewImgName=@"map_Indicating_icon";
+    //[_baiduMapView updateLocationViewWithParam:displayParam];
 }
 
 - (void)setRect:(NSDictionary *)paramsDict_ {
@@ -332,6 +363,10 @@ typedef enum {
         [_allMovingAnno removeAllObjects];
         self.allMovingAnno = nil;
     }
+    if (_offlineMap) {
+        _offlineMap.delegate = nil;
+        _offlineMap = nil;
+    }
     if (_baiduMapView){
         _baiduMapView.showsUserLocation = NO;
         _baiduMapView.delegate = nil;
@@ -347,9 +382,6 @@ typedef enum {
         _geoSearch.delegate = nil;
         self.geoSearch = nil;
     }
-    if (setBubbleCbid >= 0) {
-        [self deleteCallback:setBubbleCbid];
-    }
     if (_allOverlays) {
         [_allOverlays removeAllObjects];
         self.allOverlays = nil;
@@ -359,6 +391,7 @@ typedef enum {
         self.allRoutes = nil;
     }
     if (_plans) {
+        [_plans removeAllObjects];
         self.plans = nil;
     }
     if (_poisearch) {
@@ -377,14 +410,10 @@ typedef enum {
         [_allBusNodeSet removeAllObjects];
         self.allBusNodeSet = nil;
     }
-    if (timerAnnoMove) {
-        [timerAnnoMove invalidate];
+    if (_timerAnnoMove) {
+        [_timerAnnoMove invalidate];
         self.timerAnnoMove = nil;
-    }
-    if (_offlineMap) {
-        _offlineMap.delegate = nil;
-        self.offlineMap = nil;
-    }
+    }isopened = NO;
 }
 
 - (void)show:(NSDictionary *)paramsDict_ {
@@ -547,9 +576,14 @@ typedef enum {
     [self sendResultEventWithCallbackId:getDistanceCbid dataDict:sendDict errDict:nil doDelete:YES];
 }
 
+static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
+    return object.locationViewDisplayParam;
+}
+
 - (void)showUserLocation:(NSDictionary *)paramsDict_ {
     openShow = [paramsDict_ boolValueForKey:@"openShow" defaultValue:NO];
     BOOL showsUserLocation = [paramsDict_ boolValueForKey:@"isShow" defaultValue:YES];
+    NSString * imageName = [paramsDict_ stringValueForKey:@"imageName" defaultValue:nil];
     NSString *trackType = [paramsDict_ stringValueForKey:@"trackingMode" defaultValue:@"none"];
     if (trackType.length == 0) {
         trackType = @"none";
@@ -570,6 +604,11 @@ typedef enum {
         _baiduMapView.showsUserLocation = YES;
     } else {
         _baiduMapView.showsUserLocation = NO;
+    }
+    
+    if (imageName) {
+        extracted(self).locationViewImgName = imageName;
+        [_baiduMapView updateLocationViewWithParam:self.locationViewDisplayParam];
     }
 }
 
@@ -622,6 +661,28 @@ typedef enum {
     [self sendResultEventWithCallbackId:getZoomLevelCbid dataDict:sendDict errDict:nil doDelete:YES];
 }
 
+- (void)setShowMapPoi:(NSDictionary *)paramsDict_ {
+    if (!_baiduMapView) {
+        return;
+    }
+    BOOL showMapPoi = [paramsDict_ boolValueForKey:@"showMapPoi" defaultValue:YES];
+    [_baiduMapView setShowMapPoi:showMapPoi];
+}
+
+- (void)getShowMapPoi:(NSDictionary *)paramsDict_ {
+    NSInteger getShowMapPoiCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+    [self sendResultEventWithCallbackId:getShowMapPoiCbid dataDict:@{@"showMapPoi":@(self.baiduMapView.showMapPoi)} errDict:nil doDelete:YES];
+}
+
+- (void)setMaxAndMinZoomLevel:(NSDictionary *)paramsDict_ {
+    if (!_baiduMapView) {
+        return;
+    }
+    float maxLevel = [paramsDict_ floatValueForKey:@"maxLevel" defaultValue:15];
+    float minLevel = [paramsDict_ floatValueForKey:@"minLevel" defaultValue:10];
+    [_baiduMapView setMaxZoomLevel:maxLevel];
+    [_baiduMapView setMinZoomLevel:minLevel];
+}
 - (void)setMapAttr:(NSDictionary *)paramsDict_ {
     if (!_baiduMapView) {
         return;
@@ -630,6 +691,10 @@ typedef enum {
     [_baiduMapView setZoomEnabled:zoomEnable];
     BOOL scrollEnable = [paramsDict_ boolValueForKey:@"scrollEnable" defaultValue:YES];
     [_baiduMapView setScrollEnabled:scrollEnable];
+    BOOL overlookEnabled = [paramsDict_ boolValueForKey:@"overlookEnabled" defaultValue:YES];
+    [_baiduMapView setOverlookEnabled:overlookEnabled];
+    BOOL rotateEnabled = [paramsDict_ boolValueForKey:@"rotateEnabled" defaultValue:YES];
+    [_baiduMapView setRotateEnabled:rotateEnabled];
     //设置地图类型
     NSString *mapType = [paramsDict_ stringValueForKey:@"type" defaultValue:@"standard"];
     BMKMapType realMapType = BMKMapTypeStandard;
@@ -942,6 +1007,198 @@ typedef enum {
     }
 }
 
+# pragma mark - 室内地图 -
+- (void)setIndoorMap:(NSDictionary *)paramsDict_ {
+    BOOL enalbe = [paramsDict_ boolValueForKey:@"enalbe" defaultValue:YES];
+    if (_baiduMapView) {
+        _baiduMapView.baseIndoorMapEnabled = enalbe;
+    }
+}
+
+- (void)addIndoorListener:(NSDictionary *)paramsDict_ {
+    indoorListenerCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+}
+
+- (void)switchIndoorMapFloor:(NSDictionary *)paramsDict_ {
+    if (!_baiduMapView) {
+        return;
+    }
+    NSString *strID = [paramsDict_ stringValueForKey:@"strID" defaultValue:@""];
+    //室内图楼层,格式为F1,B1…
+    NSString *strFloor = [paramsDict_ stringValueForKey:@"strFloor" defaultValue:@"F1"];
+    BMKSwitchIndoorFloorError error = [_baiduMapView switchBaseIndoorMapFloor:strFloor withID:strID];
+    NSInteger switchIndoorCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+    if (error == BMKSwitchIndoorFloorSuccess) {
+        [self sendResultEventWithCallbackId:switchIndoorCbid dataDict:@{@"status":@(YES)} errDict:nil doDelete:YES];
+    } else {
+        //BMKSwitchIndoorFloorFailed             切换楼层失败
+        //BMKSwitchIndoorFloorNotFocused         地图还未聚焦到传入的室内图
+        //BMKSwitchIndoorFloorNotExist           当前室内图不存在该楼层
+        NSString *errorMsg = @"failed";
+        switch (error) {
+            case BMKSwitchIndoorFloorNotFocused:
+                errorMsg = @"notFocused";
+                break;
+            case BMKSwitchIndoorFloorNotExist:
+                errorMsg = @"notExist";
+                break;
+                
+            default:
+                errorMsg = @"failed";
+                break;
+        }
+        [self sendResultEventWithCallbackId:switchIndoorCbid dataDict:@{@"status":@(NO)} errDict:@{@"code":@(error),@"msg":errorMsg} doDelete:YES];
+    }
+}
+
+- (void)indoorSearch:(NSDictionary *)paramsDict_ {
+    /*
+     检查室内图当前状态
+     1.室内图默认是关闭的，检索室内POI需要打开室内图功能。
+     2.室内图需要显示在屏幕范围内，才支持检索当前室内图的室内POI。
+     */
+    NSString *strID = [paramsDict_ stringValueForKey:@"strID" defaultValue:@""];
+    if (![strID isKindOfClass:[NSString class]] || strID.length==0) {
+        return;
+    }
+    NSString *keyword = [paramsDict_ stringValueForKey:@"keyword" defaultValue:@""];
+    int pageIndex = [paramsDict_ intValueForKey:@"pageIndex" defaultValue:0];
+    int pageCapacity = [paramsDict_ intValueForKey:@"pageCapacity" defaultValue:10];
+    indoorSearchCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+    
+    BMKPoiIndoorSearchOption *option = [[BMKPoiIndoorSearchOption alloc] init];
+    option.pageIndex = pageIndex;
+    option.pageCapacity = pageCapacity;
+    option.indoorId = strID;
+    option.keyword = keyword;
+    if (!_poisearch) {
+        _poisearch = [[UZBMKPoiSearch alloc]init];
+        _poisearch.delegate = self;
+    }
+    _poisearch.type = UZSEARCH_INDOOR;
+    BOOL flag = [_poisearch poiIndoorSearch:option];
+    if(!flag) {
+        [self sendResultEventWithCallbackId:indoorSearchCbid dataDict:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"status"] errDict:nil doDelete:YES];
+    }
+}
+
+- (void)onGetPoiIndoorResult:(BMKPoiSearch *)searcher result:(BMKPoiIndoorResult *)poiIndoorResult errorCode:(BMKSearchErrorCode)errorCode {
+    if (errorCode == BMK_SEARCH_NO_ERROR) {
+        ///本次POI室内搜索的总结果数
+        NSInteger totalPoiNum = poiIndoorResult.totalPoiNum;
+        ///当前页的室内POI结果数
+        NSInteger currPoiNum = poiIndoorResult.currPoiNum;
+        ///本次POI室内搜索的总页数
+        NSInteger pageNum = poiIndoorResult.pageNum;
+        ///当前页的索引
+        int pageIndex = poiIndoorResult.pageIndex;
+        //成功获取结果BMKPoiIndoorInfo *
+        NSArray *indoorPoint = poiIndoorResult.poiIndoorInfoList;
+        NSMutableArray *indoorAry = [NSMutableArray array];
+        for (BMKPoiIndoorInfo *indInfo in indoorPoint) {
+            NSMutableDictionary *indoorDict = [NSMutableDictionary dictionary];
+            ///POI名称
+            NSString *name = indInfo.name;
+            if (![name isKindOfClass:[NSString class]] || name.length==0) {
+                name = @"";
+            }
+            [indoorDict setObject:name forKey:@"name"];
+            ///POIuid
+            NSString *uid = indInfo.uid;
+            if (![uid isKindOfClass:[NSString class]] || uid.length==0) {
+                uid = @"";
+            }
+            [indoorDict setObject:uid forKey:@"uid"];
+            ///该室内POI所在 室内ID
+            NSString *indoorId = indInfo.indoorId;
+            if (![indoorId isKindOfClass:[NSString class]] || indoorId.length==0) {
+                indoorId = @"";
+            }
+            [indoorDict setObject:indoorId forKey:@"indoorId"];
+            ///该室内POI所在楼层
+            NSString *floor = indInfo.floor;
+            if (![floor isKindOfClass:[NSString class]] || floor.length==0) {
+                floor = @"";
+            }
+            [indoorDict setObject:floor forKey:@"floor"];
+            ///POI地址
+            NSString *address = indInfo.address;
+            if (![address isKindOfClass:[NSString class]] || address.length==0) {
+                address = @"";
+            }
+            [indoorDict setObject:address forKey:@"address"];
+            ///POI所在城市
+            NSString *city = indInfo.city;
+            if (![city isKindOfClass:[NSString class]] || city.length==0) {
+                city = @"";
+            }
+            [indoorDict setObject:city forKey:@"city"];
+            ///POI电话号码
+            NSString *phone = indInfo.phone;
+            if (![phone isKindOfClass:[NSString class]] || phone.length==0) {
+                phone = @"";
+            }
+            [indoorDict setObject:phone forKey:@"phone"];
+            ///POI标签
+            NSString *tag = indInfo.tag;
+            if (![tag isKindOfClass:[NSString class]] || tag.length==0) {
+                tag = @"";
+            }
+            [indoorDict setObject:tag forKey:@"tag"];
+            ///POI坐标
+            CLLocationCoordinate2D pt = indInfo.pt;
+            NSDictionary *coord = @{@"latitude":@(pt.latitude),@"latitude":@(pt.latitude)};
+            [indoorDict setObject:coord forKey:@"pt"];
+            ///价格
+            double price = indInfo.price;
+            [indoorDict setObject:@(price) forKey:@"price"];
+            ///星级（0-50），50表示五星
+            NSInteger starLevel = indInfo.starLevel;
+            [indoorDict setObject:@(starLevel) forKey:@"starLevel"];
+            ///是否有团购
+            BOOL grouponFlag = indInfo.grouponFlag;
+            [indoorDict setObject:@(grouponFlag) forKey:@"grouponFlag"];
+            ///是否有外卖
+            BOOL takeoutFlag = indInfo.takeoutFlag;
+            [indoorDict setObject:@(takeoutFlag) forKey:@"takeoutFlag"];
+            ///是否排队
+            BOOL waitedFlag = indInfo.waitedFlag;
+            [indoorDict setObject:@(waitedFlag) forKey:@"waitedFlag"];
+            ///团购数,-1表示没有团购信息
+            NSInteger grouponNum = indInfo.grouponNum;
+            [indoorDict setObject:@(grouponNum) forKey:@"grouponNum"];
+            
+            [indoorAry addObject:indoorDict];
+        }
+        NSDictionary *sendDict = @{@"status":@(YES),@"totalPoiNum":@(totalPoiNum),@"currPoiNum":@(currPoiNum),@"pageNum":@(pageNum),@"pageIndex":@(pageIndex),@"poiIndoorInfoList":indoorAry};
+        [self sendResultEventWithCallbackId:indoorSearchCbid dataDict:sendDict errDict:@{@"code":@(errorCode)} doDelete:YES];
+    } else {
+        //检索失败
+        [self sendResultEventWithCallbackId:indoorSearchCbid dataDict:@{@"status":@(NO)} errDict:@{@"code":@(errorCode)} doDelete:YES];
+    }
+}
+
+- (void)mapview:(BMKMapView *)mapView baseIndoorMapWithIn:(BOOL)flag   baseIndoorMapInfo:(BMKBaseIndoorMapInfo *)info {
+    if (indoorListenerCbid >= 0) {
+        //室内ID
+        NSString *strID = info.strID;
+        if (![strID isKindOfClass:[NSString class]] || strID.length==0) {
+            strID = @"";
+        }
+        /// 当前楼层
+        NSString *strFloor = info.strFloor;
+        if (![strFloor isKindOfClass:[NSString class]] || strFloor.length==0) {
+            strFloor = @"";
+        }
+        /// 所有楼层信息
+        NSMutableArray *arrStrFloors = info.arrStrFloors;
+        id obj = [arrStrFloors firstObject];
+        NSString *className = NSStringFromClass([obj class]);
+        NSLog(@"所有楼层信息%@",className);
+        NSDictionary *indoorInfo = @{@"enter":@(flag),@"strID":strID,@"strFloor":strFloor};
+        [self sendResultEventWithCallbackId:indoorListenerCbid dataDict:indoorInfo errDict:nil doDelete:NO];
+    }
+}
 #pragma mark-
 #pragma mark 标注、气泡类接口
 #pragma mark-
@@ -990,6 +1247,12 @@ typedef enum {
     }
     if (annotationsAry.count > 0) {
         [self.baiduMapView addAnnotations:annotationsAry];
+        if (!self.allAnnotation) {
+            self.allAnnotation = [NSMutableArray array];
+        }
+        for (UZbMapAnnotation *annotation in annotationsAry) {
+            [self.allAnnotation addObject:annotation];
+        }
     }
 }
 
@@ -1061,15 +1324,13 @@ typedef enum {
     NSDictionary *styleInfo = [paramsDict_ dictValueForKey:@"styles" defaultValue:@{}];
     NSArray *annos = [self.baiduMapView annotations];
     if ([setID isKindOfClass:[NSString class]] && setID.length>0) {
-        if (setBubbleCbid >= 0) {
-            [self deleteCallback:setBubbleCbid];
-        }
-        setBubbleCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+        NSInteger setBubbleCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
         for (UZbMapAnnotation *annoElem in annos) {
             if (annoElem.annoId == [setID integerValue]) {
                 annoElem.content = contentInfo;
                 annoElem.styles = styleInfo;
                 annoElem.title = @"";
+                annoElem.bubbleClickCbid = setBubbleCbid;
                 annoElem.isStyled = YES;
                 annoElem.bubbleBgImg = bgImgStr;
                 [self.baiduMapView removeAnnotation:annoElem];
@@ -1145,6 +1406,10 @@ typedef enum {
     annotation.styles = styleInfo;
     annotation.type = ANNOTATION_BILLBOARD;
     [self.baiduMapView addAnnotation:annotation];
+    if (!self.allAnnotation) {
+        self.allAnnotation = [NSMutableArray array];
+    }
+    [self.allAnnotation addObject:annotation];
 }
 
 - (void)addMobileAnnotations:(NSDictionary *)paramsDict_ {
@@ -1179,6 +1444,12 @@ typedef enum {
     }
     if (annotationsAry.count > 0) {
         [self.baiduMapView addAnnotations:annotationsAry];
+        if (!self.allAnnotation) {
+            self.allAnnotation = [NSMutableArray array];
+        }
+        for (UZbMapAnnotation *annotation in annotationsAry) {
+            [self.allAnnotation addObject:annotation];
+        }
     }
 }
 
@@ -1259,7 +1530,7 @@ typedef enum {
 
 - (void)doStep {
     if (_allMovingAnno.count == 0) {
-        [timerAnnoMove invalidate];
+        [_timerAnnoMove invalidate];
         self.timerAnnoMove = nil;
         return;
     }
@@ -1288,6 +1559,10 @@ typedef enum {
             }
         }
         [self.baiduMapView removeAnnotations:willRemoveAnnos];
+    } else {
+        if (self.allAnnotation) {
+            [self.baiduMapView removeAnnotations:self.allAnnotation];
+        }
     }
 }
 
@@ -1327,6 +1602,9 @@ typedef enum {
     [line setPolylineWithCoordinates:coorAry count:pointCount];
     line.lineType = 0;
     [self.baiduMapView addOverlay:line];
+    if (!_allOverlays) {
+        _allOverlays = [NSMutableDictionary dictionaryWithCapacity:1];
+    }
     [self.allOverlays setObject:line forKey:overlayIdStr];
 }
 
@@ -1343,7 +1621,11 @@ typedef enum {
     if (target) {
         [self.baiduMapView removeOverlay:target];
     }
-    self.overlayPolygon = [paramsDict_ dictValueForKey:@"styles" defaultValue:@{}];
+    NSDictionary *polyStyle = [paramsDict_ dictValueForKey:@"styles" defaultValue:@{}];
+    if (!self.overlayPolygon) {
+        self.overlayPolygon = [NSMutableDictionary dictionary];
+    }
+    [self.overlayPolygon setValue:polyStyle forKey:overlayIdStr];
     NSInteger pointCount = [pointAry count];
     CLLocationCoordinate2D coorAry[200] = {0};
     for (int i=0; i<pointCount; i++){
@@ -1360,6 +1642,9 @@ typedef enum {
     }
     BMKPolygon *polygon = [BMKPolygon polygonWithCoordinates:coorAry count:pointCount];
     [self.baiduMapView addOverlay:polygon];
+    if (!_allOverlays) {
+        _allOverlays = [NSMutableDictionary dictionaryWithCapacity:1];
+    }
     [self.allOverlays setObject:polygon forKey:overlayIdStr];
 }
 
@@ -1388,6 +1673,9 @@ typedef enum {
     coor.latitude = lat;
     BMKCircle *circle = [BMKCircle circleWithCenterCoordinate:coor radius:radius];
     [self.baiduMapView addOverlay:circle];
+    if (!_allOverlays) {
+        _allOverlays = [NSMutableDictionary dictionaryWithCapacity:1];
+    }
     [self.allOverlays setObject:circle forKey:overlayIdStr];
 }
 
@@ -1421,6 +1709,9 @@ typedef enum {
     }
     BMKArcline *arcline = [BMKArcline arclineWithCoordinates:coorAry];
     [self.baiduMapView addOverlay:arcline];
+    if (!_allOverlays) {
+        _allOverlays = [NSMutableDictionary dictionaryWithCapacity:1];
+    }
     [self.allOverlays setObject:arcline forKey:overlayIdStr];
 }
 
@@ -1460,6 +1751,9 @@ typedef enum {
     BMKGroundOverlay *ground = [BMKGroundOverlay groundOverlayWithBounds:bound icon:image];
     ground.alpha = alpha;
     [self.baiduMapView addOverlay:ground];
+    if (!_allOverlays) {
+        _allOverlays = [NSMutableDictionary dictionary];
+    }
     [self.allOverlays setObject:ground forKey:overlayIdStr];
 }
 
@@ -1522,7 +1816,7 @@ typedef enum {
     NSString *policy = nil;
     BMKDrivingPolicy drivePolicy = BMK_DRIVING_TIME_FIRST;
     BMKTransitPolicy transPlicy = BMK_TRANSIT_TIME_FIRST;
-    if (routeTypeValue == 0) {
+    if (routeTypeValue == 0) {//驾车
         policy = [paramsDict_ stringValueForKey:@"policy" defaultValue:@"ecar_time_first"];
         if ([policy isEqualToString:@"ecar_fee_first"]) {
             drivePolicy = BMK_DRIVING_FEE_FIRST;
@@ -1535,7 +1829,7 @@ typedef enum {
         } else {
             drivePolicy = BMK_DRIVING_TIME_FIRST;
         }
-    } else if (routeTypeValue == 1) {
+    } else if (routeTypeValue == 1) {//公交
         policy = [paramsDict_ stringValueForKey:@"policy" defaultValue:@"ebus_time_first"];
         if ([policy isEqualToString:@"ebus_no_subway"]) {
             transPlicy = BMK_TRANSIT_NO_SUBWAY;
@@ -1611,7 +1905,9 @@ typedef enum {
             [self.baiduMapView removeOverlay:target];
         }
         NSArray *allNodes = [self.routeNodeSet objectForKey:routeId];
-        [self.baiduMapView removeAnnotations:allNodes];
+        if (allNodes) {
+            [self.baiduMapView removeAnnotations:allNodes];
+        }
     }
     BOOL isAutoFit = [paramsDict_ boolValueForKey:@"autoresizing" defaultValue:YES];
     drawRouteCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
@@ -2147,6 +2443,7 @@ typedef enum {
     offlineListenerCbid = -1;
 }
 
+#pragma mark 离线地图代理
 - (void)onGetOfflineMapState:(int)type withState:(int)state {
     if (offlineListenerCbid >= 0) {
         [self sendResultEventWithCallbackId:offlineListenerCbid dataDict:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:type],@"type",[NSNumber numberWithInt:state],@"state", nil] errDict:nil doDelete:NO];
@@ -2357,7 +2654,13 @@ typedef enum {
         polyLine.lineType = 1;
         [_baiduMapView addOverlay:polyLine];
         if (routeId.length >0 ) {
+            if (!_allBusRoutes) {
+                _allBusRoutes = [NSMutableDictionary dictionaryWithCapacity:1];
+            }
             [_allBusRoutes setObject:polyLine forKey:routeId];
+            if (!_allBusNodeSet) {
+                _allBusNodeSet = [NSMutableDictionary dictionaryWithCapacity:1];
+            }
             [_allBusNodeSet setObject:stationNode forKey:routeId];
         }
         delete [] temppoints;
@@ -2459,13 +2762,21 @@ typedef enum {
          return polylineView;
      }
      if ([overlay isKindOfClass:[BMKPolygon class]]) {//添加多边形
+         NSString *targetkey;
+         for (NSString * key in [self.allOverlays allKeys]) {
+             BMKPolygon *target = [self.allOverlays objectForKey:key];
+             if ([target isEqual:overlay]) {
+                 targetkey = key;
+             }
+         }
+         NSDictionary *sytleDict = [self.overlayPolygon dictValueForKey:targetkey defaultValue:@{}];
          BMKPolygonView *polygonView = [[BMKPolygonView alloc] initWithOverlay:overlay];
-         NSString *borColor = [self.overlayPolygon stringValueForKey:@"borderColor" defaultValue:@"#000"];
-         NSString *filColor = [self.overlayPolygon stringValueForKey:@"fillColor" defaultValue:@"#000"];
+         NSString *borColor = [sytleDict stringValueForKey:@"borderColor" defaultValue:@"#000"];
+         NSString *filColor = [sytleDict stringValueForKey:@"fillColor" defaultValue:@"#000"];
          polygonView.strokeColor = [UZAppUtils colorFromNSString:borColor];
          polygonView.fillColor = [UZAppUtils colorFromNSString:filColor];
-         polygonView.lineWidth = [self.overlayPolygon floatValueForKey:@"borderWidth" defaultValue:2];
-         polygonView.lineDash = [self.overlayPolygon boolValueForKey:@"lineDash" defaultValue:NO];
+         polygonView.lineWidth = [sytleDict floatValueForKey:@"borderWidth" defaultValue:2];
+         polygonView.lineDash = [sytleDict boolValueForKey:@"lineDash" defaultValue:NO];
          return polygonView;
      }
      if ([overlay isKindOfClass:[BMKCircle class]]) {//添加圆圈儿
@@ -2478,8 +2789,8 @@ typedef enum {
          circleView.lineDash = [self.overlayCircle boolValueForKey:@"lineDash" defaultValue:NO];
          return circleView;
      }
-     if ([overlay isKindOfClass:[BMKGroundOverlay class]]) {
-         BMKGroundOverlayView* groundView = [[BMKGroundOverlayView alloc] initWithOverlay:overlay];
+     if ([overlay isKindOfClass:[BMKGroundOverlay class]]) {//图片
+         BMKGroundOverlayView *groundView = [[BMKGroundOverlayView alloc] initWithOverlay:overlay];
          return groundView;
      }
      if ([overlay isKindOfClass:[BMKArcline class]]) {//添加弧形
@@ -2610,11 +2921,15 @@ typedef enum {
 }
 
 - (void)mapView:(BMKMapView *)mapView annotationViewForBubble:(BMKAnnotationView *)view {//气泡点击代理
-    if (setBubbleCbid >= 0) {
+    UZbMapAnnotation *tempAnnot = (UZbMapAnnotation *) view.annotation;
+    if (![tempAnnot isKindOfClass:[UZbMapAnnotation class]]) {
+        return;
+    }
+    if (tempAnnot.bubbleClickCbid >= 0) {
         NSMutableDictionary *sendDict = [NSMutableDictionary dictionaryWithCapacity:1];
         [sendDict setObject:[NSNumber numberWithInteger:[view.reuseIdentifier integerValue]] forKey:@"id"];
         [sendDict setObject:@"clickContent" forKey:@"eventType"];
-        [self sendResultEventWithCallbackId:setBubbleCbid dataDict:sendDict errDict:nil doDelete:NO];
+        [self sendResultEventWithCallbackId:tempAnnot.bubbleClickCbid dataDict:sendDict errDict:nil doDelete:NO];
     }
 }
 
@@ -2782,6 +3097,9 @@ typedef enum {
         if (routeIdStr.length > 0) {
             NSArray *routes = result.routes;
             if (routes && routes.count>0) {
+                if (!_plans) {
+                    _plans = [NSMutableDictionary dictionaryWithCapacity:1];
+                }
                 [self.plans setObject:routes forKey:routeIdStr];
             }
         }
@@ -2925,6 +3243,9 @@ typedef enum {
         if (routeIdStr.length > 0) {
             NSArray *routes = result.routes;
             if (routes && routes.count>0) {
+                if (!_plans) {
+                    _plans = [NSMutableDictionary dictionaryWithCapacity:1];
+                }
                 [self.plans setObject:routes forKey:routeIdStr];
             }
         }
@@ -3076,6 +3397,9 @@ typedef enum {
         if (routeIdStr.length > 0) {
             NSArray *routes = result.routes;
             if (routes && routes.count>0) {
+                if (!_plans) {
+                    _plans = [NSMutableDictionary dictionaryWithCapacity:1];
+                }
                 [self.plans setObject:routes forKey:routeIdStr];
             }
         }
@@ -3238,36 +3562,17 @@ typedef enum {
             }
             [manager start:ios_api_key generalDelegate:self];
         } else {
-            [self initMapSDK];
+            [self initMapSDK:nil];
         }
     }
 }
 
 - (void)onGetPermissionState:(int)iError {
-    if (iError != 0) {
-        BMKMapManager *manager = [UZAppUtils globalValueForKey:@"BMKMapManager"];
-        if (manager) {
-            NSDictionary *feature_location = [self getFeatureByName:@"bMap"];
-            NSString *ios_api_key = [feature_location stringValueForKey:@"ios_api_key" defaultValue:nil];
-            if (!ios_api_key || ios_api_key.length==0) {
-                NSDictionary *feature_map = [self getFeatureByName:@"baiduLocation"];
-                ios_api_key = [feature_map stringValueForKey:@"ios_api_key" defaultValue:nil];
-            }
-            if (!ios_api_key || ios_api_key.length==0) {
-                NSDictionary *feature_map = [self getFeatureByName:@"baiduMap"];
-                ios_api_key = [feature_map stringValueForKey:@"ios_api_key" defaultValue:nil];
-            }
-            if (!ios_api_key) {
-                ios_api_key = [feature_location stringValueForKey:@"apiKey" defaultValue:nil];
-            }
-            if (!ios_api_key) {
-                ios_api_key = @"key";
-            }
-            [manager start:ios_api_key generalDelegate:self];
-        } else {
-            [self initMapSDK];
-        }
+    BOOL status = NO;
+    if (iError == 0) {
+        status = YES;
     }
+    [self sendResultEventWithCallbackId:initMapSDKcbId dataDict:@{@"status":@(status)} errDict:@{@"code":@(iError)} doDelete:YES];
 }
 
 #pragma mark -
@@ -3411,6 +3716,37 @@ typedef enum {
         }
         [cbDict setObject:[NSNumber numberWithBool:YES] forKey:@"status"];
 
+        NSString *country = addCompent.country;
+        if (![country isKindOfClass:[NSString class]] || country.length==0) {
+            country = @"";
+        }
+        NSString *countryCode = addCompent.countryCode;
+        if (![countryCode isKindOfClass:[NSString class]] || countryCode.length==0) {
+            countryCode = @"";
+        }
+        NSString *adCode = addCompent.adCode;
+        if (![adCode isKindOfClass:[NSString class]] || adCode.length==0) {
+            adCode = @"";
+        }
+        NSString *businessCircle = result.businessCircle;
+        if (![businessCircle isKindOfClass:[NSString class]] || businessCircle.length==0) {
+            businessCircle = @"";
+        }
+        NSString *sematicDescription = result.sematicDescription;
+        if (![sematicDescription isKindOfClass:[NSString class]] || sematicDescription.length==0) {
+            sematicDescription = @"";
+        }
+        NSString *cityCode = result.cityCode;
+        if (![cityCode isKindOfClass:[NSString class]] || cityCode.length==0) {
+            cityCode = @"";
+        }
+        [cbDict setObject:country forKey:@"country"];
+        [cbDict setObject:countryCode forKey:@"countryCode"];
+        [cbDict setObject:adCode forKey:@"adCode"];
+        [cbDict setObject:businessCircle forKey:@"businessCircle"];
+        [cbDict setObject:sematicDescription forKey:@"sematicDescription"];
+        [cbDict setObject:cityCode forKey:@"cityCode"];
+        
         NSArray *poiAry = result.poiList;
         NSMutableArray *poiInfoAry = [NSMutableArray array];
         for (BMKPoiInfo *poiInfo in poiAry) {
@@ -3557,6 +3893,9 @@ typedef enum {
 }
 
 - (void)selectBubbleIllus:(UIButton *)btn {//点击气泡上的插图事件
+    //扩展属性
+    NSString *setBubbleCbidStr = (NSString *)objc_getAssociatedObject(btn, &extendButtonKey);
+    NSInteger setBubbleCbid = [setBubbleCbidStr integerValue];
     if (setBubbleCbid >= 0) {
         NSMutableDictionary *sendDict = [NSMutableDictionary dictionaryWithCapacity:1];
         [sendDict setObject:[NSNumber numberWithInteger:btn.tag] forKey:@"id"];
@@ -3741,6 +4080,9 @@ typedef enum {
             UIButton *tap = [UIButton buttonWithType:UIButtonTypeCustom];
             tap.frame = asyImg.bounds;
             tap.tag= tempAnnot.annoId;
+            //扩展属性
+            NSString *clickBubbleCbid = [NSString stringWithFormat:@"%zi",tempAnnot.bubbleClickCbid];
+            objc_setAssociatedObject(tap, &extendButtonKey, clickBubbleCbid, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             [tap addTarget:self action:@selector(selectBubbleIllus:) forControlEvents:UIControlEventTouchDown];
             [asyImg addSubview:tap];
         } else {
@@ -3761,6 +4103,9 @@ typedef enum {
             UIButton *tap = [UIButton buttonWithType:UIButtonTypeCustom];
             tap.frame = illusImg.bounds;
             tap.tag= tempAnnot.annoId;
+            //扩展属性
+            NSString *clickBubbleCbid = [NSString stringWithFormat:@"%zi",tempAnnot.bubbleClickCbid];
+            objc_setAssociatedObject(tap, &extendButtonKey, clickBubbleCbid, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             [tap addTarget:self action:@selector(selectBubbleIllus:) forControlEvents:UIControlEventTouchDown];
             [illusImg addSubview:tap];
         }
@@ -3952,7 +4297,13 @@ typedef enum {
     if (autofit) {
         [self mapViewFitPolyLine:polyLine];
     }
+    if (!_allRoutes) {
+        _allRoutes = [NSMutableDictionary dictionaryWithCapacity:1];
+    }
     [self.allRoutes setObject:polyLine forKey:routeId];
+    if (!_routeNodeSet) {
+        _routeNodeSet = [NSMutableDictionary dictionaryWithCapacity:1];
+    }
     [self.routeNodeSet setObject:allRouteNode forKey:routeId];
 }
 
@@ -4016,7 +4367,13 @@ typedef enum {
     if (autofit) {
         [self mapViewFitPolyLine:polyLine];
     }
+    if (!_allRoutes) {
+        _allRoutes = [NSMutableDictionary dictionaryWithCapacity:1];
+    }
     [self.allRoutes setObject:polyLine forKey:routeId];
+    if (!_routeNodeSet) {
+        _routeNodeSet = [NSMutableDictionary dictionaryWithCapacity:1];
+    }
     [self.routeNodeSet setObject:allRouteNode forKey:routeId];
 }
 
@@ -4087,7 +4444,13 @@ typedef enum {
     if (autofit) {
         [self mapViewFitPolyLine:polyLine];
     }
+    if (!_allRoutes) {
+        _allRoutes = [NSMutableDictionary dictionaryWithCapacity:1];
+    }
     [self.allRoutes setObject:polyLine forKey:routeId];
+    if (!_routeNodeSet) {
+        _routeNodeSet = [NSMutableDictionary dictionaryWithCapacity:1];
+    }
     [self.routeNodeSet setObject:allRouteNode forKey:routeId];
 }
 

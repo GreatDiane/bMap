@@ -42,7 +42,7 @@ public class MapOverlay {
 	private JsParamsUtil mJsParamsUtil;
 	private MapOpen mMap;
 	private Map<Integer, Annotation> mMarkerMap;
-	private Map<Integer, Annotation> mMoveMarkerMap;
+	private Map<Integer, Annotation> mMoveMarkerMap;//todo
 	private Map<Integer, Bubble> mBubbleMap;
 	private Map<Integer, Billboard> mBillboardMap;
 	private InfoWindow mInfoWindow;
@@ -79,9 +79,15 @@ public class MapOverlay {
 		}
 	}
 
-	public boolean isAnnotationExist(int id) {
+	public boolean isAnnotationExist(int id) {//todo
 		if (mMarkerMap != null) {
 			Annotation annotation = mMarkerMap.get(id);
+			if (annotation != null) {
+				return true;
+			}
+		}
+		if (mMoveMarkerMap != null) {
+			Annotation annotation = mMoveMarkerMap.get(id);
 			if (annotation != null) {
 				return true;
 			}
@@ -180,7 +186,7 @@ public class MapOverlay {
 
 	public void removeOverlay(UZModuleContext moduleContext) {
 		List<Integer> list = mJsParamsUtil.removeOverlayIds(moduleContext);
-		if (list != null) {
+		if (list != null && list.size() > 0) {
 			Annotation annotation = null;
 			Billboard billboard = null;
 			for (int i : list) {
@@ -205,6 +211,8 @@ public class MapOverlay {
 					}
 				}
 			}
+		}else {
+			mMap.getBaiduMap().clear();//清空所有标注物
 		}
 	}
 

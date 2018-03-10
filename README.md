@@ -7,7 +7,12 @@ APICloud 的 bMap 模块是对百度地图移动端开放 SDK 进行的一次封
 # **模块接口文档**
 
 
-<p style="color: #ccc; margin-bottom: 30px;">来自于：APICloud 官方</p>
+/*
+Title: bMap
+Description: bMap
+*/
+
+<p style="color: #ccc; margin-bottom: 30px;">来自于：APICloud 官方<a style="background-color: #95ba20; color:#fff; padding:4px 8px;border-radius:5px;margin-left:30px; margin-bottom:0px; font-size:12px;text-decoration:none;" target="_blank" href="//www.apicloud.com/mod_detail/bMap">立即使用</a></p>
 
 ## 基础类
 
@@ -30,6 +35,9 @@ APICloud 的 bMap 模块是对百度地图移动端开放 SDK 进行的一次封
 [getCenter](#getCenter)
 [setZoomLevel](#setZoomLevel)
 [getZoomLevel](#getZoomLevel)
+[setMaxAndMinZoomLevel](#setMaxAndMinZoomLevel)
+[getShowMapPoi](#getShowMapPoi)
+[setShowMapPoi](#setShowMapPoi)
 [setMapAttr](#setMapAttr)
 [setRotation](#setRotation)
 [setOverlook](#setOverlook)
@@ -49,6 +57,18 @@ APICloud 的 bMap 模块是对百度地图移动端开放 SDK 进行的一次封
 [startSearchGPS](#startSearchGPS)
 [stopSearchGPS](#stopSearchGPS)
 [getCurrentLocation](#getCurrentLocation)
+
+</div>
+
+
+## 室内地图
+
+<div class="outline">
+
+[setIndoorMap](#setIndoorMap)
+[addIndoorListener](#addIndoorListener)
+[switchIndoorMapFloor](#switchIndoorMapFloor)
+[indoorSearch](#indoorSearch)
 
 </div>
 
@@ -144,14 +164,14 @@ APICloud 的 bMap 模块是对百度地图移动端开放 SDK 进行的一次封
 
 bMap 模块封装了百度地图的原生 SDK，集成了百度地图常用基本接口；手机版原生地图，不同于 js 地图，相对于js地图而言，本模块封装的原生手机地图更加流畅迅速、动画效果更加逼真。使用此模块可轻松把百度地图集成到自己的app内，实现百度地图常用的定位、关键字搜索、周边搜索、自定义标注及气泡、查公交路线等各种功能；另外本模块已支持百度地图离线版本。
 
-若某些带UI的接口不能满足开发设计需求，开发者（借助于原生开发者）可在本模块基础上修改少量原生代码，随心所欲的自定义百度地图所具有的原生功能，简单、轻松、快捷、高效、迅速集成百度地图，将自己的 app 和百度地图实现无缝链接。模块原生代码开源地址为：[https://github.com/apicloudcom/bMap](https://github.com/apicloudcom/bMap)
+若某些带UI的接口不能满足开发设计需求，开发者（借助于原生开发者）可在本模块基础上修改少量原生代码，随心所欲的自定义百度地图所具有的原生功能，简单、轻松、快捷、高效、迅速集成百度地图，将自己的 app 和百度地图实现无缝链接。
 
 **模块使用攻略**
 
 ***注意事项***
 
 - 本模块内带动画效果的接口不可同时调用（两个以上），需要设置延迟（`setTimeout`）处理。
-- bMap 模块是 baiduMap 模块的优化版。不可与baiduMap、baiduLocation、baiduPanorama模块同时使用
+- bMap 模块是 baiduMap 模块的优化版。不可与baiduMap、aMapNavigation, aMap模块同时使用
 - **需要在APICloud 网站控制台编译界面选择定位权限。**
 - 使用本模块需云编译安装包，或以自定义 loader 的形式使用
 - 离线地图功能属于“基础地图”这个功能模块，开发者使用时请注意选择
@@ -176,11 +196,15 @@ bMap 模块封装了百度地图的原生 SDK，集成了百度地图常用基�
 
     **ios_api_key**：在百度地图开放平台申请的 iOS 端 AK
  
- ***百度ak申请方法见[百度地图接入指南](http://docs.apicloud.com/APICloud/开放平台接入指南/baidu)***
+ ***百度ak申请方法见[百度地图接入指南](//docs.apicloud.com/APICloud/开放平台接入指南/baidu),[申请百度key注意事项](https://community.apicloud.com/bbs/forum.php?mod=viewthread&tid=20073&extra=page%3D3%26filter%3Dtypeid%26typeid%3D63)***
  
  ***注意：在使用搜索类接口时，请确保您的 ak 是通过百度认证的状态，否则会报异常***
  
-## **模块接口**
+ **iOS如果需要自定义当前位置图标需要自定义模块**
+
+制作方法如下：下载 bMap 模块 zip 包并解压（请到[APICloud网站](https://docs.apicloud.com/Client-API/Open-SDK/bMap)下载），将自己的图片放到 zip 包内 target 目录下的 mapapi.bundle里的images目录内。然后重新压缩为 zip 包文件上传自定义模块，云编译时勾选该模块。请到[APICloud网站](https://docs.apicloud.com/Client-API/Open-SDK/bMap)下载安卓平台模块包。
+ 
+##**模块接口**
 
 <div id="initMapSDK"></div>
 
@@ -718,14 +742,20 @@ ret：
 ```js
 {
     status: true,              //布尔型；true||false
-    lon: 116.351,              //数字类型；经度
-    lat: 39.283,               //数字类型；纬度
-    address: '',               //字符串类型；地址信息
     province: '',              //字符串类型；省份
     city: '',                  //字符串类型；城市
     district: '',              //字符串类型；县区
     streetName: '',            //字符串类型；街道名
     streetNumber: '',          //字符串类型；街道号
+    country:'',                //字符串类型；国家
+    countryCode:'',            //字符串类型；国家代码
+    adCode:'',                 //字符串类型；行政区域编码
+    businessCircle:'',         //字符串类型；商圈名称
+    sematicDescription:'',     //字符串类型；结合当前位置POI的语义化结果描述
+    cityCode:'',               //字符串类型；城市编码
+    lon: 116.351,              //数字类型；经度
+    lat: 39.283,               //数字类型；纬度
+    address: '',               //字符串类型；地址信息
     poiList:[{                 //数组类型；经纬度点热点列表
        name: '',               //字符串类型；热点名称
        uid: '',                //字符串类型；热点id
@@ -881,6 +911,19 @@ trackingMode：
     - none（标准模式）注：Android平台为指向箭头，iOS平台为圆点
     - follow（跟踪模式）
     - compass（罗盘模式）
+    
+imageName：
+
+- 类型：字符串
+- 描述：（可选项）自定义当前位置图标的图片名称 (android不支持)
+- 注意：使用此模块需要自定义模块，参见“概述”内容
+- 默认值：百度地图默认当前位置图标
+
+imagePath:
+
+- 类型：字符串
+- 描述：(可选项)当前位置显示图标的图片，支持fs,widget (ios不支持)
+- 默认值：百度地图默认当前位置图标
 
 ## 示例代码
 
@@ -1050,6 +1093,114 @@ iOS系统，Android系统
 
 可提供的1.0.0及更高版本
 
+
+<div id="setMaxAndMinZoomLevel"></div>
+
+# **setMaxAndMinZoomLevel**
+
+设置最大缩放比例，取值范围：3-18级
+
+setMaxAndMinZoomLevel({params})
+
+## params
+
+maxLevel：
+
+- 类型：数字
+- 描述：（可选项）设置的最大缩放比例
+- 默认：15
+
+minLevel：
+
+- 类型：数字
+- 描述：（可选项）设置的最小缩放比例
+- 默认：10
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.setMaxAndMinZoomLevel({
+   maxLevel: 15,
+	minLevel:10
+});
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.0.0及更高版本
+
+
+<div id="setShowMapPoi"></div>
+
+# **setShowMapPoi**
+
+设定地图是否显示底图 poi 标注(不包含室内图标注)
+
+setShowMapPoi({params})
+
+## params
+
+showMapPoi：
+
+- 类型：布尔
+- 描述：（可选项）是否显示地图 poi
+- 默认值：true
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.setShowMapPoi({
+    showMapPoi: true
+});
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.0.0及更高版本
+
+<div id="getShowMapPoi"></div>
+
+# **getShowMapPoi**
+
+获取地图是否显示底图 poi 标注(不包含室内图标注)，Android系统（不支持）
+
+getShowMapPoi(callback(ret))
+
+## callback(ret)
+
+ret：
+
+- 类型：JSON 对象
+- 内部字段：
+
+```js
+{
+    showMapPoi: true       //布尔类型；是否显示地图 poi
+}
+```
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.getShowMapPoi(function(ret) {
+    alert(ret.showMapPoi);
+});
+```
+
+## 可用性
+
+iOS系统，Android系统（不支持）
+
+可提供的1.0.0及更高版本
+
+
 <div id="setMapAttr"></div>
 
 # **setMapAttr**
@@ -1081,6 +1232,18 @@ scrollEnable：
 
 - 类型：布尔
 - 描述：（可选项）拖动手势是否可以移动地图
+- 默认值：ture
+
+rotateEnabled：
+
+- 类型：布尔
+- 描述：（可选项）拖动手势是否可以旋转地图
+- 默认值：ture
+
+overlookEnabled：
+
+- 类型：布尔
+- 描述：（可选项）拖动手势是否可以改变地图俯视角度
 - 默认值：ture
 
 ## 示例代码
@@ -1865,6 +2028,268 @@ iOS系统，Android系统
 可提供的1.0.0及更高版本
 
 
+<div id="setIndoorMap"></div>
+
+# **setIndoorMap**
+
+打开关闭室内地图
+
+**注意**
+
+1.因路况、卫星图和城市热力图，仅支持20级地图数据显示，室内地图放大到22级，打开路况、卫星图或城市热力图，无相应数据显示。
+
+2.室内图默认是关闭的，通过本接口打开
+
+setIndoorMap({params})
+
+## params
+
+draggable：
+
+- 类型：布尔
+- 描述：（可选项）是否打开室内地图
+- 默认值：true
+
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.setIndoorMap({
+    enable: true
+});
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.0.9及更高版本
+
+<div id="addIndoorListener"></div>
+
+# **addIndoorListener**
+
+添加进出室内地图的监听
+
+addIndoorListener(callback(ret))
+
+
+## callback(ret)
+
+ret：
+
+- 类型：JSON 对象
+- 内部字段：
+
+```js
+{
+    enter: true,           //布尔型；进出室内地图，true：进入
+    strID: ‘’,             //字符串类型；室内ID
+    strFloor:‘’,           //字符串类型；当前楼层
+}
+```
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.addIndoorListener(function(ret) {
+    if (ret.status) {
+        alert(JSON.stringify(ret));
+    }
+});
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.0.9及更高版本
+
+
+<div id="switchIndoorMapFloor"></div>
+
+# **switchIndoorMapFloor**
+
+切换楼层
+
+switchIndoorMapFloor({params},callback(ret,err))
+
+## params
+
+strID：
+
+- 类型：字符串
+- 描述：室内ID
+
+strFloor：
+
+- 类型：字符串
+- 描述：楼层
+
+
+## callback(ret,err)
+
+ret：
+
+- 类型：JSON 对象
+- 内部字段：
+
+```js
+{
+    status: true,         //布尔类型；是否设置成功
+}
+```
+
+err：
+
+- 类型：JSON 对象
+- 内部字段：
+
+```js
+{
+    code: 1                //数字类型；错误码
+                           //1:切换楼层失败
+                           //2:地图还未聚焦到传入的室内图
+                           //3:当前室内图不存在该楼层
+}
+```
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.switchIndoorMapFloor({
+    strFloor:'',
+    strID:''
+});
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.0.9及更高版本
+
+
+<div id="indoorSearch"></div>
+
+# **indoorSearch**
+
+搜索室内地图内容
+
+indoorSearch({params}, callback(ret, err))
+
+## params
+
+strID：
+
+- 类型：字符串
+- 描述：室内ID
+
+keyword：
+
+- 类型：字符串
+- 描述：关键字
+
+pageIndex：
+
+- 类型：数字
+- 描述：分页索引，可选，默认为0
+
+pageCapacity：
+
+- 类型：数字
+- 描述：分页数量，可选，默认为10，最多为50
+
+## callback(ret，err)
+
+ret：
+
+- 类型：JSON 对象
+- 内部字段：
+
+```js
+{
+      status: true,         //布尔型；是否检索成功true||false
+      totalPoiNum: ,        //数字类型；本次POI室内搜索的总结果数
+      currPoiNum: ,         //数字类型；当前页的室内POI结果数(android不支持)
+      pageNum: ,            //数字类型；本次POI室内搜索的总页数
+      pageIndex: ,          //数字类型；当前页的索引(android不支持)
+      poiIndoorInfoList: [{ //数组类型；返回搜索结果列表
+        name: '',           //字符串类型；名称
+        uid: '',            //字符串类型；POIuid
+        indoorId: '',       //字符串类型；该室内POI所在 室内ID
+        floor: '',          //字符串类型；该室内POI所在楼层
+        address: '',        //字符串类型；地址
+        city: '',           //字符串类型；所在城市(android不支持)
+        cid: '',           //字符串类型；所在城市id(ios不支持)
+        phone: '',          //字符串类型；电话号码
+        pt: {               //JOSN对象；位置信息
+           latitude:,       //数字类型；维度
+           longtitude:      //数字类型；经度
+        },                   
+        tag: '',            //字符串类型；POI标签
+        price: '',          //数字类型；价格
+        starLevel: '',      //数字类型；星级（0-50），50表示五星
+        grouponFlag: '',    //数字类型；是否有团购
+        takeoutFlag: 0 ,    //数字类型；是否有外卖
+        waitedFlag: '',     //数字类型；是否排队
+        grouponNum: '',     //数字类型；团购数,-1表示没有团购信息
+      }] 
+}
+```
+
+err：
+
+- 类型：JSON 对象
+- 内部字段：
+
+```js
+{
+    code: 1           //数字类型；错误码
+                      //1（检索词有岐义）
+                      //2（检索地址有岐义）
+                      //3（该城市不支持公交搜索）
+                      //4（不支持跨城市公交）
+                      //5（没有找到检索结果）
+                      //6（起终点太近）
+                      //7（key错误）
+                      //8（网络连接错误）
+                      //9（网络连接超时）
+                      //10（还未完成鉴权，请在鉴权通过后重试）
+                      //11（室内图ID错误）
+                      //12（室内图检索楼层错误）
+                      //13（起终点不在支持室内路线的室内图内）
+                      //14（起终点不在同一个室内）
+                      //15（参数错误）
+}
+```
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.indoorSearch({
+    strID: '',
+    keyword: ''
+}, function(ret, err) {
+    if (ret.status) {
+        alert(JSON.stringify(ret));
+    } else {
+        alert(JSON.stringify(err));
+    }
+});
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.0.0及更高版本
+
+
 <div id="addAnnotations"></div>
 
 # **addAnnotations**
@@ -2527,7 +2952,7 @@ removeAnnotations({params})
 ids：
 
 - 类型：数组
-- 描述：要移除的标注或布告牌id（数字）
+- 描述：（可选项）要移除的标注或布告牌id（数字），若不传或传空则移除所有addAnnotations、addBillboard、addMobileAnnotations接口添加的标注
 
 ## 示例代码
 
