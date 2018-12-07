@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>title</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
+    <style>
+    	body{
+
+    	}
+    </style>
+</head>
+<body>
+	<p>frame4</p>
+	<button type="button" onclick="closeframe()" name="button">closeframe</button>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript">
+var bMap2 =null;
+	apiready = function(){
+		bMap2 = api.require("bMap");
+		bMap2.open({
+			rect: {
+				x: 0,
+				y: 100,
+				w: 320,
+				h: 300
+			},
+			center: {
+				lon: 116.4021310000,
+				lat: 39.9994480000
+			},
+			zoomLevel: 10,
+			showUserLocation: true,
+			fixedOn: api.frameName,
+			fixed: true
+		}, function(ret) {
+			if (ret.status) {
+				alert('地图打开成功');
+			}
+		});
+	};
+
+	function closeframe(){
+			bMap2.close();
+		api.closeFrame({
+		    name: api.frameName
+		});
+
+	}
+</script>
+</html>

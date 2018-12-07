@@ -47,6 +47,7 @@ import com.uzmap.pkg.uzcore.uzmodule.UZModule;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapAnimationOverlay;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapBusLine;
+import com.uzmap.pkg.uzmodules.uzBMap.methods.MapCluster;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapDrawRoute;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapEventListener;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapGPSSignal;
@@ -63,6 +64,8 @@ import com.uzmap.pkg.uzmodules.uzBMap.methods.MapSetcenter;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapSimple;
 import com.uzmap.pkg.uzmodules.uzBMap.mode.Annotation;
 import com.uzmap.pkg.uzmodules.uzBMap.mode.MoveOverlay;
+import com.uzmap.pkg.uzmodules.uzBMap.overlay.BusLineOverlay;
+import com.uzmap.pkg.uzmodules.uzBMap.overlay.OverlayManager;
 import com.uzmap.pkg.uzmodules.uzBMap.utils.JsParamsUtil;
 
 public class UzBMap extends UZModule {
@@ -80,10 +83,14 @@ public class UzBMap extends UZModule {
 	public UzBMap(UZWebView webView) {
 		super(webView);
 	}
+	
+	public void jsmethod_openActivity(UZModuleContext moduleContext) {
+		startActivity(new Intent(context(), MapTestActivity.class));
+	}
 
 	public void jsmethod_open(UZModuleContext moduleContext) {
 		if (mMap == null) {
-			mMap = new MapOpen(this, moduleContext, mContext);
+			mMap = new MapOpen(this, moduleContext, context());
 			mMap.open();
 			new MapEventListener(moduleContext, mMap, false)
 					.addDefaultEventListener();
@@ -128,7 +135,7 @@ public class UzBMap extends UZModule {
 		if (mLocation != null) {
 			mLocation.stopLocation();
 		}
-		mLocation = new MapLocation(moduleContext, mContext);
+		mLocation = new MapLocation(moduleContext, context());
 		mLocation.startLocation();
 	}
 
@@ -165,7 +172,7 @@ public class UzBMap extends UZModule {
 
 	public void jsmethod_setCenter(UZModuleContext moduleContext) {
 		if (mMap != null) {
-			new MapSetcenter(moduleContext, mContext, mMap).setCenter();
+			new MapSetcenter(moduleContext, context(), mMap).setCenter();
 		}
 	}
 
@@ -293,7 +300,7 @@ public class UzBMap extends UZModule {
 		if (mMapGPSSignal == null) {
 			mMapGPSSignal = new MapGPSSignal();
 		}
-		mMapGPSSignal.getGPSSnr(moduleContext, mContext);
+		mMapGPSSignal.getGPSSnr(moduleContext, context());
 	}
 
 	public void jsmethod_stopSearchGPS(UZModuleContext moduleContext) {
@@ -378,8 +385,38 @@ public class UzBMap extends UZModule {
 			if (mMapOverlay == null) {
 				mMapOverlay = new MapOverlay(this, mMap);
 			}
-			mMapOverlay.setBubble(moduleContext);
+			mMapOverlay.setBubble(moduleContext, false);
 		}
+	}
+	
+	/**
+	 * 设置点击标注时弹出的气泡信息
+	 * @param moduleContext
+	 */
+	public void jsmethod_setWebBubble(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			if (mMapOverlay == null) {
+				mMapOverlay = new MapOverlay(this, mMap);
+			}
+			mMapOverlay.setBubble(moduleContext, true);
+		}
+	}
+	
+	
+	/**
+	 * 添加网页气泡点击监听
+	 * @param moduleContext
+	 */
+	public void jsmethod_addWebBubbleListener(UZModuleContext moduleContext) {
+		BMapConfig.getInstance().setAddWebBubble(moduleContext);
+	}
+	
+	/**
+	 * 移除网页气泡点击监听
+	 * @param moduleContext
+	 */
+	public void jsmethod_removeWebBubbleListener(UZModuleContext moduleContext) {
+		BMapConfig.getInstance().setAddWebBubble(null);
 	}
 
 	public void jsmethod_popupBubble(UZModuleContext moduleContext) {
@@ -412,6 +449,46 @@ public class UzBMap extends UZModule {
 			if (mMapOverlay != null) {
 				mMapOverlay.removeOverlay(moduleContext);
 			}
+		}
+	}
+	
+	private MapCluster mMapCluster;
+	/**
+	 * 往地图上添加聚合点
+	 * @param moduleContext
+	 */
+	public void jsmethod_addCluster(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			if (mMapCluster == null) {
+				mMapCluster = new MapCluster(this, mMap);
+			}
+			mMapCluster.addCluster(moduleContext);
+		}
+	}
+	
+	/**
+	 * 移除本次添加的聚合点
+	 * @param moduleContext
+	 */
+	public void jsmethod_removeCluster(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			if (mMapCluster == null) {
+				mMapCluster = new MapCluster(this, mMap);
+			}
+			mMapCluster.removeCluster();
+		}
+	}
+	
+	/**
+	 * 添加聚合点点击事件的监听
+	 * @param moduleContext
+	 */
+	public void jsmethod_addClusterListener(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			if (mMapCluster == null) {
+				mMapCluster = new MapCluster(this, mMap);
+			}
+			mMapCluster.addClusterListener(moduleContext);
 		}
 	}
 
@@ -467,6 +544,8 @@ public class UzBMap extends UZModule {
 			}
 		}
 	}
+	
+	
 
 	@SuppressLint("UseSparseArrays")
 	public void jsmethod_searchRoute(UZModuleContext moduleContext) {
@@ -557,77 +636,77 @@ public class UzBMap extends UZModule {
 
 	public void jsmethod_getHotCityList(UZModuleContext moduleContext) {
 		if (mOffLine == null) {
-			mOffLine = new MapOffLine(mContext);
+			mOffLine = new MapOffLine(context());
 		}
 		mOffLine.getHotCityList(moduleContext);
 	}
 
 	public void jsmethod_getOfflineCityList(UZModuleContext moduleContext) {
 		if (mOffLine == null) {
-			mOffLine = new MapOffLine(mContext);
+			mOffLine = new MapOffLine(context());
 		}
 		mOffLine.getOfflineCityList(moduleContext);
 	}
 
 	public void jsmethod_searchCityByName(UZModuleContext moduleContext) {
 		if (mOffLine == null) {
-			mOffLine = new MapOffLine(mContext);
+			mOffLine = new MapOffLine(context());
 		}
 		mOffLine.searchCityByName(moduleContext);
 	}
 
 	public void jsmethod_getAllUpdateInfo(UZModuleContext moduleContext) {
 		if (mOffLine == null) {
-			mOffLine = new MapOffLine(mContext);
+			mOffLine = new MapOffLine(context());
 		}
 		mOffLine.getAllUpdateInfo(moduleContext);
 	}
 
 	public void jsmethod_getUpdateInfoByID(UZModuleContext moduleContext) {
 		if (mOffLine == null) {
-			mOffLine = new MapOffLine(mContext);
+			mOffLine = new MapOffLine(context());
 		}
 		mOffLine.getUpdateInfoByID(moduleContext);
 	}
 
 	public void jsmethod_start(UZModuleContext moduleContext) {
 		if (mOffLine == null) {
-			mOffLine = new MapOffLine(mContext);
+			mOffLine = new MapOffLine(context());
 		}
 		mOffLine.startDownload(moduleContext);
 	}
 
 	public void jsmethod_update(UZModuleContext moduleContext) {
 		if (mOffLine == null) {
-			mOffLine = new MapOffLine(mContext);
+			mOffLine = new MapOffLine(context());
 		}
 		mOffLine.updateOffLine(moduleContext);
 	}
 
 	public void jsmethod_pause(UZModuleContext moduleContext) {
 		if (mOffLine == null) {
-			mOffLine = new MapOffLine(mContext);
+			mOffLine = new MapOffLine(context());
 		}
 		mOffLine.pauseDownload(moduleContext);
 	}
 
 	public void jsmethod_remove(UZModuleContext moduleContext) {
 		if (mOffLine == null) {
-			mOffLine = new MapOffLine(mContext);
+			mOffLine = new MapOffLine(context());
 		}
 		mOffLine.removeDownload(moduleContext);
 	}
 
 	public void jsmethod_addOfflineListener(UZModuleContext moduleContext) {
 		if (mOffLine == null) {
-			mOffLine = new MapOffLine(mContext);
+			mOffLine = new MapOffLine(context());
 		}
 		mOffLine.addOfflineListener(moduleContext);
 	}
 
 	public void jsmethod_removeOfflineListener(UZModuleContext moduleContext) {
 		if (mOffLine == null) {
-			mOffLine = new MapOffLine(mContext);
+			mOffLine = new MapOffLine(context());
 		}
 		mOffLine.removeOfflineListener();
 	}
@@ -821,7 +900,7 @@ public class UzBMap extends UZModule {
 	
 
 	private boolean isLocationOPen() {
-		LocationManager locationManager = (LocationManager) mContext
+		LocationManager locationManager = (LocationManager) context()
 				.getSystemService(Context.LOCATION_SERVICE);
 		boolean gps = locationManager
 				.isProviderEnabled(LocationManager.GPS_PROVIDER);

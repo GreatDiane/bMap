@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+		<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+		<title>title</title>
+		<link rel="stylesheet" type="text/css" href="../css/api.css"/>
+		<style>
+			body {
+				padding-top: 100px;
+				
+			}
+		</style>
+	</head>
+	<body>
+		<button onclick="startLocation()">
+			startLocation
+		</button>
+		<button onclick="stopLocation()">
+			stopLocation
+		</button>
+		<button onclick="submit()">
+			提交
+		</button>
+		<p>
+			-------------------------
+		</p>
+		<h2>Using the HttpRequest Object</h2>
+		<p>
+			<b>Status:</b>
+			<span id="A1"></span>
+		</p>
+		<p>
+			<b>Status text:</b>
+			<span id="A2"></span>
+		</p>
+		<p>
+			<b>Response:</b>
+			<br />
+			<span id="A3"></span>
+		</p>
+		<button onclick="loadXMLDoc('http://192.168.23.1/exphp/1.php')">
+			Get XML
+		</button>
+	</body>
+	<script type="text/javascript" src="../script/api.js"></script>
+	<script type="text/javascript" src="../script/jquery.min.js"></script>
+	<script type="text/javascript" src="../script/jquery.sha1.js"></script>
+	<script type="text/javascript">
+		var model;
+		var appId = 'A6923535229486';
+		var appKey = 'B9157652-7593-D7E0-13E3-B14962FE7B13';
+		var nowTime = Date.now();
+		var AppKey = $.sha1(appId + "UZ" + appKey + "UZ" + nowTime) + "." + nowTime;
+		var aMapReportLocation;
+		apiready = function() {
+			//			model = api.require('model');
+			//			model.config({
+			//				appKey : 'B9157652-7593-D7E0-13E3-B14962FE7B13',
+			//				host : 'https://d.apicloud.com'
+			//			});
+			aMapReportLocation = api.require('aMapReportLocation');
+		};
+		function startLocation() {
+			aMapReportLocation.startLocation({
+				accuracy : 'battery_saving',
+				filter : 100,
+				autoStop : false,
+				report : {
+					uid : '123456789',
+					url : "http://192.168.13.101:8090",
+					//url : "https://d.apicloud.com/mcm/api/du",
+					interval : 30,
+					type : 'post',
+					//					headerField : {
+					//						//'ContentType' : 'text/html',
+					//						'X-APICloud-AppId' : appId,
+					//						'X-APICloud-AppKey' : AppKey
+					//					}
+					//aesKey : 'apicloud'
+				}
+			}, function(ret) {
+				if (ret.status) {
+					alert("aaa" + JSON.stringify(ret));
+					//console.log(JSON.stringify(ret));
+					//					api.ajax({
+					//						url : 'http://192.168.13.101:8090',
+					//						method : 'POST',
+					//						//dataType : 'text',
+					//						headers : {
+					//							"Content-Type" : "application/x-www-form-urlencoded"
+					//						},
+					//						data : {
+					//							values : {
+					//								"lon" : ret.loc.lon,
+					//								"lat" : ret.loc.lat
+					//							}
+					//						}
+					//					}, function(ret, err) {
+					//						//coding...
+					//						alert("ajaxret" + JSON.stringify(ret));
+					//						alert("ajaxerr" + JSON.stringify(err));
+					//					});
+					//submit();
+				} else {
+					api.alert({
+						msg : '定位失败'
+					});
+				}
+			});
+		}
+
+		function stopLocation() {
+			aMapReportLocation.stopLocation();
+		}
+
+		function submit() {
+			api.ajax({
+				url : 'http://192.168.13.101:8090',
+				//url : "https://d.apicloud.com/mcm/api/du",
+				charset : "utf-8",
+				method : 'post',
+				headers : {
+					//					'X-APICloud-AppId' : appId,
+					//					'X-APICloud-AppKey' : AppKey
+					'Content-Type' : 'application/x-www-form-urlencoded'
+				},
+				//dataType : "text",
+				data : {
+					values : {
+						//						loc : {
+						//							lng : 116.213, //数字类型；经度    longitude
+						//							lat : 39.213 //数字类型；纬度
+						//						}
+						//						loc : {
+						//							"lon" : "116.222", //数字类型；经度    longitude
+						//							"lat" : "44.33" //数字类型；纬度
+						//						}
+						"lon" : "222",
+						"lat" : "111"
+					}
+				}
+			}, function(ret, err) {
+				if (ret) {
+					api.alert({
+						msg : JSON.stringify(ret)
+					});
+				} else {
+					api.alert({
+						msg : JSON.stringify(err)
+					});
+				}
+			});
+		}
+
+		var xmlhttp;
+		function loadXMLDoc(url) {
+			xmlhttp = null;
+			if (window.XMLHttpRequest) {// code for IE7, Firefox, Opera, etc.
+				xmlhttp = new XMLHttpRequest();
+			} else if (window.ActiveXObject) {// code for IE6, IE5
+				xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+			if (xmlhttp != null) {
+				xmlhttp.onreadystatechange = state_Change;
+				xmlhttp.open("POST", url, true);
+				xmlhttp.send("1234567");
+			} else {
+				alert("Your browser does not support XMLHTTP.");
+			}
+		}
+
+		function state_Change() {
+			if (xmlhttp.readyState == 4) {// 4 = "loaded"
+				if (xmlhttp.status == 200) {// 200 = "OK"
+					document.getElementById('A1').innerHTML = xmlhttp.status;
+					document.getElementById('A2').innerHTML = xmlhttp.statusText;
+					document.getElementById('A3').innerHTML = xmlhttp.responseText;
+				} else {
+					alert("Problem retrieving XML data:" + xmlhttp.statusText);
+				}
+			}
+		}
+	</script>
+</html>

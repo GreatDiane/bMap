@@ -6,6 +6,10 @@
  */
 package com.uzmap.pkg.uzmodules.uzBMap.methods;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,7 +30,7 @@ public class MapLocation implements LocationInterface {
 	public MapLocation(UZModuleContext mModuleContext, Context mContext) {
 		this.mModuleContext = mModuleContext;
 		mJsParamsUtil = JsParamsUtil.getInstance();
-		mLocationUtil = new LocationUtil(mContext, this);
+		mLocationUtil = new LocationUtil(mContext, mModuleContext, this);
 	}
 
 	public void startLocation() {
@@ -64,7 +68,7 @@ public class MapLocation implements LocationInterface {
 						|| location.getLocType() == BDLocation.TypeOffLineLocation
 						|| location.getLocType() == BDLocation.TypeCacheLocation) {
 					ret.put("status", true);
-					ret.put("timestamp", System.currentTimeMillis());
+					ret.put("timestamp", dateTimeStringToMillis(location.getTime(), formatDateTimeE));
 					ret.put("lon", location.getLongitude());
 					ret.put("lat", location.getLatitude());
 					ret.put("locationType", getLocType(location));
@@ -84,6 +88,19 @@ public class MapLocation implements LocationInterface {
 			e.printStackTrace();
 		}
 	}
+	
+	private static final String formatDateTimeE = "yyyy-MM-dd HH:mm:ss";
+	private final long dateTimeStringToMillis(String str, String format) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format, Locale.getDefault());
+        long res = 0;
+        try {
+            Date date = dateFormat.parse(str);
+            res = date.getTime();
+        } catch (Exception e) {
+            res = 0;
+        }
+        return res;
+    }
 
 	private String getLocType(BDLocation location) {
 		String locType = "NetWork";

@@ -27,7 +27,7 @@ import com.baidu.mapapi.search.poi.PoiIndoorResult;
 import com.baidu.mapapi.search.poi.PoiResult;
 import com.baidu.mapapi.search.poi.PoiSearch;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
-import com.uzmap.pkg.uzmodules.uzBMap.BusLineOverlay;
+import com.uzmap.pkg.uzmodules.uzBMap.overlay.BusLineOverlay;
 import com.uzmap.pkg.uzmodules.uzBMap.utils.JsParamsUtil;
 
 public class MapBusLine implements OnGetPoiSearchResultListener,

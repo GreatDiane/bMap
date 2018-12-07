@@ -1,0 +1,17 @@
+{
+	modules:[
+		{
+		    name:'eas',
+		    class:'com.uzmap.pkg.uzmodules.uzBMap.EasDelegate'
+		},
+		{
+		    name:'bMap',
+		    class:'com.uzmap.pkg.uzmodules.uzBMap.UzBMap'
+		},
+		{
+			"name":"UIPullRefreshFlash",
+			"class":"com.pulltorefresh.pullRefreshGifFly.PullRefreshGifFly"
+		}
+		
+	]
+}

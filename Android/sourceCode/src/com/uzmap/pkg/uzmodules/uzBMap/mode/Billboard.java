@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils.TruncateAt;
@@ -31,7 +32,9 @@ import com.lidroid.xutils.util.OtherUtils;
 import com.uzmap.pkg.uzcore.UZCoreUtil;
 import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzkit.UZUtility;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapOverlay;
+import com.uzmap.pkg.uzmodules.uzBMap.utils.JsParamsUtil;
 
 public class Billboard {
 	private static final int width = 165;
@@ -55,11 +58,13 @@ public class Billboard {
 	private int maxWidth;
 	private MapOverlay mapOverlay;
 	private Marker marker;
+	private int aWidth;
+	private int aHeight;
 
 	public Billboard(UZModuleContext moduleContext, Context context, int id,
 			Bitmap bgImg, String title, String subTitle, Bitmap icon,
 			String iconStr, int titleSize, int subTitleSize, int titleColor,
-			int subTitleColor, String iconAlign, int maxWidth,
+			int subTitleColor, String iconAlign, int maxWidth,int w, int h,
 			MapOverlay mapOverlay) {
 		this.moduleContext = moduleContext;
 		this.context = context;
@@ -76,6 +81,8 @@ public class Billboard {
 		this.iconAlign = iconAlign;
 		this.maxWidth = maxWidth;
 		this.mapOverlay = mapOverlay;
+		this.aWidth = w;
+		this.aHeight = h;
 	}
 
 	@SuppressWarnings("deprecation")
@@ -83,9 +90,17 @@ public class Billboard {
 		LinearLayout billboardLayout = new LinearLayout(context);
 		LayoutParams layoutParams = null;
 		if (bgImg != null) {
-			billboardLayout.setBackgroundDrawable(new BitmapDrawable(bgImg));
-			layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width),
-					UZCoreUtil.dipToPix(height));
+			if (aWidth == -1 || aHeight == -1) {
+				billboardLayout.setBackgroundDrawable(new BitmapDrawable(bgImg));
+				layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width), UZCoreUtil.dipToPix(height));
+			}else {
+				Bitmap newBitmap = JsParamsUtil.getInstance().createNewBitmap(bgImg, aWidth, aHeight);
+				if (newBitmap != null) {
+					billboardLayout.setBackgroundDrawable(new BitmapDrawable(newBitmap));
+					layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width), UZCoreUtil.dipToPix(height));
+				}
+			}
+			
 		} else {
 			billboardLayout.setBackgroundResource(UZResourcesIDFinder
 					.getResDrawableID("mo_bmap_popupmap"));
@@ -111,16 +126,25 @@ public class Billboard {
 		LinearLayout billboardLayout = new LinearLayout(context);
 		LayoutParams layoutParams = null;
 		if (bgImg != null) {
-			billboardLayout.setBackgroundDrawable(new BitmapDrawable(bgImg));
-			layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width),
-					UZCoreUtil.dipToPix(height));
+			if (aWidth == -1 || aHeight == -1) {
+				billboardLayout.setBackgroundDrawable(new BitmapDrawable(bgImg));
+				layoutParams = new LayoutParams(UZCoreUtil.dipToPix(100),
+						UZCoreUtil.dipToPix(100));
+			}else {
+				Bitmap newBitmap = JsParamsUtil.getInstance().createNewBitmap(bgImg, aWidth, aHeight);
+				if (newBitmap != null) {
+					billboardLayout.setBackgroundDrawable(new BitmapDrawable(newBitmap));
+					layoutParams = new LayoutParams(UZCoreUtil.dipToPix(100),
+							UZCoreUtil.dipToPix(100));
+				}
+			}
 		} else {
 			billboardLayout.setBackgroundResource(UZResourcesIDFinder
 					.getResDrawableID("mo_bmap_popupmap"));
 			layoutParams = new LayoutParams(LayoutParams.WRAP_CONTENT,
 					UZCoreUtil.dipToPix(height));
 		}
-		billboardLayout.setLayoutParams(layoutParams);
+		//billboardLayout.setLayoutParams(layoutParams);
 		billboardLayout.setOrientation(LinearLayout.HORIZONTAL);
 		if (getIconAlign().equals("left")) {
 			if (iconStr != null && !iconStr.isEmpty())

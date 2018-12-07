@@ -12,4 +12,9 @@
 
 @property (nonatomic, assign) NSInteger lineType;
 
+@property (nonatomic, copy) NSString * color;
+@property (nonatomic, assign) float width;
+@property (nonatomic, assign) BOOL dash;
+@property (nonatomic, copy) NSString * textureImg;
+
 @end

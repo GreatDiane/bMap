@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget id="A6923535229486" version="0.0.1">
+	<name>地图</name>
+	<description/>
+	<author email="qa1@apicloud.com" href="http://www.apicloud.com">技术支持-F</author>
+	<content src="index.html"/>
+	
+	<preference name="pageBounce" value="false"/>
+	<preference name="appBackground" value="rgba(0,0,0,0)"/>
+	<preference name="windowBackground" value="rgba(0,0,0,0)"/>
+	<preference name="frameBackgroundColor" value="rgba(0,0,0,0)"/>
+	<preference name="hScrollBarEnabled" value="false"/>
+    <preference name="vScrollBarEnabled" value="false"/>
+	<preference name="autoLaunch" value="true"/>
+	<preference name="autoUpdate" value="true"/>
+	<preference name="smartUpdate" value="false"/>
+	<preference name="debug" value="true"/>
+	<preference name="statusBarAppearance" value="true"/>
+	<preference name="customRefreshHeader" value="UIPullRefreshFlash"/>
+	<meta-data name="com.baidu.lbsapi.API_KEY" value="Ago5S6OcvB8FanCxvVzTnT8NCkSuH49G"/>
+	<meta-data name="com.google.android.geo.API_KEY" value="AIzaSyCqdqoiRnxWfByyJhV31a2znRAVAZia9u8"/>
+	<permission name="location"/>
+	<permission name="internet"/>
+	<access origin="*"/>
+	<!--
+	<preference name="backgroundMode" value="audio|location"/>
+	<feature name="aMapNavigation">
+		<param name="android_api_key" value="38d031e4c1d644dff52d4de3c6b14a93"/>
+		<param name="ios_api_key" value="29de9db45658cbedc6038235bdaa6e3d"/>
+	</feature>
+
+	<feature name="reportLocation">
+	<param name="ios_api_key" value="36MvbG6uDGiupAMgzWYGKtpR1PkeuvUP" />
+	</feature>
+
+		<feature name="aMap">
+			<param name="android_api_key" value="38d031e4c1d644dff52d4de3c6b14a93"/>
+			<param name="ios_api_key" value="c60fc533c70aa043cca4421678e46833"/>
+		</feature>
+
+		<feature name="aMapLBS">
+			<param name="android_api_key" value="38d031e4c1d644dff52d4de3c6b14a93"/>
+			<param name="ios_api_key" value="c60fc533c70aa043cca4421678e46833"/>
+		</feature>
+
+	<feature name="baiduNavigation">
+		<param name="android_api_key" value="Ago5S6OcvB8FanCxvVzTnT8NCkSuH49G"/>
+		<param name="ios_api_key" value="36MvbG6uDGiupAMgzWYGKtpR1PkeuvUP"/>
+	  <param name="ios_tts_appid" value="9370508" />
+	</feature>
+	-->
+	<!--
+	<feature name="googleMap">
+		<param name="ios_api_key" value="AIzaSyDdYnbrqPDPOO0BPIDPdDmf-DYlzqBs09c" />
+	</feature>
+	 -->
+	<feature name="bMap">
+		<param name="android_api_key" value="k7xtpb2CVSxoK42a3l5pPicAm7XGRybK"/>
+		<param name="ios_api_key" value="36MvbG6uDGiupAMgzWYGKtpR1PkeuvUP"/>
+	</feature>
+
+</widget>

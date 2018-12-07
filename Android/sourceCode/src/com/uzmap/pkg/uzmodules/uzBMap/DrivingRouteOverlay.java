@@ -59,8 +59,8 @@ public class DrivingRouteOverlay extends OverlayManager {
                                             .zIndex(10)
                                                     .rotate((360 - step.getDirection()))
                                                             .extraInfo(b)
-                                                                    .icon(BitmapDescriptorFactory
-                                                                            .fromAssetWithDpi("Icon_line_node.png")));
+                                                                    .icon(getNodeMarker() == null ? BitmapDescriptorFactory
+                                                                            .fromAssetWithDpi("Icon_line_node.png") : getNodeMarker()));
                 }
                 // 最后路段绘制出口点
                 if (mRouteLine.getAllStep().indexOf(step) == (mRouteLine
@@ -75,24 +75,30 @@ public class DrivingRouteOverlay extends OverlayManager {
                 }
             }
         }
-
-        if (mRouteLine.getStarting() != null) {
-            overlayOptionses.add((new MarkerOptions())
-                    .position(mRouteLine.getStarting().getLocation())
-                            .icon(getStartMarker() != null ? getStartMarker() :
-                                    BitmapDescriptorFactory
-                                            .fromAssetWithDpi("Icon_start.png")).zIndex(10));
-        }
-        if (mRouteLine.getTerminal() != null) {
-            overlayOptionses
-                    .add((new MarkerOptions())
-                            .position(mRouteLine.getTerminal().getLocation())
-                                    .icon(getTerminalMarker() != null ? getTerminalMarker() :
-                                            BitmapDescriptorFactory
-                                                    .fromAssetWithDpi("Icon_end.png"))
-                                                            .zIndex(10));
-        }
-        // poly line
+        
+        if (showStart()) {
+        		if (mRouteLine.getStarting() != null) {
+                overlayOptionses.add((new MarkerOptions())
+                        .position(mRouteLine.getStarting().getLocation())
+                                .icon(getStartMarker() != null ? getStartMarker() :
+                                        BitmapDescriptorFactory
+                                                .fromAssetWithDpi("Icon_start.png")).zIndex(10));
+            }
+		}
+        
+        if (showEnd()) {
+        		if (mRouteLine.getTerminal() != null) {
+                overlayOptionses
+                        .add((new MarkerOptions())
+                                .position(mRouteLine.getTerminal().getLocation())
+                                        .icon(getTerminalMarker() != null ? getTerminalMarker() :
+                                                BitmapDescriptorFactory
+                                                        .fromAssetWithDpi("Icon_end.png"))
+                                                                .zIndex(10));
+            }
+		}
+        
+        // poly line  画线
         if (mRouteLine.getAllStep() != null
                 && mRouteLine.getAllStep().size() > 0) {
         
@@ -134,8 +140,8 @@ public class DrivingRouteOverlay extends OverlayManager {
                 isDotLine = true;
             }
             PolylineOptions option = new PolylineOptions().points(points).textureIndex(traffics)
-                    .width(7).dottedLine(isDotLine).focus(true)
-                        .color(getLineColor() != 0 ? getLineColor() : Color.argb(178, 0, 78, 255)).zIndex(0);
+                    .width(lineWidth()).dottedLine(dash()).focus(true)
+                        .color(getLineColor()).zIndex(0);
             if (isDotLine) {
                 option.customTextureList(getCustomTextureList());
             }
@@ -162,6 +168,14 @@ public class DrivingRouteOverlay extends OverlayManager {
     public BitmapDescriptor getStartMarker() {
         return null;
     }
+    
+    public BitmapDescriptor getNodeMarker() {
+    		return null;
+    }
+    
+    public BitmapDescriptor getTextureImg() {
+		return null;
+	}
 
     /**
      * 覆写此方法以改变默认绘制颜色
@@ -170,6 +184,23 @@ public class DrivingRouteOverlay extends OverlayManager {
     public int getLineColor() {
         return 0;
     }
+    
+    public boolean showStart() {
+    		return false;
+    }
+    
+    public boolean showEnd() {
+    		return false;
+    }
+    
+    public int lineWidth() {
+    		return 1;
+    }
+    
+    public boolean dash() {
+    		return false;
+    }
+    
     public List<BitmapDescriptor> getCustomTextureList() {
         ArrayList<BitmapDescriptor> list = new ArrayList<BitmapDescriptor>();
         list.add(BitmapDescriptorFactory.fromAsset("Icon_road_blue_arrow.png"));

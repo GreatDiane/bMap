@@ -19,7 +19,9 @@ import android.graphics.Point;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.view.ViewParent;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.AbsoluteLayout;
@@ -87,11 +89,11 @@ public class MapOpen implements LocationInterface {
 		this.mUzBMap = mUzBMap;
 		this.mModuleContext = mModuleContext;
 		this.mContext = mContext;
-		mLocationUtil = new LocationUtil(mContext, this);
+		mLocationUtil = new LocationUtil(mContext, mModuleContext, this);
 		mJsParamsUtil = JsParamsUtil.getInstance();
 	}
 
-	private void requestParentDisallowInterceptTouchEvent(
+	public void requestParentDisallowInterceptTouchEvent(
 			boolean disallowIntercept) {
 		final ViewParent parent = mMapView.getParent();
 		if (parent != null) {
@@ -404,9 +406,9 @@ public class MapOpen implements LocationInterface {
 	}
 
 	public void setCompassPosition(UZModuleContext moduleContext) {
-		// getBaiduMap().getUiSettings().setCompassPosition(
-		// new Point(mJsParamsUtil.controlX(moduleContext), mJsParamsUtil
-		// .controlY(moduleContext)));
+//		getBaiduMap().getUiSettings().setCompassPosition(
+//		new Point(mJsParamsUtil.controlX(moduleContext), mJsParamsUtil
+//		.controlY(moduleContext)));
 	}
 
 	public void setRegion(UZModuleContext moduleContext) {

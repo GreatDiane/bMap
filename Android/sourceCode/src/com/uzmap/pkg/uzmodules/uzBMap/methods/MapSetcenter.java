@@ -28,7 +28,7 @@ public class MapSetcenter implements GeoCoderInterface, LocationInterface {
 			MapOpen mMap) {
 		this.mModuleContext = mModuleContext;
 		this.mMap = mMap;
-		mLocationUtil = new LocationUtil(mContext, this);
+		mLocationUtil = new LocationUtil(mContext, mModuleContext, this);
 		mJsParamsUtil = JsParamsUtil.getInstance();
 	}
 

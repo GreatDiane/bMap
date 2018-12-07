@@ -54,6 +54,7 @@ public class CallBackUtil {
 			String eventType, String dragState) {
 		JSONObject ret = new JSONObject();
 		try {
+			ret.put("id", id);
 			ret.put("dragState", dragState);
 			ret.put("eventType", eventType);
 			moduleContext.success(ret, false);

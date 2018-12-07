@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <title>title</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <style>
+        body {
+            padding: 60px;
+        }
+    </style>
+</head>
+
+<body>
+    <button type="button" onclick="singleLocation()" name="button">singleLocation</button>
+    <button type="button" onclick="aa()" name="button">location</button>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript">
+    // apiready = function() {
+    //     var aMapLBS = api.require('aMapLBS');
+    //     aMapLBS.configManager({
+    //         accuracy: 'hundredMeters',
+    //         filter: 1
+    //     }, function(ret, err) {
+    //         if (ret.status) {
+    //             alert('定位管理器初始化成功！');
+    //         }
+    //     });
+    // };
+
+    function singleLocation() {
+
+        var aMapLBS = api.require('aMapLBS');
+        aMapLBS.singleLocation({
+            timeout: 10
+        }, function(ret, err) {
+            if (ret.status) {
+                alert(JSON.stringify(ret));
+            }
+        });
+    }
+
+    function aa() {
+        var aMapLBS = api.require('aMapLBS');
+        aMapLBS.configManager({
+            accuracy: 'tenMeters',
+            filter: 1
+        }, function(ret, err) {
+            if (ret.status) {
+                aMapLBS.singleAddress({
+                    timeout: 10
+                }, function(ret, err) {
+                    if (ret.status) {
+                        console.log("singleAddress:" + JSON.stringify(ret));
+                        city = ret.address.city;
+                        adcode = ret.address.adcode;
+                        aMapLBS.singleLocation({
+                            timeout: 10
+                        }, function(ret, err) {
+                            if (ret.status) {
+                                console.log("singleLocation:" + JSON.stringify(ret));
+                                carlon = ret.lon;
+                                carlat = ret.lat;
+                                altitude = ret.altitude;
+                            }
+                        })
+                    }
+                })
+            }
+        })
+    }
+</script>
+
+</html>

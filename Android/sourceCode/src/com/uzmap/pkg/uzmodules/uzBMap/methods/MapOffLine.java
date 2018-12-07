@@ -23,7 +23,11 @@ public class MapOffLine implements MKOfflineMapListener {
 
 	@Override
 	public void onGetOfflineMapState(int type, int state) {
-		System.out.println("onGetOfflineMapState");
+		System.out.println("onGetOfflineMapState   type :" + type + "  state :" + state);
+//		type = MKOfflineMap.TYPE_DOWNLOAD_UPDATE;//0
+//		type = MKOfflineMap.TYPE_NETWORK_ERROR;//2
+//		type = MKOfflineMap.TYPE_NEW_OFFLINE;//6
+//		type = MKOfflineMap.TYPE_VER_UPDATE;//4
 		listenerCallBack(mModuleContext, type, state);
 	}
 

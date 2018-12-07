@@ -8,23 +8,39 @@ package com.uzmap.pkg.uzmodules.uzBMap.mode;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.baidu.location.a.l;
+import com.baidu.mapapi.map.BitmapDescriptor;
+import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.lidroid.xutils.BitmapUtils;
 import com.lidroid.xutils.util.OtherUtils;
 import com.uzmap.pkg.uzcore.UZCoreUtil;
 import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzkit.UZUtility;
+import com.uzmap.pkg.uzmodules.uzBMap.BMapConfig;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapOverlay;
+import com.uzmap.pkg.uzmodules.uzBMap.utils.JsParamsUtil;
 
 public class Bubble {
 	private static final int width = 160;
@@ -48,15 +64,19 @@ public class Bubble {
 	private String iconAlign;
 	private int maxWidth;
 	private MapOverlay mapOverlay;
+	private boolean isWebBubble;
+	private int bWidth;
+	private int bHeight;
 
-	public Bubble(UZModuleContext moduleContext, Context context, int id,
+	public Bubble(UZModuleContext moduleContext, Context context, boolean isWebBubble, int id,
 			Bitmap bgImg, String title, String subTitle, Bitmap icon,
 			String iconStr, int titleSize, int subTitleSize, int titleColor,
 			int subTitleColor, String iconAlign, int maxWidth,
-			MapOverlay mapOverlay) {
+			MapOverlay mapOverlay, int width, int height) {
 		this.moduleContext = moduleContext;
 		this.context = context;
 		this.id = id;
+		this.isWebBubble = isWebBubble;
 		this.bgImg = bgImg;
 		this.title = title;
 		this.subTitle = subTitle;
@@ -69,38 +89,141 @@ public class Bubble {
 		this.iconAlign = iconAlign;
 		this.maxWidth = maxWidth;
 		this.mapOverlay = mapOverlay;
+		this.bWidth = width;
+		this.bHeight = height;
+	}
+	
+	private String url;
+	private String data;
+	private int wWidth;
+	private int wHeight;
+	private String bg;
+	public Bubble(UZModuleContext moduleContext, Context context, boolean isWebBubble, int id, String url, String data, int width, int height, String bg) {
+		this.moduleContext = moduleContext;
+		this.context = context;
+		this.id = id;
+		this.isWebBubble = isWebBubble;
+		this.url = url;
+		this.data = data;
+		this.wWidth = width;
+		this.wHeight = height;
+		this.bg = bg;
 	}
 
 	@SuppressWarnings("deprecation")
 	public View bubbleView() {
-		LinearLayout bubbleLayout = new LinearLayout(context);
-		LayoutParams layoutParams = null;
-		if (bgImg != null) {
-			bubbleLayout.setBackgroundDrawable(new BitmapDrawable(bgImg));
-			layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width),
-					UZCoreUtil.dipToPix(height));
-		} else {
-			if (moduleContext.isNull("bgImg")) {
-				bubbleLayout.setBackgroundResource(UZResourcesIDFinder
-						.getResDrawableID("mo_bmap_popupmap"));
+		if (!isWebBubble) {
+			LinearLayout bubbleLayout = new LinearLayout(context);
+			LayoutParams layoutParams = null;
+			if (bgImg != null) {
+				if (bWidth == -1 || bHeight == -1) {
+					bubbleLayout.setBackgroundDrawable(new BitmapDrawable(bgImg));
+					layoutParams = new LayoutParams(UZUtility.dipToPix(width), UZUtility.dipToPix(height));
+				}else {
+					Bitmap newBitmap = JsParamsUtil.getInstance().createNewBitmap(bgImg, bWidth, bHeight);
+					if (newBitmap != null) {
+						bubbleLayout.setBackgroundDrawable(new BitmapDrawable(newBitmap));
+						layoutParams = new LayoutParams(0, 0);
+					}
+				}
+			} else {
+				if (moduleContext.isNull("bgImg")) {
+					bubbleLayout.setBackgroundResource(UZResourcesIDFinder
+							.getResDrawableID("mo_bmap_popupmap"));
+				}
+				layoutParams = new LayoutParams(-2, -2);
 			}
-			layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width),
-					UZCoreUtil.dipToPix(height));
+			bubbleLayout.setLayoutParams(layoutParams);
+			bubbleLayout.setGravity(Gravity.CENTER);
+			bubbleLayout.setOrientation(LinearLayout.HORIZONTAL);
+			if (!getIconAlign().equals("right")) {
+				if (!TextUtils.isEmpty(iconStr)) {
+					bubbleLayout.addView(icon());
+				}
+				bubbleLayout.addView(titleLayout());
+			} else {
+				bubbleLayout.addView(titleLayout());
+				if (!TextUtils.isEmpty(iconStr)) {
+					bubbleLayout.addView(icon());
+				}
+			}
+			return bubbleLayout;
+		}else {
+			RelativeLayout bubbleLayout = new RelativeLayout(context);
+			RelativeLayout.LayoutParams bubbleParams = new RelativeLayout.LayoutParams(UZUtility.dipToPix(wWidth), UZUtility.dipToPix(wHeight));
+			WebView webView = new WebView(context);
+			RelativeLayout.LayoutParams webParams = new RelativeLayout.LayoutParams(-1, -1);
+			if (UZUtility.isHtmlColor(bg)) {
+				bubbleLayout.setBackgroundColor(UZUtility.parseCssColor(bg));
+				webView.setBackgroundColor(UZUtility.parseCssColor(bg));
+			}else {
+				Bitmap bitmap = UZUtility.getLocalImage(moduleContext.makeRealPath(bg));
+				if (bitmap != null) {
+					int width = bitmap.getWidth();
+					int height = bitmap.getHeight();
+					float scaleWidth = ((float) UZUtility.dipToPix(wWidth)) / width;
+				    float scaleHeight = ((float) UZUtility.dipToPix(wHeight)) / height;
+					Matrix matrix = new Matrix();  
+				    matrix.postScale(scaleWidth, scaleHeight);
+				    Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true); 
+					bubbleLayout.setBackgroundDrawable(new BitmapDrawable(newBitmap));
+					webView.setBackgroundDrawable(new BitmapDrawable(newBitmap));
+				}else {
+					BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(UZResourcesIDFinder.getResDrawableID("mo_bmap_popupmap"));
+					Bitmap newBit = bitmapDescriptor.getBitmap();
+					bubbleLayout.setBackgroundDrawable(new BitmapDrawable(newBit));
+					webView.setBackgroundDrawable(new BitmapDrawable(newBit));
+				}
+			}
+			//bubbleLayout.setLayoutParams(bubbleParams);
+			//webView.setLayoutParams(webParams);
+			
+			url = moduleContext.makeRealPath(url);
+			// 这里需要判断url是否/绝对路径开头，如果是，则加上file://
+			if (url != null && url.startsWith("/")) {
+				url = "file://" + url;
+			}
+			if (TextUtils.isEmpty(data)) {// 如果data是空就加载网页
+				webView.loadUrl(url);
+				webView.setWebViewClient(new WebViewClient() {
+					@Override
+					public boolean shouldOverrideUrlLoading(WebView view, String url) {
+						view.loadUrl(url);
+						return true;
+					}
+				});
+			} else {// 否则就加载data数据的片段
+				webView.getSettings().setJavaScriptEnabled(true);
+				webView.getSettings().setDefaultTextEncodingName("utf-8");
+				webView.loadDataWithBaseURL(url, data, "text/html", "utf-8", null);// TODO
+			}
+			webView.setOnTouchListener(new OnTouchListener() {
+				
+				@Override
+				public boolean onTouch(View arg0, MotionEvent event) {
+					
+					if (event.getAction() == MotionEvent.ACTION_DOWN) {
+						if (BMapConfig.getInstance().getAddWebBubble() != null) {
+							try {
+								JSONObject result = new JSONObject();
+								result.put("id", id);
+								BMapConfig.getInstance().getAddWebBubble().success(result, false);
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
+							
+						}
+						return false;
+					}else {
+						return false;
+					}
+					
+				}
+			});
+			bubbleLayout.addView(webView);
+			return bubbleLayout;
 		}
-		bubbleLayout.setLayoutParams(layoutParams);
-		bubbleLayout.setOrientation(LinearLayout.HORIZONTAL);
-		if (!getIconAlign().equals("right")) {
-			if (!TextUtils.isEmpty(iconStr)) {
-				bubbleLayout.addView(icon());
-			}
-			bubbleLayout.addView(titleLayout());
-		} else {
-			bubbleLayout.addView(titleLayout());
-			if (!TextUtils.isEmpty(iconStr)) {
-				bubbleLayout.addView(icon());
-			}
-		}
-		return bubbleLayout;
+		
 	}
 
 	private LinearLayout titleLayout() {
@@ -111,41 +234,39 @@ public class Bubble {
 				mapOverlay.bubbleClickCallBack(getId(), "clickContent");
 			}
 		});
-		LayoutParams layoutParams = new LayoutParams(LayoutParams.WRAP_CONTENT,
-				UZCoreUtil.dipToPix(height));
-		layoutParams.setMargins(UZCoreUtil.dipToPix(10), 0,
-				UZCoreUtil.dipToPix(10), 0);
-		titleLayout.setGravity(Gravity.CENTER);
+		LayoutParams layoutParams = new LayoutParams(-2, -2);
+		//layoutParams.setMargins(UZCoreUtil.dipToPix(10), 0, UZCoreUtil.dipToPix(10), 0);
+		//titleLayout.setGravity(Gravity.CENTER);
 		titleLayout.setLayoutParams(layoutParams);
 		titleLayout.setOrientation(LinearLayout.VERTICAL);
 		titleLayout.addView(title());
-		titleLayout.addView(subTitle());
+		if (!TextUtils.isEmpty(getSubTitle())) {
+			titleLayout.addView(subTitle());
+		}
 		return titleLayout;
 	}
 
 	private TextView title() {
 		TextView title = new TextView(context);
 		title.setSingleLine();
-		title.setEllipsize(TruncateAt.END);
-		title.setMaxWidth(UZCoreUtil.dipToPix(maxWidth) - 2 * iconMarginLeft
-				+ iconW);
+		//title.setEllipsize(TruncateAt.END);
+		//title.setMaxWidth(UZCoreUtil.dipToPix(maxWidth) - 2 * iconMarginLeft + iconW);
 		title.setText(getTitle());
 		title.setTextColor(getTitleColor());
 		title.setTextSize(getTitleSize());
-		title.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+		//title.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
 		return title;
 	}
 
 	private TextView subTitle() {
 		TextView title = new TextView(context);
 		title.setSingleLine();
-		title.setEllipsize(TruncateAt.END);
-		title.setMaxWidth(UZCoreUtil.dipToPix(maxWidth) - 2 * iconMarginLeft
-				+ iconW);
+		//title.setEllipsize(TruncateAt.END);
+		//title.setMaxWidth(UZCoreUtil.dipToPix(maxWidth) - 2 * iconMarginLeft + iconW);
 		title.setText(getSubTitle());
 		title.setTextColor(getSubTitleColor());
 		title.setTextSize(getSubTitleSize());
-		title.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+		//title.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
 		return title;
 	}
 
@@ -160,8 +281,7 @@ public class Bubble {
 		});
 		LayoutParams layoutParams = new LayoutParams(
 				UZCoreUtil.dipToPix(iconW), UZCoreUtil.dipToPix(iconH));
-		layoutParams.setMargins(iconMarginLeft, iconMarginTop, iconMarginLeft,
-				iconMarginTop);
+		layoutParams.setMargins(iconMarginLeft, iconMarginTop, iconMarginLeft, iconMarginTop);
 		layoutParams.gravity = Gravity.CENTER_VERTICAL;
 		icon.setLayoutParams(layoutParams);
 		if (getIcon() != null) {

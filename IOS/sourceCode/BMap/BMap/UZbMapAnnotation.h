@@ -59,7 +59,12 @@ typedef enum {
 @property (nonatomic, assign) CFTimeInterval lastStep;
 @property (nonatomic, assign) NSTimeInterval timeOffset;
 @property (nonatomic, assign) NSInteger bubbleClickCbid;
-@property (nonatomic, assign) id <MovingAnimationDelegate> delegate;
+@property (nonatomic, weak) id <MovingAnimationDelegate> delegate;
+
+@property (nonatomic, assign) float pinSize;
+@property (nonatomic, assign) BOOL drawRoute;
+
+@property (nonatomic, strong) NSDictionary * webBubbleDict; //加载网页的的气泡的样式信息
 
 - (void)moveStep;
 

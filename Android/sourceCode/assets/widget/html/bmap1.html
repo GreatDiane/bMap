@@ -1,0 +1,852 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport"
+	content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+<meta name="format-detection"
+	content="telephone=no,email=no,date=no,address=no">
+<title>Hello APP</title>
+<link rel="stylesheet" type="text/css" href="../css/api.css" />
+<style>
+section {
+	position: relative;
+	top: 400px;
+	margin: 8px;
+	background-color: #fff;
+}
+
+h2 {
+	position: relative;
+	height: 44px;
+	line-height: 44px;
+	color: #888;
+}
+
+div {
+	position: relative;
+	height: 56px;
+	margin: 8px;
+	text-align: center;
+	font-size: 12px;
+	line-height: 56px;
+	color: #fff;
+	background-color: #354399;
+	background-clip: padding;
+	box-shadow: 0 0 1px 1px #ccc;
+	border-radius: 2px;
+}
+
+.active {
+	opacity: 0.7;
+}
+</style>
+</head>
+<body>
+	<section>
+		<!-- <feature name="bMap"> 
+				    <param name="android_api_key" value="L77uO0BZbcH1M6Mjgtf0x7UG"/>  
+				    <param name="ios_api_key" value="CtrMTl2HRuIgfXY2DYueA2Gf"/> 
+			 	 </feature> <-->
+		<h2>百度地图</h2>
+		<div tapmode="active" onclick="fnInitMapSDK()">初始化百度地图引擎(ios系统)
+		</div>
+		<!--<div tapmode="active" onclick="fnGetLocationServices()">
+			获取定位是否开启，及当前 app 获取的定位权限
+			</div>
+			<div tapmode="active" onclick="fnAddEventListener()">
+			监听地图
+			</div>
+			<div tapmode="active" onclick="fnSetLocation()">
+			设置定位状态
+			</div>-->
+		<div tapmode="active" onclick="fnOpens()">打开地图</div>
+		<div tapmode="active" onclick="fnGetOfflineCityList()">
+			获取支持离线下载城市列表</div>
+		<div tapmode="active" onclick="fnClose()">关闭地图</div>
+		<div tapmode="active" onclick="fnShowUserLocation()">
+			是否在地图上显示用户位置</div>
+		<div tapmode="active" onclick="fnGetLocation()">开始定位</div>
+
+		<div tapmode="active" onclick="fnAddAnnotations()">在地图上添加标注信息</div>
+
+		<div tapmode="active" onclick="fnSetBubble()">设置点击标注时弹出的气泡信息</div>
+		<div tapmode="active" onclick="fnSetWebBubble()">
+			设置点击标注时弹出的Web气泡信息</div>
+		<div tapmode="active" onclick="fnSearchRoute()">搜索路线方案</div>
+		<div tapmode="active" onclick="fnDrawRoute()">在地图上显示指定路线</div>
+		<div tapmode="active" onclick="fnGetNameFromCoords()">
+			根据经纬度查找地址信息</div>
+		<div tapmode="active" onclick="fnGetCoordsFromName()">根据地区获得经纬度
+		</div>
+		<div tapmode="active" onclick="fnAddBillboard()">添加布告牌</div>
+		<!--
+			<div tapmode="active" onclick="fnGetAnnotationCoords()">
+				获取指定标注的经纬度
+			</div>
+			<div tapmode="active" onclick="fnSetAnnotationCoords()">
+				设置某个已添加标注的经纬度
+			</div>
+			<div tapmode="active" onclick="fnAnnotationExist()">
+				判断标注是否存在
+			</div>
+			
+			<div tapmode="active" onclick="fnPopupBubble()">
+				弹出指定标注的气泡
+			</div>
+			<div tapmode="active" onclick="fnAddBillboard()">
+				在地图上添加布告牌
+			</div>
+			<div tapmode="active" onclick="fnAddMobileAnnotations()">
+				在地图上添加可移动、旋转的标注图标
+			</div>
+			<div tapmode="active" onclick="fnMoveAnnotation()">
+				移动地图上已添加的可移动、旋转的标注图标
+			</div>
+			<div tapmode="active" onclick="fnRemoveAnnotations()">
+				移除指定 id 的标注（可移动、不可移动）或布告牌
+			</div>-->
+		<div tapmode="active" onclick="fnAddCluster()">往地图上添加聚合点</div>
+		<div tapmode="active" onclick="fnRemoveCluster()">移除本次添加的聚合点</div>
+		<div tapmode="active" onclick="fnAddClusterListener()">
+			添加聚合点点击事件的监听</div>
+		<div tapmode="active" onclick="fnCloseBubble()">删除指定标注的气泡</div>
+		<div tapmode="active" onclick="fnAddOfflineListener()">
+			监听离线地图相关事件</div>
+		<div tapmode="active" onclick="fnStart()">启动下载指定城市 id 的离线地图</div>
+		<div tapmode="active" onclick="fnAddLine()">开始画线</div>
+		<div tapmode="active" onclick="fnSetZoomLevel()">设置地图缩放等级</div>
+		<div tapmode="active" onclick="fnGetZoomLevel()">获取地图缩放等级</div>
+		<div tapmode="active" onclick="fnSetMaxAndMinZoomLevel()">
+			设置地图缩放值（最大和最小）</div>
+
+		<div tapmode="active" onclick="fnSetShowMapPoi()">
+			设定地图是否显示底图poi标注</div>
+		<div tapmode="active" onclick="fnGetShowMapPoi()">
+			获取地图是否显示底图poi标注</div>
+		<div tapmode="active" onclick="fnSetMapAttr()">设置地图相关属性</div>
+		--------室内地图---------------------------------------
+		<div tapmode="active" onclick="fnSetIndoorMap()">打开关闭室内地图</div>
+		<div tapmode="active" onclick="fnAddIndoorListener()">
+			添加进出室内地图的监听</div>
+		<div tapmode="active" onclick="fnSwitchIndoorMapFloor()">切换楼层</div>
+		<div tapmode="active" onclick="fnIndoorSearch()">搜索室内地图内容</div>
+
+	</section>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript">
+	//		window.apiready = function() { 
+	//			setTimeout(function() {
+	//				fnAddBillboard();
+	//				alert('追加成功！');
+	//			}, 10000);
+	//		}
+	function fnInitMapSDK() {
+		var map = api.require('bMap');
+		map.initMapSDK(function(ret, err) {
+			if (ret.status) {
+				alert('初始化成功！');
+			} else {
+				alert('错误码：' + err.code);
+			}
+		});
+	};
+	function fnAddLine() {
+		var map = api.require('bMap');
+		map.addLine({
+			id : 1,
+			styles : {
+				borderColor : '#FF0000',
+				borderWidth : 3
+			},
+			points : [ {
+				lon : 116.39432327,
+				lat : 39.98963192
+			}, {
+				lon : 116.49432328,
+				lat : 39.98963192
+			}, {
+				lon : 116.39432327,
+				lat : 39.88933191
+			} ]
+		});
+	};
+
+	function fnGetLocationServices() {
+		var bMap = api.require('bMap');
+		bMap.getLocationServices(function(ret, err) {
+			if (ret.enable) {
+				alert(JSON.stringify(ret));
+			} else {
+				alert("未开启定位功能！");
+			}
+		});
+	};
+	function fnAddEventListener() {
+		var aMap = api.require('bMap');
+		aMap.addEventListener({
+			name : 'zoom'
+		}, function(ret) {
+			alert(JSON.stringify(ret));
+		});
+	};
+	function fnSetLocation() {
+		var bMap = api.require('bMap');
+		bMap.setLocation({
+			enable : true
+		});
+	};
+	function fnOpens() {
+		var map = api.require('bMap');
+		map.open({
+			rect : {
+				x : 0,
+				y : 50,
+				w : api.winWidth,
+				h : 400
+			},
+			zoomLevel : 10, //设置缩放等级
+			showUserLocation : true,
+			fixedOn : api.frameName,
+			fixed : false
+		}, function(ret) {
+			if (ret.status = 'true') {
+				//					map.addBillboard({
+				//						id : 4,
+				//						coords : {
+				//							lon : 116.4021310000,
+				//							lat : 39.9994480000
+				//						},
+				//						//bgImg : 'widget://image/jt.png',
+				//						content : {
+				//							title : '大标题大标题大标题大标题',
+				//							subTitle : '概述内容概述内容概述内容',
+				//							//illus : 'http://ico.ooopic.com/ajax/iconpng/?id=145044.png'
+				//							illus:'widget://image/address1.png'
+				//						},
+				//						styles : {
+				//							titleColor : '#000',
+				//							titleSize : 16,
+				//							subTitleColor : '#999',
+				//							subTitleSize : 12,
+				////							illusAlign : 'left'
+				//						}
+				//					}, function(ret) {
+				//						if (ret) {
+				//							alert(JSON.stringify(ret));
+				//						}
+				//					});
+			}
+		});
+	};
+	function fnGetOfflineCityList() {
+		var map = api.require('bMap');
+		map.getOfflineCityList(function(ret) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	};
+	function fnGetAllUpdateInfo() {
+		var map = api.require('bMap');
+		map.getAllUpdateInfo(function(ret) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	};
+	function fnCloseWin() {
+		api.closeWin();
+	};
+	function fnClose() {
+		var map = api.require('bMap');
+		map.close();
+	};
+	function fnShowUserLocation() {
+		var map = api.require('bMap');
+		map.showUserLocation({
+			isShow : true, //是否显示用户位置
+			trackingMode : 'none',//用户当前位置的显示形式
+			imageName : 'location', //ios支持
+			imagePath : 'widget://image/location.png' //android支持
+
+		});
+	}
+	function fnSetZoomLevel() {
+		var bMap = api.require('bMap');
+		bMap.setZoomLevel({
+			level : 5
+		});
+	};
+	function fnGetZoomLevel() {
+		var bMap = api.require('bMap');
+		bMap.getZoomLevel(function(ret, err) {
+			if (ret) {
+				alert(JSON.stringify(ret));
+			} else {
+				alert(JSON.stringify(err));
+			}
+		});
+	};
+	function fnGetLocation() {
+		var bMap = api.require('bMap');
+		bMap.getLocation({
+			accuracy : '100m',
+			autoStop : true,
+			filter : 1,
+			enableLocInForeground : true, //仅支持android
+			notification : //仅支持android
+			{
+				id : 1, //数字类型；为通知栏notifation设置唯一id，必须大于0
+				contentTitle : '通知栏title', //字符串类型；标题
+				contentText : '通知栏text' //字符串类型；内容
+			},
+		}, function(ret, err) {
+			if (ret.status) {
+				alert("开始定位:" + JSON.stringify(ret));
+			} else {
+				alert("开始定位:" + JSON.stringify(err));
+			}
+		});
+	};
+	function fnSearchRoute() {
+		var map = api.require('bMap');
+		map.searchRoute({
+			id : 2,
+			type : 'transit',
+			policy : 'ebus_in_subway_first',
+			start : {
+				lon : 116.3878017416,
+				lat : 39.9827863000
+			},
+			end : {
+				lon : 116.4192830034,
+				lat : 40.0815870097
+			}
+		}, function(ret, err) {
+			if (ret.status) {
+				api.alert({
+					msg : JSON.stringify(ret)
+				});
+				console.log("路线说明:" + JSON.stringify(ret));
+			}
+		});
+	};
+
+	function fnDrawRoute() {
+		var map = api.require('bMap');
+		map.drawRoute({
+			id : 2,
+			autoresizing : true,
+			index : 0,
+			styles : {
+				start : { //（可选项）JSON对象；起点样式配置，不传则不显示
+					icon : 'widget://image/start.png', //（可选项）字符串类型；起点图标，要求本地路径（fs://、widget://）;默认：百度
+					size : 30
+				//（可选项）数字类型；起点图标大小；默认：30
+				},
+				end : { //（可选项）JSON对象；终点样式配置，不传则不显示
+					icon : 'widget://image/end.png', //（可选项）字符串类型；终点图标路径，要求本地路径（fs://、widget://）;默认：百度图标
+					size : 30
+				//（可选项）数字类型；终点图标大小；默认：30  
+				},
+				line : { //（可选项）JSON对象；路线样式配置，不传则显示默认值  
+					color : '#DDA0DD', //（可选项）字符串类型；折线的颜色，支持rgb、rgba、#；默认值：'#000'
+					width : 5, //（可选项）数字类型；折线的宽度，默认：1
+					dash : true, //（可选项）布尔类型；是否显示为虚线；默认：false
+					textureImg : 'widget://image/textureImg.png' //（可选项）字符串类型；纹理图片路径，要求本地路径（fs://、widget://）；默认：无
+				},
+				node : { //（可选项）JSON类型；节点样式，不传则不显示。注意节点并不一定是转弯点。
+					size : 5, //（可选项）数字类型；节点大小；默认：17
+					icon : 'widget://image/node.png' //（可选项）字符串类型；节点图标，要求本地路径（fs://、widget://）;默认：百度图标
+				},
+				busLine : { //（可选项）JSON对象；乘公交路时的线样式配置，不传则以line为准 ，仅当搜索路线类型为 transit 时有效
+					color : '#000000', //（可选项）字符串类型；折线的颜色，支持rgb、rgba、#；默认值：'#000'
+					width : 18, //（可选项）数字类型；折线的宽度，默认：1
+					dash : true, //（可选项）布尔类型；是否显示为虚线；默认：false
+					textureImg : 'widget://image/bus.png' //（可选项）字符串类型；纹理图片路径，要求本地路径（fs://、widget://）；默认：无
+				},
+				subwayLine : { //（可选项）JSON对象；乘坐地铁时的路线样式配置，不传则以line为准 ，仅当搜索路线类型为 transit 时有效
+					color : '#76EE00', //（可选项）字符串类型；折线的颜色，支持rgb、rgba、#；默认值：'#000'
+					width : 18, //（可选项）数字类型；折线的宽度，默认：1
+					dash : true, //（可选项）布尔类型；是否显示为虚线；默认：false
+					textureImg : 'widget://image/subway.png' //（可选项）字符串类型；纹理图片路径，要求本地路径（fs://、widget://）；默认：无
+				},
+				walkLine : { //（可选项）JSON对象；步行时的路线样式配置，不传则以line为准 ，仅当搜索路线类型为 transit 时有效
+					color : '#0000CD', //（可选项）字符串类型；折线的颜色，支持rgb、rgba、#；默认值：'#000'
+					width : 18, //（可选项）数字类型；折线的宽度，默认：1
+					dash : true, //（可选项）布尔类型；是否显示为虚线；默认：false
+					textureImg : 'widget://image/walk.png' //（可选项）字符串类型；纹理图片路径，要求本地路径（fs://、widget://）；默认：无
+				},
+				busNode : { //（可选项）JSON类型；切换为公交时节点样式，不传则显示默认值，仅当搜索路线类型为 transit 时有效
+					size : 17, //（可选项）数字类型；节点大小；默认：17
+					icon : 'widget://image/busN.png' //（可选项）字符串类型；节点图标，要求本地路径（fs://、widget://）;默认：百度图标
+				},
+				subwayNode : { //（可选项）JSON类型；切换为地铁时节点样式，不传则显示默认值，仅当搜索路线类型为 transit 时有效
+					size : 17, //（可选项）数字类型；节点大小；默认：17
+					icon : 'widget://image/subwayN.png' //（可选项）字符串类型；节点图标，要求本地路径（fs://、widget://）;默认：百度图标
+				},
+				walkNode : { //（可选项）JSON类型；切换为步行时节点样式，不传则显示默认值，仅当搜索路线类型为 transit 时有效
+					size : 17, //（可选项）数字类型；节点大小；默认：17
+					icon : 'widget://image/walkN.png' //（可选项）字符串类型；节点图标，要求本地路径（fs://、widget://）;默认：百度图标
+				}
+			}
+		}, function(ret, err) {
+			alert(JSON.stringify(ret));
+		});
+	}
+	function fnGetCoordsFromName() {
+		var map = api.require('bMap');
+		map.getCoordsFromName({
+			city : '北京市',
+			address : '泰翔商务楼'
+		}, function(ret, err) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	};
+	function fnGetNameFromCoords() {
+		var map = api.require('bMap');
+		map.getNameFromCoords({
+			lon : 116.3848,
+			lat : 39.98954
+		}, function(ret, err) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	};
+	function fnAddAnnotations() {
+		var map = api.require('bMap');
+		map.addAnnotations({
+			annotations : [ {
+				id : 1,
+				lon : 116.297,
+				lat : 40.109,
+				size : 30
+			}, {
+				id : 2,
+				lon : 116.29,
+				lat : 40.109,
+				size : 40
+			}, {
+				id : 3,
+				lon : 116.298,
+				lat : 40.11,
+				size : 50
+			} ],
+			icon : 'widget://image/paopao.png',
+			draggable : true
+		}, function(ret) {
+			if (ret) {
+				alert(ret.id);
+			}
+		});
+	};
+	function fnGetAnnotationCoords() {
+		var map = api.require('bMap');
+		map.getAnnotationCoords({
+			id : 2
+		}, function(ret) {
+			if (ret) {
+				api.alert({
+					msg : JSON.stringify(ret)
+				});
+			}
+		});
+	};
+	function fnSetAnnotationCoords() {
+		var map = api.require('bMap');
+		map.setAnnotationCoords({
+			id : 2,
+			lon : 116.39,
+			lat : 40.209
+		});
+	};
+	function fnAnnotationExist() {
+		var map = api.require('bMap');
+		map.annotationExist({
+			id : 2
+		}, function(ret) {
+			if (ret.status) {
+				api.alert({
+					msg : '存在'
+				});
+			}
+		});
+	};
+	function fnSetBubble() {
+		var map = api.require('bMap');
+		map.setBubble({
+			id : 2,
+			bgImg : 'widget://image/paopao.png',
+			content : {
+				title : '大标题',
+				subTitle : '概述内容',
+				illus : 'http://ico.ooopic.com/ajax/iconpng/?id=145044.png'
+			},
+			styles : {
+				titleColor : '#000',
+				titleSize : 16,
+				subTitleColor : '#999',
+				subTitleSize : 12,
+				illusAlign : 'left',
+				w : 500,
+				h : 500
+			}
+		}, function(ret) {
+			if (ret) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	};
+
+	function fnSetWebBubble() {
+		var map = api.require('bMap');
+		map.setWebBubble({
+			id : 1,
+			size : {
+				width : 180,
+				height : 180
+			},
+			bg : 'widget://image/paopao.png',
+			url : 'https://www.baidu.com/',
+		//			    data:'哈哈 < img src="hBiG96B8egigBULxUWcOpA==/109212290980771276.jpg">'
+		}, function(ret) {
+			if (ret) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	};
+	function fnPopupBubble() {
+		var map = api.require('bMap');
+		map.popupBubble({
+			id : 2
+		});
+	};
+	function fnAddBillboard() {
+		var map = api.require('bMap');
+		map.addBillboard({
+			id : 4,
+			coords : {
+				lon : 116.233,
+				lat : 39.134
+			},
+			bgImg : 'widget://image/textureImg.png',
+			content : {
+				title : '添加布告牌',
+				subTitle : '布告牌描述内容id = 4',
+				illus : 'http://ico.ooopic.com/ajax/iconpng/?id=145044.png'
+				//illus : 'widget://image/illus.png'
+			},
+			styles : {
+				titleColor : '#000',
+				titleSize : 16,
+				subTitleColor : '#999',
+				subTitleSize : 12,
+				illusAlign : 'left',
+				w : 70,
+				h : 75
+			}
+		}, function(ret) {
+			if (ret) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	};
+	function fnAddMobileAnnotations() {
+		var map = api.require('bMap');
+		map.addMobileAnnotations({
+			annotations : [ {
+				id : 10,
+				lon : 116.297,
+				lat : 40.109,
+				icon : 'widget://image/address1.png'
+			}, {
+				id : 11,
+				lon : 116.98,
+				lat : 40.109,
+				icon : 'widget://image/address2.png'
+			}, {
+				id : 12,
+				lon : 115.30,
+				lat : 40.109,
+				icon : 'widget://image/address3.png'
+			}, {
+				id : 13,
+				lon : 116.297,
+				lat : 39.109,
+				icon : 'widget://image/address1.png'
+			}, {
+				id : 14,
+				lon : 116.98,
+				lat : 39.109,
+				icon : 'widget://image/address2.png'
+			}, {
+				id : 15,
+				lon : 115.30,
+				lat : 39.109,
+				icon : 'widget://image/address3.png'
+			} ]
+		});
+	};
+	function fnMoveAnnotation() {
+		var map = api.require('bMap');
+		for (var i = 0; i < 6; i++) {
+			map.moveAnnotation({
+				id : 10 + i,
+				duration : 6,
+				end : {
+					lon : 116.3843839609304,
+					lat : 39.98964439091298
+				}
+			}, function(ret, err) {
+				alert(ret.id + '移动结束')
+			});
+		}
+	};
+	function fnRemoveAnnotations() {
+		var map = api.require('bMap');
+		map.removeAnnotations({
+			ids : [ 1, 2, 4, 10, 11, 12, 15 ]
+		});
+	};
+
+	function fnAddCluster() {
+		var map = api.require('bMap');
+		map.addCluster({
+			styles : {
+				size : {
+					w : 32,
+					h : 32
+				},
+				bg : {
+					pointBg : '#9AC0CD',
+					grade : [ 0, 2, 5 ], //android不支持
+					bgs : [ '#FFEC8B', '#BCEE68', '#9AC0CD' ], //黄，绿，蓝  android不支持
+					numberColors : [ '#32CD32', '#EE9A49', '#EE2C2C' ]
+				//绿，橘，红  android不支持
+				}
+			},
+			data : //'widget://res/judian.txt',
+			[ {
+				lon : 116.3366681445,
+				lat : 40.0090994814,
+				title : '苏市民书院',
+				subtitle : '清华大学 约565米',
+				customID : '1'
+			}, {
+				lon : 116.3328027632,
+				lat : 40.0130509160,
+				title : '北京清华大学',
+				subtitle : '中国北京市北京市海淀区',
+				customID : '2'
+			}, {
+				lon : 116.3224141276,
+				lat : 40.0090266749,
+				title : '北京清华大学医院',
+				subtitle : '清华大学医院 约37米',
+				customID : '3'
+			}, {
+				lon : 116.3328027632,
+				lat : 40.0090994814,
+				title : '水魔社区',
+				subtitle : '北京市海淀区燕园街道燕东园西北方向',
+				customID : '4'
+			}, {
+				lon : 116.3293020403,
+				lat : 40.0087801228,
+				title : '水木清华',
+				subtitle : '北京市海淀区清华园街道西北方向',
+				customID : '5'
+			}, {
+				lon : 116.3206342452,
+				lat : 40.0038147047,
+				title : '北大博雅国际酒店',
+				subtitle : '北京市海淀区燕园街道校内社区东北方向',
+				customID : '6'
+			}, {
+				lon : 116.3268773234,
+				lat : 40.0042762810,
+				title : '清华园住宅小区',
+				subtitle : '北京市海淀区燕园街道燕东园东北方向',
+				customID : '7'
+			}, {
+				lon : 116.3235299265,
+				lat : 40.0034379419,
+				title : '阿隆重庆火锅',
+				subtitle : '燕东园北区约113米',
+				customID : '8'
+			}, {
+				lon : 116.3267914927,
+				lat : 40.0014489000,
+				title : '燕东幼儿园',
+				subtitle : '北京市海淀区燕园街道燕东园东南方向',
+				customID : '9'
+			}, {
+				lon : 116.3244765390,
+				lat : 40.0007753675,
+				title : '北京大学附属小学',
+				subtitle : '中国北京市北京市海淀区颐和园路5号',
+				customID : '10'
+			}, {
+				lon : 116.3234894861,
+				lat : 39.9988191265,
+				title : '北京大学物理学院',
+				subtitle : '中国北京市北京市海淀区成府路209号',
+				customID : '11'
+			} ]
+		});
+	}
+
+	function fnRemoveCluster() {
+		var map = api.require('bMap');
+		map.removeCluster();
+	}
+
+	function fnAddClusterListener() {
+		var map = api.require('bMap');
+		map.addClusterListener(function(ret) {
+			api.alert({
+				msg : "添加聚合点事件监听:" + JSON.stringify(ret)
+			});
+		});
+	}
+
+	function fnCloseBubble() {
+		var aMap = api.require('bMap');
+		aMap.closeBubble({
+			id : 2
+		});
+	};
+	function fnStart() {
+		var map = api.require('bMap');
+		map.start({
+			cityID : 1
+		}, function(ret) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	};
+	function fnAddOfflineListener() {
+		var map = api.require('bMap');
+		map.addOfflineListener(function(ret) {
+			switch (ret.type) {
+			case 0: {
+				map.getUpdateInfoByID({
+					cityID : 1
+				}, function(ret) {
+					api.alert({
+						msg : ret.cityInfo.name + "下载进度：" + ret.cityInfo.ratio
+					});
+				});
+			}
+				break;
+			case 1: {
+				alert('检测到离线包个数是：' + ret.state);
+			}
+				break;
+			case 2: {
+				alert('正在解压第state个离线包，导入时会回调此类型');
+			}
+				break;
+			case 3: {
+				alert('有state个错误包，导入完成后会回调此类型');
+			}
+				break;
+			case 4: {
+				alert('id为state的state城市有新版本,可调用update接口进行更新');
+			}
+				break;
+			case 5: {
+				alert('导入成功state个离线包，导入成功后会回调此类型');
+			}
+				break;
+			case 6: {
+				alert('新增离线包');
+			}
+				break;
+			default:
+				break;
+			}
+		});
+	}
+
+	function fnSetMaxAndMinZoomLevel() {
+		var map = api.require('bMap');
+		map.setMaxAndMinZoomLevel({
+			maxLevel : 15,
+			minLevel : 10
+		});
+	}
+
+	function fnSetShowMapPoi() {
+		var map = api.require('bMap');
+		map.setShowMapPoi({
+			showMapPoi : false
+		//是否显示地图 poi
+		});
+	}
+
+	function fnGetShowMapPoi() { //android不支持
+		var map = api.require('bMap');
+		map.getShowMapPoi(function(ret) {
+			alert(ret.showMapPoi);
+		});
+	}
+
+	function fnSetMapAttr() {
+		var map = api.require('bMap');
+		map.setMapAttr({
+			type : 'standard', //标准地图
+			zoomEnable : true, //捏合手势缩放
+			scrollEnable : false, //拖动手势移动
+			rotateEnabled : true, //拖动手势旋转
+			overlookEnabled : true, //拖动手势改变地图俯视
+		});
+	}
+
+	function fnSetIndoorMap() {
+		var map = api.require('bMap');
+		map.setIndoorMap({
+			enable : true
+		});
+	}
+
+	function fnAddIndoorListener() {
+		var map = api.require('bMap');
+		map.addIndoorListener(function(ret) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	}
+
+	function fnSwitchIndoorMapFloor() {
+		var map = api.require('bMap');
+		map.switchIndoorMapFloor({
+			strFloor : '001',
+			strID : '2'
+		});
+	}
+
+	function fnIndoorSearch() {
+		var map = api.require('bMap');
+		map.indoorSearch({
+			strID : '1001',
+			keyword : 'ddd',
+			pageIndex : 0,
+			pageCapacity : 10
+		}, function(ret, err) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+			} else {
+				alert(JSON.stringify(err));
+			}
+		});
+	}
+</script>
+</html>

@@ -12,16 +12,21 @@ import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.model.LatLngBounds;
+import com.baidu.mapapi.search.route.MassTransitRoutePlanOption;
 import com.baidu.mapapi.search.route.PlanNode;
+import com.baidu.mapapi.search.route.TransitRoutePlanOption;
 import com.baidu.mapapi.search.route.DrivingRoutePlanOption.DrivingPolicy;
 import com.baidu.mapapi.search.route.TransitRoutePlanOption.TransitPolicy;
 import com.uzmap.pkg.uzcore.UZCoreUtil;
@@ -265,10 +270,17 @@ public class JsParamsUtil {
 		int id = annoJson.optInt("id");
 		double lon = annoJson.optDouble("lon");
 		double lat = annoJson.optDouble("lat");
+		int size = 30;
+		if (annoJson.isNull("size")) {
+			size = -1;
+		}else {
+			size = annoJson.optInt("size", 30);
+		}
+		
 		String icon = annoIcon(annoJson, defaultIcon);
 		boolean unitDraggable = annoJson.optBoolean("draggable", draggable);
 		return new Annotation(moduleContext, id, new LatLng(lat, lon),
-				createIcon(uzBMap, icon), unitDraggable);
+				createIcon(uzBMap, icon, size), unitDraggable);
 	}
 
 	private String annoIcon(JSONObject annoJson, String defaultIcon) {
@@ -279,15 +291,40 @@ public class JsParamsUtil {
 		return icon;
 	}
 
-	private BitmapDescriptor createIcon(UzBMap uzBMap, String iconPath) {
+	private BitmapDescriptor createIcon(UzBMap uzBMap, String iconPath, int size) {
 		String realPath = uzBMap.makeRealPath(iconPath);
 		Bitmap bitmap = getBitmap(realPath);
 		if (bitmap == null) {
 			int id = UZResourcesIDFinder
 					.getResDrawableID("mo_bmap_icon_gcoding");
 			return BitmapDescriptorFactory.fromResource(id);
+		}else {
+			if (size == -1) {
+				return BitmapDescriptorFactory.fromBitmap(bitmap);
+			}else {
+				Bitmap newBitmap = createNewBitmap(bitmap, size, size);
+				if (newBitmap != null) {
+					return BitmapDescriptorFactory.fromBitmap(newBitmap);
+				}else {
+					int id = UZResourcesIDFinder
+							.getResDrawableID("mo_bmap_icon_gcoding");
+					return BitmapDescriptorFactory.fromResource(id);
+				}
+			}
+			
 		}
-		return BitmapDescriptorFactory.fromBitmap(bitmap);
+	}
+	
+	public Bitmap createNewBitmap(Bitmap bitmap, int newWidth, int newHeight) {
+		int width = bitmap.getWidth();
+		int height = bitmap.getHeight();
+		float scaleWidth = ((float) UZUtility.dipToPix(newWidth)) / width;  
+	    float scaleHeight = ((float) UZUtility.dipToPix(newHeight)) / height;  
+
+		Matrix matrix = new Matrix();  
+	    matrix.postScale(scaleWidth, scaleHeight);
+	    Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true); 
+	    return newBitmap;
 	}
 
 	public int bubbleId(UZModuleContext moduleContext) {
@@ -359,6 +396,22 @@ public class JsParamsUtil {
 		}
 		return UZUtility.parseCssColor("#000");
 	}
+	
+	public int getWidth(UZModuleContext moduleContext) {
+		JSONObject styles = moduleContext.optJSONObject("styles");
+		if (styles == null) {
+			styles = new JSONObject();
+		}
+		return styles.optInt("w", 160);
+	}
+	
+	public int getHeight(UZModuleContext moduleContext) {
+		JSONObject styles = moduleContext.optJSONObject("styles");
+		if (styles == null) {
+			styles = new JSONObject();
+		}
+		return styles.optInt("h", 160);
+	}
 
 	public int bubbleSubTitleSize(UZModuleContext moduleContext) {
 		JSONObject styles = moduleContext.optJSONObject("styles");
@@ -374,6 +427,30 @@ public class JsParamsUtil {
 			return styles.optString("illusAlign", "left");
 		}
 		return "left";
+	}
+	
+	public int bubbleWidth(UZModuleContext moduleContext) {
+		JSONObject styles = moduleContext.optJSONObject("styles");
+		int width = -1;
+		if (styles != null) {
+			if (styles.isNull("w")) {
+				return -1;
+			}
+			return styles.optInt("w", 160);
+		}
+		return width;
+	}
+	
+	public int bubbleHeight(UZModuleContext moduleContext) {
+		JSONObject styles = moduleContext.optJSONObject("styles");
+		int width = -1;
+		if (styles != null) {
+			if (styles.isNull("h")) {
+				return -1;
+			}
+			return styles.optInt("h", 90);
+		}
+		return width;
 	}
 
 	public boolean isBillboardNetIcon(UZModuleContext moduleContext) {
@@ -505,6 +582,50 @@ public class JsParamsUtil {
 		}
 		return transitPolicy;
 	}
+	
+	public MassTransitRoutePlanOption.TacticsIncity getTransInPolicy(UZModuleContext moduleContext){
+		String policy = routePolicy(moduleContext);
+		MassTransitRoutePlanOption.TacticsIncity tacticsIncity = MassTransitRoutePlanOption.TacticsIncity.ETRANS_SUGGEST;
+		switch (policy) {
+		case "ebus_in_time":
+			tacticsIncity = MassTransitRoutePlanOption.TacticsIncity.ETRANS_LEAST_TIME;
+			break;
+		case "ebus_in_transfer":
+			tacticsIncity = MassTransitRoutePlanOption.TacticsIncity.ETRANS_LEAST_TRANSFER;
+			break;
+		case "ebus_in_walk":
+			tacticsIncity = MassTransitRoutePlanOption.TacticsIncity.ETRANS_LEAST_WALK;
+			break;
+		case "ebus_in_no_subway":
+			tacticsIncity = MassTransitRoutePlanOption.TacticsIncity.ETRANS_NO_SUBWAY;
+			break;
+		case "ebus_in_subway_first":
+			tacticsIncity = MassTransitRoutePlanOption.TacticsIncity.ETRANS_SUBWAY_FIRST;
+			break;
+		default:
+			tacticsIncity = MassTransitRoutePlanOption.TacticsIncity.ETRANS_SUGGEST;
+			break;
+		}
+		return tacticsIncity;
+	}
+	
+	public MassTransitRoutePlanOption.TacticsIntercity geTacticsIntercityPolicy(UZModuleContext moduleContext){
+		String policy = routePolicy(moduleContext);
+		MassTransitRoutePlanOption.TacticsIntercity tacticsIntercity = MassTransitRoutePlanOption.TacticsIntercity.ETRANS_LEAST_TIME;
+		switch (policy) {
+		case "ebus_out_price":
+			tacticsIntercity = MassTransitRoutePlanOption.TacticsIntercity.ETRANS_LEAST_PRICE;
+			break;
+		case "ebus_out_time":
+			tacticsIntercity = MassTransitRoutePlanOption.TacticsIntercity.ETRANS_LEAST_TIME;
+			break;
+		default:
+			tacticsIntercity = MassTransitRoutePlanOption.TacticsIntercity.ETRANS_START_EARLY;
+			break;
+		}
+		return tacticsIntercity;
+	}
+	
 
 	public PlanNode routePoint(UZModuleContext moduleContext, String type) {
 		if (!moduleContext.isNull(type)) {
@@ -532,8 +653,7 @@ public class JsParamsUtil {
 		return null;
 	}
 
-	public Bitmap nodeIcon(UZModuleContext moduleContext, UZModule module,
-			String name) {
+	public Bitmap nodeIcon(UZModuleContext moduleContext, UZModule module, String name) {
 		JSONObject styles = moduleContext.optJSONObject("styles");
 		if (!moduleContext.isNull("styles")) {
 			JSONObject start = styles.optJSONObject(name);
@@ -573,5 +693,241 @@ public class JsParamsUtil {
 		DisplayMetrics metric = new DisplayMetrics();
 		act.getWindowManager().getDefaultDisplay().getMetrics(metric);
 		return UZCoreUtil.pixToDip(metric.heightPixels);
+	}
+	
+	public int getIconSize(UZModuleContext moduleContext, String nodeName) {
+		JSONObject styleJson = moduleContext.optJSONObject("styles");
+		if (styleJson == null) {
+			styleJson = new JSONObject();
+		}
+		JSONObject startJson = styleJson.optJSONObject(nodeName);
+		if (startJson == null) {
+			startJson = new JSONObject();
+		}
+		return startJson.optInt("size", 30);
+	}
+	
+	/**
+	 * 是否显示节点
+	 * @param moduleContext
+	 * @param nodeName
+	 * @return
+	 */
+	public boolean showNode(UZModuleContext moduleContext, String nodeName) {
+		if(moduleContext.isNull("styles")) {
+			return false;
+		}else {
+			JSONObject styleJson = moduleContext.optJSONObject("style");
+			if (styleJson.isNull(nodeName)) {
+				return false;
+			}else {
+				return true;
+			}
+		}
+	}
+	
+	/**
+	 * 获取节点标注
+	 * @param moduleContext
+	 * @param node
+	 * @param typeNode
+	 * @return
+	 */
+	public BitmapDescriptor getNodeMarker(UZModuleContext moduleContext, boolean isTransit, String node, String typeNode) {
+		JSONObject styleJson = moduleContext.optJSONObject("styles");
+		if (styleJson == null) {
+			styleJson = new JSONObject();
+		}
+		if (isTransit) {
+			JSONObject typeJson = styleJson.optJSONObject(typeNode);
+			if (typeJson == null) {
+				typeJson = new JSONObject();
+			}
+			String icon = typeJson.optString("icon");
+			if (TextUtils.isEmpty(icon)) {
+				if (TextUtils.equals(typeNode, "busNode")) {
+					return BitmapDescriptorFactory.fromAssetWithDpi("Icon_bus_station.png");
+				}else if (TextUtils.equals(typeNode, "subwayNode")) {
+					return BitmapDescriptorFactory.fromAssetWithDpi("Icon_subway_station.png");
+				}else if (TextUtils.equals(typeNode, "walkNode")) {
+					return BitmapDescriptorFactory.fromAssetWithDpi("Icon_walk_route.png");
+				}
+			}else {
+				return BitmapDescriptorFactory.fromBitmap(UZUtility.getLocalImage(moduleContext.makeRealPath(icon)));
+			}
+		}else {
+			JSONObject nodeJson = styleJson.optJSONObject("node");
+			if (nodeJson != null) {
+				String icon = nodeJson.optString("icon");
+				return BitmapDescriptorFactory.fromBitmap(UZUtility.getLocalImage(moduleContext.makeRealPath(icon)));
+			}else {
+				return BitmapDescriptorFactory.fromAssetWithDpi("Icon_line_node.png");
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 获取新的颜色
+	 * @param moduleContext
+	 * @param node
+	 * @param typeNode
+	 * @return
+	 */
+	public int getLineColor(UZModuleContext moduleContext, boolean isTransit, String node, String typeNode) {
+		JSONObject styleJson = moduleContext.optJSONObject("styles");
+		if (styleJson == null) {
+			styleJson = new JSONObject();
+		}
+		if (isTransit) {
+			if (!styleJson.isNull(typeNode)) {
+				JSONObject typeJson = styleJson.optJSONObject(typeNode);
+				String color = typeJson.optString("color", "#0000FF");
+				return UZUtility.parseCssColor(color);
+			}else if (!styleJson.isNull(node)) {
+				JSONObject nodeJson = styleJson.optJSONObject(node);
+				String color = nodeJson.optString("color", "#0000FF");
+				return UZUtility.parseCssColor(color);
+			}else {
+				return UZUtility.parseCssColor("#0000FF");
+			}
+		}else {
+			JSONObject nodeJson = styleJson.optJSONObject(node);
+			if (nodeJson == null) {
+				nodeJson = new JSONObject();
+			}
+			return UZUtility.parseCssColor(nodeJson.optString("color", "#0000FF"));
+		}
+		
+	}
+	
+	/**
+	 * 线的宽度
+	 * @param moduleContext
+	 * @param node
+	 * @param typeNode
+	 * @return
+	 */
+	public int lineWidth(UZModuleContext moduleContext, boolean isTransit, String node, String typeNode) {
+		JSONObject styleJson = moduleContext.optJSONObject("styles");
+		if (styleJson == null) {
+			styleJson = new JSONObject();
+		}
+		if (isTransit) {
+			if (!styleJson.isNull(typeNode)) {
+				JSONObject typeJson = styleJson.optJSONObject(typeNode);
+				int width = typeJson.optInt("width", 3);
+				return width;
+			}else if (!styleJson.isNull(node)) {
+				JSONObject nodeJson = styleJson.optJSONObject(node);
+				int width = nodeJson.optInt("width", 3);
+				return width;
+			}else {
+				return 3;
+			}
+		}else {
+			JSONObject nodeJson = styleJson.optJSONObject(node);
+			if (nodeJson == null) {
+				nodeJson = new JSONObject();
+			}
+			return nodeJson.optInt("width", 3);
+		}
+		
+	}
+	
+	/**
+	 * 是否为虚线
+	 * @param moduleContext
+	 * @param node
+	 * @param typeNode
+	 * @return
+	 */
+	public boolean dash(UZModuleContext moduleContext, boolean isTransit, String node, String typeNode) {
+		JSONObject styleJson = moduleContext.optJSONObject("styles");
+		if (styleJson == null) {
+			styleJson = new JSONObject();
+		}
+		if (isTransit) {
+			if (!styleJson.isNull(typeNode)) {
+				JSONObject typeJson = styleJson.optJSONObject(typeNode);
+				boolean dash = typeJson.optBoolean("dash", false);
+				return dash;
+			}else if (!styleJson.isNull(node)) {
+				JSONObject nodeJson = styleJson.optJSONObject(node);
+				boolean dash = nodeJson.optBoolean("dash", false);
+				return dash;
+			}else {
+				return false;
+			}
+		}else {
+			JSONObject nodeJson = styleJson.optJSONObject(node);
+			if (nodeJson == null) {
+				nodeJson = new JSONObject();
+			}
+			return nodeJson.optBoolean("dash", false);
+		}
+		
+	}
+	
+	/**
+	 * 纹理图片
+	 * @param moduleContext
+	 * @param node
+	 * @param typeNode
+	 * @return
+	 */
+	public BitmapDescriptor getTextureImg(UZModuleContext moduleContext, boolean isTransit, String node, String typeNode) {
+		JSONObject styleJson = moduleContext.optJSONObject("styles");
+		if (styleJson == null) {
+			styleJson = new JSONObject();
+		}
+		if (isTransit) {
+			if (!styleJson.isNull(typeNode)) {
+				JSONObject typeJson = styleJson.optJSONObject(typeNode);
+				String textureImg = typeJson.optString("textureImg");
+				return BitmapDescriptorFactory.fromBitmap(UZUtility.getLocalImage(moduleContext.makeRealPath(textureImg)));
+			}else if (!styleJson.isNull(node)) {
+				JSONObject nodeJson = styleJson.optJSONObject(node);
+				String textureImg = nodeJson.optString("textureImg");
+				return BitmapDescriptorFactory.fromBitmap(UZUtility.getLocalImage(moduleContext.makeRealPath(textureImg)));
+			}else {
+				return null;
+			}
+		}else {
+			JSONObject nodeJson = styleJson.optJSONObject(node);
+			if (nodeJson == null) {
+				nodeJson = new JSONObject();
+			}
+			String textureImg = nodeJson.optString("textureImg");
+			if (TextUtils.isEmpty(textureImg)) {
+				return null;
+			}else {
+				return BitmapDescriptorFactory.fromBitmap(UZUtility.getLocalImage(moduleContext.makeRealPath(textureImg)));
+			}
+		}
+		
+	}
+	
+	public BitmapDescriptor getStartOrEndMarker(UZModuleContext moduleContext, String node) {
+		JSONObject styleJson = moduleContext.optJSONObject("styles");
+		if (styleJson == null) {
+			styleJson = new JSONObject();
+		}
+		
+		if (styleJson.isNull(node)) {
+			return null;
+		}
+		
+		JSONObject nodeJson = styleJson.optJSONObject(node);
+		String icon = nodeJson.optString("icon");
+		if (TextUtils.isEmpty(icon)) {
+			if (TextUtils.equals(node, "start")) {
+				return BitmapDescriptorFactory.fromAssetWithDpi("Icon_start.png");
+			}else {
+				return BitmapDescriptorFactory.fromAssetWithDpi("Icon_end.png");
+			}
+		}else {
+			return BitmapDescriptorFactory.fromBitmap(UZUtility.getLocalImage(moduleContext.makeRealPath(icon)));
+		}
 	}
 }

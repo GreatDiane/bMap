@@ -52,7 +52,7 @@ public class WalkingRouteOverlay extends OverlayManager {
             for (WalkingRouteLine.WalkingStep step : mRouteLine.getAllStep()) {
                 Bundle b = new Bundle();
                 b.putInt("index", mRouteLine.getAllStep().indexOf(step));
-                if (step.getEntrance() != null) {
+                if (step.getEntrance() != null) {//获取路段起点信息
                     overlayList.add((new MarkerOptions())
                             .position(step.getEntrance().getLocation())
                                     .rotate((360 - step.getDirection()))
@@ -77,7 +77,7 @@ public class WalkingRouteOverlay extends OverlayManager {
             }
         }
         // starting
-        if (mRouteLine.getStarting() != null) {
+        if (mRouteLine.getStarting() != null) {//获取路线起点信息
             overlayList.add((new MarkerOptions())
                     .position(mRouteLine.getStarting().getLocation())
                             .icon(getStartMarker() != null ? getStartMarker() :
@@ -85,7 +85,7 @@ public class WalkingRouteOverlay extends OverlayManager {
                                             .fromAssetWithDpi("Icon_start.png")).zIndex(10));
         }
         // terminal
-        if (mRouteLine.getTerminal() != null) {
+        if (mRouteLine.getTerminal() != null) {//获取路线终点信息
             overlayList
                     .add((new MarkerOptions())
                             .position(mRouteLine.getTerminal().getLocation())
@@ -100,7 +100,7 @@ public class WalkingRouteOverlay extends OverlayManager {
                 && mRouteLine.getAllStep().size() > 0) {
             LatLng lastStepLastPoint = null;
             for (WalkingRouteLine.WalkingStep step : mRouteLine.getAllStep()) {
-                List<LatLng> watPoints = step.getWayPoints();
+                List<LatLng> watPoints = step.getWayPoints();//返回路段所经过的地理坐标集合
                 if (watPoints != null) {
                     List<LatLng> points = new ArrayList<LatLng>();
                     if (lastStepLastPoint != null) {

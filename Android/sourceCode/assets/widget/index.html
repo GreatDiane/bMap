@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<title>地图</title>
+	<style>
+		html {
+			height: 100%;
+			background-color: #fff;
+		}
+
+		body {
+			background-color: #fff;
+			padding: 0;
+			margin: 0;
+			display: -webkit-box;
+			display: -webkit-flex;
+			display: flex;
+			height: 100%;
+			-webkit-box-orient: vertical;
+			-webkit-flex-flow: column;
+			flex-flow: column;
+		}
+	</style>
+</head>
+
+<body>
+	<script>
+		apiready = function() {
+			
+			
+			
+			api.openFrameGroup({
+				name : 'group1',
+				background : '#fff',
+				scrollEnabled : false,
+				rect : {
+					x : 0,
+					y : 0,
+					w : 'auto',
+					h : 'auto'
+				},
+				index : 0,
+				frames : [{
+					name : 'frame1',
+					url : 'html/bmap1.html',
+					bgColor : '#fff'
+				}, {
+					name : 'frame2',
+					url : 'html/frame2.html',
+					bgColor : '#fff'
+				},{
+					name : 'frame3',
+					url : 'html/frame3.html',
+					bgColor : '#fff'
+				}, {
+					name : 'frame4',
+					url : 'html/frame4.html',
+					bgColor : '#fff'
+				}]
+			}, function(ret, err) {
+				var index = ret.index;
+			});
+		}
+	</script>
+</body>
+
+</html>

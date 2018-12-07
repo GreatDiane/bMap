@@ -9,11 +9,15 @@ package com.uzmap.pkg.uzmodules.uzBMap.methods;
 import java.util.List;
 import com.baidu.mapapi.search.geocode.GeoCodeResult;
 import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
+import com.baidu.mapapi.search.route.BikingRouteLine;
+import com.baidu.mapapi.search.route.BikingRoutePlanOption;
 import com.baidu.mapapi.search.route.BikingRouteResult;
 import com.baidu.mapapi.search.route.DrivingRouteLine;
 import com.baidu.mapapi.search.route.DrivingRoutePlanOption;
 import com.baidu.mapapi.search.route.DrivingRouteResult;
 import com.baidu.mapapi.search.route.IndoorRouteResult;
+import com.baidu.mapapi.search.route.MassTransitRouteLine;
+import com.baidu.mapapi.search.route.MassTransitRoutePlanOption;
 import com.baidu.mapapi.search.route.MassTransitRouteResult;
 import com.baidu.mapapi.search.route.OnGetRoutePlanResultListener;
 import com.baidu.mapapi.search.route.PlanNode;
@@ -24,13 +28,19 @@ import com.baidu.mapapi.search.route.TransitRouteResult;
 import com.baidu.mapapi.search.route.WalkingRouteLine;
 import com.baidu.mapapi.search.route.WalkingRoutePlanOption;
 import com.baidu.mapapi.search.route.WalkingRouteResult;
+import com.uzmap.pkg.a.e.n;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzmodules.uzBMap.callback.BikeRoutePlanCallBack;
 import com.uzmap.pkg.uzmodules.uzBMap.callback.BusRoutePlanCallBack;
 import com.uzmap.pkg.uzmodules.uzBMap.callback.DriveRoutePlanCallBack;
+import com.uzmap.pkg.uzmodules.uzBMap.callback.TransitRoutePlanCallBack;
 import com.uzmap.pkg.uzmodules.uzBMap.callback.WalkRoutePlanCallBack;
 import com.uzmap.pkg.uzmodules.uzBMap.geocoder.GeoCoderInterface;
 import com.uzmap.pkg.uzmodules.uzBMap.geocoder.GeoCoderUtil;
 import com.uzmap.pkg.uzmodules.uzBMap.utils.JsParamsUtil;
+
+import android.text.TextUtils;
+import android.util.Log;
 
 public class MapSearchRoute implements OnGetRoutePlanResultListener,
 		GeoCoderInterface {
@@ -39,6 +49,8 @@ public class MapSearchRoute implements OnGetRoutePlanResultListener,
 	private List<DrivingRouteLine> mCarPlans;
 	private List<WalkingRouteLine> mWalkPlans;
 	private List<TransitRouteLine> mBusPlans;
+	private List<BikingRouteLine> mBikePlans;
+	private List<MassTransitRouteLine> mMassTransitPlans;
 	private GeoCoderUtil mGeoCoderUtil;
 	private String mSearchType;
 	private int mSearchID;
@@ -67,13 +79,19 @@ public class MapSearchRoute implements OnGetRoutePlanResultListener,
 		} else if (type.equals("transit")) {
 			this.mStart = start;
 			this.mEnd = end;
-			mGeoCoderUtil = new GeoCoderUtil(this);
-			mGeoCoderUtil.coord2address(
-					mJsParamsUtil.lat(mModuleContext, "start"),
-					mJsParamsUtil.lon(mModuleContext, "start"));
-		} else {
+			//search.transitSearch(new TransitRoutePlanOption().from(start).to(end).policy(mJsParamsUtil.getBusPolicy(mModuleContext)));
+			boolean isSameCity = mModuleContext.optBoolean("isSameCity", true);
+			if (isSameCity) {
+				search.masstransitSearch(new MassTransitRoutePlanOption().from(start).to(end).tacticsIncity(mJsParamsUtil.getTransInPolicy(mModuleContext)));
+			}else {
+				search.masstransitSearch(new MassTransitRoutePlanOption().from(start).to(end).tacticsIntercity(mJsParamsUtil.geTacticsIntercityPolicy(mModuleContext)));
+			}
+			
+		} else if(TextUtils.equals(type, "walk")){
 			search.walkingSearch(new WalkingRoutePlanOption().from(start).to(
 					end));
+		}else if (TextUtils.equals(type, "riding")) {
+			search.bikingSearch(new BikingRoutePlanOption().from(start).to(end).ridingType(0));
 		}
 	}
 
@@ -100,7 +118,32 @@ public class MapSearchRoute implements OnGetRoutePlanResultListener,
 			mBusPlans = callBack.getPlans();
 		}
 	}
+	
+	private boolean isSameCity;
+	@Override
+	public void onGetMassTransitRouteResult(MassTransitRouteResult result) {
+		TransitRoutePlanCallBack callBack = new TransitRoutePlanCallBack();
+		boolean flag = callBack.routePlanCallBack(mModuleContext, result);
+		if (flag) {
+			mMassTransitPlans = callBack.getPlans();
+			if (result.getOrigin().getCityId() == result.getDestination().getCityId()) {
+				isSameCity = true;
+			}else {
+				isSameCity = false;
+			}
+		}
+	}
+	
+	@Override
+	public void onGetBikingRouteResult(BikingRouteResult result) {
+		BikeRoutePlanCallBack callBack = new BikeRoutePlanCallBack();
+		boolean flag = callBack.routePlanCallBack(mModuleContext, result);
+		if (flag) {
+			mBikePlans = callBack.getPlans();
+		}
+	}
 
+	
 	@Override
 	public void onGetWalkingRouteResult(WalkingRouteResult result) {
 		WalkRoutePlanCallBack callBack = new WalkRoutePlanCallBack();
@@ -120,6 +163,18 @@ public class MapSearchRoute implements OnGetRoutePlanResultListener,
 
 	public List<TransitRouteLine> getBusPlans() {
 		return mBusPlans;
+	}
+	
+	public List<MassTransitRouteLine> getMassTransitPlans(){
+		return mMassTransitPlans;
+	}
+	
+	public boolean isSameCity() {
+		return isSameCity;
+	}
+	
+	public List<BikingRouteLine> getBikePlans() {
+		return mBikePlans;
 	}
 
 	public String getSearchType() {
@@ -143,20 +198,9 @@ public class MapSearchRoute implements OnGetRoutePlanResultListener,
 				.city(result.getAddressDetail().city));
 	}
 
-	@Override
-	public void onGetBikingRouteResult(BikingRouteResult arg0) {
-		// TODO Auto-generated method stub  新增方法
-		
-	}
 
 	@Override
 	public void onGetIndoorRouteResult(IndoorRouteResult arg0) {
-		// TODO Auto-generated method stub  新增方法
-		
-	}
-
-	@Override
-	public void onGetMassTransitRouteResult(MassTransitRouteResult arg0) {
 		// TODO Auto-generated method stub  新增方法
 		
 	}

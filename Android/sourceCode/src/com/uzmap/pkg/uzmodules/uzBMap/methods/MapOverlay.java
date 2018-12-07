@@ -14,6 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.view.View;
@@ -136,8 +137,8 @@ public class MapOverlay {
 		}
 	}
 
-	public void setBubble(UZModuleContext moduleContext) {
-		Bubble bubble = createBubble(moduleContext);
+	public void setBubble(UZModuleContext moduleContext, boolean isWebBubble) {
+		Bubble bubble = createBubble(moduleContext, isWebBubble);
 		mBubbleMap.put(bubble.getId(), bubble);
 	}
 
@@ -230,28 +231,44 @@ public class MapOverlay {
 		return billboard.billboardView(icon);
 	}
 
-	private Bubble createBubble(UZModuleContext moduleContext) {
-		Context context = mUzBMap.getContext();
+	private Bubble createBubble(UZModuleContext moduleContext, boolean isWebBubble) {
+		Context context = mUzBMap.context();
 		int bubbleId = mJsParamsUtil.bubbleId(moduleContext);
-		Bitmap bgImg = mJsParamsUtil.bubbleBgImg(moduleContext, mUzBMap);
-		String title = mJsParamsUtil.bubbleTitle(moduleContext);
-		String subTitle = mJsParamsUtil.bubbleSubTitle(moduleContext);
-		Bitmap icon = mJsParamsUtil.bubbleIllus(moduleContext, mUzBMap);
-		String iconStr = mJsParamsUtil.bubbleIllusPath(moduleContext);
-		int titleSize = mJsParamsUtil.bubbleTitleSize(moduleContext);
-		int titleColor = mJsParamsUtil.bubbleTitleColor(moduleContext);
-		int subTitleSize = mJsParamsUtil.bubbleSubTitleSize(moduleContext);
-		int subTitleColor = mJsParamsUtil.bubbleSubTitleColor(moduleContext);
-		String iconAlign = mJsParamsUtil.bubbleIconAlign(moduleContext);
-		int maxWidth = mJsParamsUtil.getScreenWidth(mUzBMap.getContext())
-				- UZCoreUtil.dipToPix(50);
-		return new Bubble(moduleContext, context, bubbleId, bgImg, title,
-				subTitle, icon, iconStr, titleSize, subTitleSize, titleColor,
-				subTitleColor, iconAlign, maxWidth, this);
+		if (!isWebBubble) {
+			Bitmap bgImg = mJsParamsUtil.bubbleBgImg(moduleContext, mUzBMap);
+			String title = mJsParamsUtil.bubbleTitle(moduleContext);
+			String subTitle = mJsParamsUtil.bubbleSubTitle(moduleContext);
+			Bitmap icon = mJsParamsUtil.bubbleIllus(moduleContext, mUzBMap);
+			String iconStr = mJsParamsUtil.bubbleIllusPath(moduleContext);
+			int titleSize = mJsParamsUtil.bubbleTitleSize(moduleContext);
+			int titleColor = mJsParamsUtil.bubbleTitleColor(moduleContext);
+			int subTitleSize = mJsParamsUtil.bubbleSubTitleSize(moduleContext);
+			int subTitleColor = mJsParamsUtil.bubbleSubTitleColor(moduleContext);
+			String iconAlign = mJsParamsUtil.bubbleIconAlign(moduleContext);
+			int maxWidth = mJsParamsUtil.getScreenWidth((Activity)(mUzBMap.context())) - UZCoreUtil.dipToPix(50);
+			int width = mJsParamsUtil.bubbleWidth(moduleContext);
+			int height = mJsParamsUtil.bubbleHeight(moduleContext);
+			return new Bubble(moduleContext, context, isWebBubble, bubbleId, bgImg, title,
+					subTitle, icon, iconStr, titleSize, subTitleSize, titleColor,
+					subTitleColor, iconAlign, maxWidth, this, width, height);
+		}else {
+			String url = moduleContext.optString("url");
+			String data = moduleContext.optString("data");
+			JSONObject sizeJson = moduleContext.optJSONObject("size");
+			if (sizeJson == null) {
+				sizeJson = new JSONObject();
+			}
+			int width = sizeJson.optInt("width", 50);
+			int height = sizeJson.optInt("height", 50);
+			String bg = moduleContext.optString("bg");
+			Bubble bubble = new Bubble(moduleContext, context, isWebBubble, bubbleId, url, data, width, height, bg);
+			return bubble;
+		}
+		
 	}
 
 	private Billboard createBillboard(UZModuleContext moduleContext) {
-		Context context = mUzBMap.getContext();
+		Context context = mUzBMap.context();
 		int bubbleId = mJsParamsUtil.bubbleId(moduleContext);
 		Bitmap bgImg = mJsParamsUtil.bubbleBgImg(moduleContext, mUzBMap);
 		String title = mJsParamsUtil.bubbleTitle(moduleContext);
@@ -263,11 +280,12 @@ public class MapOverlay {
 		int subTitleSize = mJsParamsUtil.bubbleSubTitleSize(moduleContext);
 		int subTitleColor = mJsParamsUtil.bubbleSubTitleColor(moduleContext);
 		String iconAlign = mJsParamsUtil.bubbleIconAlign(moduleContext);
-		int maxWidth = mJsParamsUtil.getScreenWidth(mUzBMap.getContext())
-				- UZCoreUtil.dipToPix(50);
+		int maxWidth = mJsParamsUtil.getScreenWidth((Activity)mUzBMap.context()) - UZCoreUtil.dipToPix(50);
+		int width = mJsParamsUtil.getWidth(moduleContext);
+		int height = mJsParamsUtil.getHeight(moduleContext);
 		return new Billboard(moduleContext, context, bubbleId, bgImg, title,
 				subTitle, icon, iconStr, titleSize, subTitleSize, titleColor,
-				subTitleColor, iconAlign, maxWidth, this);
+				subTitleColor, iconAlign, maxWidth, width, height, this);
 	}
 
 	private void addMarkerClickListener() {
@@ -283,9 +301,9 @@ public class MapOverlay {
 			@Override
 			public boolean onMarkerClick(Marker marker) {
 				int id = marker.getZIndex();
-				if (isBillBord(marker)) {
+				if (isBillBord(marker)) {//布告牌
 					billClickCallBack(id);
-				} else {
+				} else {//标注
 					annoClickCallBack(id);
 					showBubble(marker);
 				}
@@ -336,10 +354,11 @@ public class MapOverlay {
 
 	private void showBubble(Marker marker) {
 		int id = marker.getZIndex();
+		int height = marker.getIcon().getBitmap().getHeight();
 		Bubble bubble = mBubbleMap.get(id);
 		if (bubble != null) {
 			mInfoWindow = new InfoWindow(mBubbleMap.get(id).bubbleView(),
-					marker.getPosition(), -10);
+					marker.getPosition(), -(height + 2));
 			mMap.getBaiduMap().showInfoWindow(mInfoWindow);
 		}
 	}

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<title>title</title>
+	<link rel="stylesheet" type="text/css" href="../css/api.css" />
+	<style>
+		body {
+			height: 1000px;
+			margin-top: 60px;
+		}
+
+		button {
+			margin: 16px;
+		}
+	</style>
+</head>
+
+<body>
+	<a href="http://www.baidu.com">打开百度</a>
+	<button onclick="openBaidu()">
+			打开百度
+		</button>
+	<button onclick="addImg()">
+				addImg
+			</button>
+	<button onclick="addAnnotations()">
+			addAnnotations
+		</button>
+	<button onclick="getNameFromCoords()">
+			getNameFromCoords
+		</button>
+	<button onclick="loc()">
+			loc
+		</button>
+	<button onclick="searchRoute()">
+			searchRoute
+		</button>
+	<button onclick="addBillboard()">
+			addBillboard
+		</button>
+	<button onclick="getLocation()">
+			getLocation
+		</button>
+	<button onclick="stopLocation()">
+			stopLocation
+		</button>
+	<button onclick="openScanner()">
+			openScanner
+		</button>
+	<button onclick="aMap_close()">
+			aMap_close
+		</button>
+	<button type="button" onclick="searchNearby()" name="button">searchNearby</button>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript">
+	var aMap;
+
+	function openBaidu() {
+		api.openFrame({
+			name: 'baidu',
+			url: 'aMap.html',
+			rect: {
+				x: 0,
+				y: 0,
+			}
+		});
+		api.setFrameClient({
+			frameName: 'baidu'
+		}, function(ret, err) {
+			alert(JSON.stringify(ret));
+		});
+	}
+
+	apiready = function() {
+		api.download({
+			url: 'http://a14a43378d50001be1c6.b0.upaiyun.com/apicloud/9e0a09e674032b58b8a75c32d1181dee.png',
+			savePath: 'fs://test.png'
+		}, function(ret, err) {
+			//coding...
+		});
+		aMap = api.require('aMap');
+		aMap.open({
+			rect: {
+				x: 0,
+				y: 270,
+				w: api.winWidth,
+				h: 500
+			},
+			showUserLocation: false,
+			zoomLevel: 16,
+			center: {
+				lon: 116.4021310000,
+				lat: 39.9994480000
+			},
+			//fixedOn : api.frameName,
+			//fixed : false
+		}, function(ret) {});
+	};
+
+	function addAnnotations() {
+		var aMap = api.require('aMap');
+		aMap.getLocation(function(ret, err) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+				aMap.addAnnotations({
+					annotations: [{
+						id: 1,
+						lon: ret.lon,
+						lat: ret.lat
+					}],
+					icons: ['widget://image/menu.png'],
+					//icons:['fs://test.png'],
+					draggable: true,
+					timeInterval: 2.0
+				}, function(ret) {
+					if (ret.eventType == 'click') {
+						alert(ret.id);
+					}
+				});
+			} else {
+				alert(JSON.stringify(err));
+			}
+		});
+	}
+
+	function getNameFromCoords() {
+		var aMap = api.require('aMap');
+		aMap.getNameFromCoords({
+			lon: 116.384767,
+			lat: 39.989539
+		}, function(ret, err) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+			} else {
+				alert(JSON.stringify(err));
+			}
+		});
+	}
+
+	function loc() {
+		var aMapLBS = api.require('aMapLBS');
+		aMapLBS.configManager({
+			accuracy: 'hundredMeters',
+			filter: 1
+		});
+		aMapLBS.singleLocation({
+			timeout: 10
+		}, function(ret, err) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+				var aMap = api.require('aMap');
+				aMap.getNameFromCoords({
+					lon: ret.lon,
+					lat: ret.lat
+				}, function(ret, err) {
+					if (ret.status) {
+						//data['address'] = ret.address + '(' + ret.thoroughfare + ')';
+						alert(JSON.stringify(ret));
+					} else {
+						alert('位置获取失败');
+					}
+				});
+			} else {
+				alert('位置获取失败');
+			}
+		});
+	}
+
+	function searchRoute() {
+		var aMap = api.require('aMap');
+		aMap.searchRoute({
+			type: 'drive',
+			policy: 'drive_fee_first',
+			start: {
+				lon: 116.403838,
+				lat: 39.914437
+			},
+			end: {
+				lon: 116.384852,
+				lat: 39.989576
+			}
+		}, function(ret, err) {
+			if (ret.status) {
+				aMap.drawRoute({
+					id: 1,
+					autoresizing: false,
+					index: 0,
+					styles: {
+						walkLine: {
+							width: 3,
+							color: '#698B22',
+							lineDash: false,
+							strokeImg: ''
+						},
+						driveLine: {
+							width: 6,
+							color: '#0000EE',
+							lineDash: false,
+							strokeImg: ''
+						},
+						busLine: {
+							width: 4,
+							color: '#00BFFF',
+							lineDash: false,
+							strokeImg: ''
+						},
+						icons: {
+							start: '',
+							end: '',
+							bus: '',
+							car: '',
+							man: ''
+						}
+					}
+				});
+			} else {
+				api.alert({
+					msg: JSON.stringify(ret)
+				});
+			}
+		});
+	}
+
+	function addBillboard() {
+		var aMap = api.require('aMap');
+		aMap.addBillboard({
+			id: 4,
+			draggable: true,
+			coords: {
+				lon: 116.233,
+				lat: 39.134
+			},
+			bgImg: 'widget://image/abg.jpg',
+			content: {
+				title: '大标题大标题大标题大标题',
+				subTitle: '概述内容概述内容概述内容',
+				illus: 'widget://image/aiil.jpg'
+			},
+			styles: {
+				titleColor: '#000',
+				titleSize: 12,
+				subTitleColor: '#999',
+				subTitleSize: 12,
+				illusAlign: 'left'
+			}
+		}, function(ret) {
+			if (ret) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	}
+
+	function getLocation() {
+		var aMap = api.require('aMap');
+		aMap.getLocation(function(ret, err) {
+			if (ret) {
+				alert(JSON.stringify(ret));
+				aMap.addImg({
+					id: 8,
+					imgPath: 'widget://image/aiil.jpg',
+					lbLon: ret.lon,
+					lbLat: ret.lat,
+					rtLon: ret.lon + 0.001,
+					rtLat: ret.lat + 0.001
+				});
+				// aMap.getNameFromCoords({
+				// 	lon: ret.lon,
+				// 	lat: ret.lat
+				// }, function(ret, err) {
+				// 	if (ret.status) {
+				// 		alert(JSON.stringify(ret));
+				// 	} else {
+				// 		alert(JSON.stringify(err));
+				// 	}
+				// });
+			} else {
+				alert(JSON.stringify(err));
+			}
+		});
+	}
+
+	function stopLocation() {
+		var aMap = api.require('aMap');
+		aMap.stopLocation();
+	}
+
+	function addAnnotations() {}
+
+	function openScanner() {
+		//			var FNScanner = api.require('FNScanner');
+		//			FNScanner.openScanner({
+		//				autorotation : true
+		//			}, function(ret, err) {
+		//				if (ret) {
+		//					alert(JSON.stringify(ret));
+		//				} else {
+		//					alert(JSON.stringify(err));
+		//				}
+		//			});
+		aMap_close();
+		var FNScanner = api.require('FNScanner');
+		FNScanner.openView({
+			autorotation: true
+		}, function(ret, err) {
+			if (ret) {
+				alert(JSON.stringify(ret));
+			} else {
+				alert(JSON.stringify(err));
+			}
+		});
+	}
+
+	function searchNearby() {
+		var aMap = api.require('aMap');
+
+		aMap.getLocation(function(ret, err) {
+			console.log(JSON.stringify(ret))
+			if (ret.status) {
+				console.log(JSON.stringify(ret))
+				aMap.searchNearby({
+					keyword: 'KTV',
+					lon: ret.lon,
+					lat: ret.lat,
+					radius: 2000,
+					offset: 20,
+					page: 1,
+					sortrule: 0
+				}, function(ret, err) {
+					if (ret.status) {
+						alert(JSON.stringify(ret));
+					}
+				});
+
+			} else {
+				alert(JSON.stringify(err));
+			}
+		});
+
+
+	}
+
+	function aMap_close() {
+		var aMap = api.require('aMap');
+		aMap.close();
+	}
+
+	function addImg() {
+		var aMap = api.require('aMap');
+		aMap.addImg({
+			id: 8,
+			imgPath: 'widget://image/abg.jpg',
+			lbLon: 116.233,
+			lbLat: 39.134,
+			rtLon: 116.233 + 0.001,
+			rtLat: 39.134 + 0.001
+		});
+	}
+</script>
+
+</html>
