@@ -61,6 +61,10 @@ div {
 			设置定位状态
 			</div>-->
 		<div tapmode="active" onclick="fnOpens()">打开地图</div>
+		<div tapmode="active" onclick="setMapCustomStyle_midnightblue()">设置个性化地图模式(午夜蓝)</div>
+		<div tapmode="active" onclick="setMapCustomStyle_night()">设置个性化地图模式(黑夜)</div>
+		<div tapmode="active" onclick="fnShowMapCustom()">显示个性化地图</div>
+		<div tapmode="active" onclick="fnCloseMapCustom()">关闭个性化地图</div>
 		<div tapmode="active" onclick="fnGetOfflineCityList()">
 			获取支持离线下载城市列表</div>
 		<div tapmode="active" onclick="fnClose()">关闭地图</div>
@@ -71,6 +75,10 @@ div {
 		<div tapmode="active" onclick="fnAddAnnotations()">在地图上添加标注信息</div>
 
 		<div tapmode="active" onclick="fnSetBubble()">设置点击标注时弹出的气泡信息</div>
+		<div tapmode="active" onclick="fnSetBubble_t()">设置点击标注时弹出的气泡信息-t id 3</div>
+		<div tapmode="active" onclick="fnPopupBubble()">弹出指定标注的气泡</div>
+		<div tapmode="active" onclick="fnPopupBubble_t()">弹出指定标注的气泡 id 3
+		</div>
 		<div tapmode="active" onclick="fnSetWebBubble()">
 			设置点击标注时弹出的Web气泡信息</div>
 		<div tapmode="active" onclick="fnSearchRoute()">搜索路线方案</div>
@@ -91,9 +99,7 @@ div {
 				判断标注是否存在
 			</div>
 			
-			<div tapmode="active" onclick="fnPopupBubble()">
-				弹出指定标注的气泡
-			</div>
+			
 			<div tapmode="active" onclick="fnAddBillboard()">
 				在地图上添加布告牌
 			</div>
@@ -152,6 +158,35 @@ div {
 			}
 		});
 	};
+
+	function fnShowMapCustom() {
+		var map = api.require('bMap');
+		map.enableCustom({
+			enable : true
+		});
+	}
+
+	function fnCloseMapCustom() {
+		var map = api.require('bMap');
+		map.enableCustom({
+			enable : false
+		});
+	}
+
+	function setMapCustomStyle_midnightblue() {
+		var map = api.require('bMap');
+		map.customStyle({
+			customConfig : "midnightblue"
+		});
+	}
+
+	function setMapCustomStyle_night() {
+		var map = api.require('bMap');
+		map.customStyle({
+			customConfig : "night"
+		});
+	}
+
 	function fnAddLine() {
 		var map = api.require('bMap');
 		map.addLine({
@@ -206,10 +241,10 @@ div {
 				w : api.winWidth,
 				h : 400
 			},
-			zoomLevel : 10, //设置缩放等级
-			showUserLocation : true,
-			fixedOn : api.frameName,
-			fixed : false
+			zoomLevel : 18, //设置缩放等级
+		//showUserLocation : true,
+		//fixedOn : api.frameName,
+		//fixed : true
 		}, function(ret) {
 			if (ret.status = 'true') {
 				//					map.addBillboard({
@@ -481,6 +516,32 @@ div {
 		var map = api.require('bMap');
 		map.setBubble({
 			id : 2,
+			bgImg : 'widget://image/zhenzhen.png',
+			content : {
+				title : '大标题',
+				subTitle : '概述内容',
+				illus : 'http://ico.ooopic.com/ajax/iconpng/?id=145044.png'
+			},
+			styles : {
+				titleColor : '#000',
+				titleSize : 16,
+				subTitleColor : '#999',
+				subTitleSize : 12,
+				illusAlign : 'left',
+			//w : 500,
+			//h : 500
+			}
+		}, function(ret) {
+			if (ret) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	};
+
+	function fnSetBubble_t() {
+		var map = api.require('bMap');
+		map.setBubble({
+			id : 3,
 			bgImg : 'widget://image/paopao.png',
 			content : {
 				title : '大标题',
@@ -493,8 +554,8 @@ div {
 				subTitleColor : '#999',
 				subTitleSize : 12,
 				illusAlign : 'left',
-				w : 500,
-				h : 500
+			//w : 500,
+			//h : 500
 			}
 		}, function(ret) {
 			if (ret) {
@@ -505,15 +566,32 @@ div {
 
 	function fnSetWebBubble() {
 		var map = api.require('bMap');
+		var strData = '<div style="width:300px;font-size:16px;padding:0 10px 0 5px;">'
+			strData += '	  <li style="list-style:none;line-height:20px;">'
+			strData += '		<div style="color: #A0A0A0;">'
+			strData += '企业名称：'
+			strData += '		</div>'
+			strData += '		<div style="color: #2480F1;">企业名称'
+			strData += '		</div>'
+			strData += '	  </li>'
+			strData += '	  <li style="list-style:none;line-height:20px;">'
+			strData += '		<div style="color: #A0A0A0;">'
+			strData += '企业名称：'
+			strData += '		</div>'
+			strData += '		<div style="color: #2480F1;">企业名称'
+			strData += '		</div>'
+			strData += '	  </li>'
+			strData += '</div>';
 		map.setWebBubble({
 			id : 1,
 			size : {
-				width : 180,
-				height : 180
+				width : 200,
+				height : 200
 			},
-			bg : 'widget://image/paopao.png',
-			url : 'https://www.baidu.com/',
-		//			    data:'哈哈 < img src="hBiG96B8egigBULxUWcOpA==/109212290980771276.jpg">'
+			//bg : 'widget://image/paopao.png',
+			//url : 'https://www.baidu.com/',
+		    //data:'哈哈 < img src="hBiG96B8egigBULxUWcOpA==/109212290980771276.jpg">'
+		    data:strData
 		}, function(ret) {
 			if (ret) {
 				alert(JSON.stringify(ret));
@@ -526,6 +604,14 @@ div {
 			id : 2
 		});
 	};
+
+	function fnPopupBubble_t() {
+		var map = api.require('bMap');
+		map.popupBubble({
+			id : 3
+		});
+	};
+
 	function fnAddBillboard() {
 		var map = api.require('bMap');
 		map.addBillboard({
@@ -539,7 +625,7 @@ div {
 				title : '添加布告牌',
 				subTitle : '布告牌描述内容id = 4',
 				illus : 'http://ico.ooopic.com/ajax/iconpng/?id=145044.png'
-				//illus : 'widget://image/illus.png'
+			//illus : 'widget://image/illus.png'
 			},
 			styles : {
 				titleColor : '#000',

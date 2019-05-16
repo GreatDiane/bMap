@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=2.0,minimum-scale=1.0,user-scalable=1,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<title>底部</title>
+	<link rel="stylesheet" type="text/css" href="../../css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../../css/public.css" />
+	<style>
+		html,
+		body {
+			background-color: inherit;
+		}
+
+		.search {
+			position: relative;
+		}
+
+		.center {
+			position: absolute;
+			top: -50px;
+			right: 0;
+			width: 30px;
+			height: 30px;
+			padding: 5px;
+			background: #fff;
+			border-radius: 50%;
+		}
+
+		.icon {
+			width: 30px;
+			height: 30px;
+			background: url(../../image/icon/myPosition.png);
+			background-position: center center;
+			background-size: 30px 30px;
+			background-repeat: no-repeat;
+		}
+
+		.inputbox {
+			margin-top: 50px;
+			background: #fff;
+			height: 150px;
+		}
+
+		.top {
+			padding-top: 20px;
+			padding-bottom: 13px;
+			width: 120px;
+			margin: auto;
+			text-align: center;
+			overflow: hidden;
+		}
+
+		.top-item {
+			font-size: 12px;
+			float: left;
+			margin: 0 10px;
+		}
+
+		.bottom-item {
+			font-size: 12px;
+			height: 50px;
+			line-height: 50px;
+			padding-left: 15px;
+		}
+
+		.text {
+			color: #999;
+		}
+
+		.icon_dot {
+			background: #5cb85c;
+			border-radius: 50%;
+			margin-top: 22px;
+			width: 7px;
+			height: 7px;
+			margin-right: 15px;
+		}
+
+		.yellow {
+			background: #FF7F00
+		}
+
+		.actives {
+			background: #eee;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="search">
+		<div class="center" tapmode onclick="fnShowCenter()">
+			<div class="icon"></div>
+		</div>
+		<div class="inputbox">
+			<div class="top">
+				<div class="top-item">
+					现在
+				</div>
+				<div class="top-item">
+					预约
+				</div>
+			</div>
+			<div class="bottom">
+				<div class="bottom-item flex-wrap" tapmode="actives" onclick="fnOpenStart()">
+					<div class="icon_dot green"></div>
+					<div class="flex-con border-1px-bottom ellipsis" id="startaddress">人民教育出版社印刷厂-东门</div>
+				</div>
+				<div class="bottom-item flex-wrap" tapmode="actives" onclick="fnOpenEnd()">
+					<div class="icon_dot yellow"></div>
+					<div class="flex-con" id="endaddress">
+						<div class="ellipsis text">
+							您要去哪
+						</div>
+					</div>
+				</div>
+			</div>
+</body>
+<script type="text/javascript" src="../../script/api.js"></script>
+<script>
+	var eStartaddress, eEndaddress;
+	apiready = function() {
+		eStartaddress = $api.byId('startaddress');
+	}
+
+	function fnShowCenter() {
+		api.execScript({
+			name: 'bmap',
+			script: 'fnBmapShowUserLocation();'
+		});
+	}
+
+	function fnStrataAdress(address) {
+		eStartaddress.innerHTML = address;
+	}
+
+	function fnOpenStart() {
+		api.openWin({
+			name: 'bmap_address',
+			url: './bmap_address.html',
+			pageParam: {
+				position: 'start'
+			},
+			animation: {
+				type: "movein",
+				subType: "from_bottom",
+				duration: 600
+			},
+			bgColor: 'rgba(255,255,255,1)',
+		});
+	}
+
+	function fnOpenEnd() {
+		api.openWin({
+			name: 'bmap_address',
+			url: './bmap_address.html',
+			animation: {
+				type: "movein",
+				subType: "from_bottom",
+				duration: 600
+			},
+			pageParam: {
+				position: 'end'
+			},
+			bgColor: 'rgba(255,255,255,1)',
+		});
+	}
+</script>
+
+</html>

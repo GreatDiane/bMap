@@ -6,21 +6,19 @@
  */
 package com.uzmap.pkg.uzmodules.uzBMap.mode;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.IdRes;
 import android.text.TextUtils.TruncateAt;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.baidu.mapapi.map.Marker;
@@ -60,12 +58,14 @@ public class Billboard {
 	private Marker marker;
 	private int aWidth;
 	private int aHeight;
+	private int marginT;
+	private int marginB;
 
 	public Billboard(UZModuleContext moduleContext, Context context, int id,
 			Bitmap bgImg, String title, String subTitle, Bitmap icon,
 			String iconStr, int titleSize, int subTitleSize, int titleColor,
 			int subTitleColor, String iconAlign, int maxWidth,int w, int h,
-			MapOverlay mapOverlay) {
+			MapOverlay mapOverlay, int marginT, int marginB) {
 		this.moduleContext = moduleContext;
 		this.context = context;
 		this.id = id;
@@ -83,6 +83,8 @@ public class Billboard {
 		this.mapOverlay = mapOverlay;
 		this.aWidth = w;
 		this.aHeight = h;
+		this.marginT = marginT;
+		this.marginB = marginB;
 	}
 
 	@SuppressWarnings("deprecation")
@@ -96,8 +98,9 @@ public class Billboard {
 			}else {
 				Bitmap newBitmap = JsParamsUtil.getInstance().createNewBitmap(bgImg, aWidth, aHeight);
 				if (newBitmap != null) {
-					billboardLayout.setBackgroundDrawable(new BitmapDrawable(newBitmap));
-					layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width), UZCoreUtil.dipToPix(height));
+					billboardLayout.setBackgroundDrawable(new BitmapDrawable(bgImg));
+					//layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width), UZCoreUtil.dipToPix(height));
+					layoutParams = new LayoutParams(UZUtility.dipToPix(aWidth), UZUtility.dipToPix(aHeight));
 				}
 			}
 			
@@ -110,13 +113,15 @@ public class Billboard {
 		billboardLayout.setLayoutParams(layoutParams);
 		billboardLayout.setOrientation(LinearLayout.HORIZONTAL);
 		if (getIconAlign().equals("left")) {
-			if (iconStr != null && !iconStr.isEmpty())
+			if (iconStr != null && !iconStr.isEmpty()) {
 				billboardLayout.addView(icon());
-			billboardLayout.addView(titleLayout());
+			}
+			billboardLayout.addView(titleLayout(aWidth, aHeight));
 		} else {
-			billboardLayout.addView(titleLayout());
-			if (iconStr != null && !iconStr.isEmpty())
+			billboardLayout.addView(titleLayout(aWidth, aHeight));
+			if (iconStr != null && !iconStr.isEmpty()) {
 				billboardLayout.addView(icon());
+			}
 		}
 		return billboardLayout;
 	}
@@ -133,9 +138,9 @@ public class Billboard {
 			}else {
 				Bitmap newBitmap = JsParamsUtil.getInstance().createNewBitmap(bgImg, aWidth, aHeight);
 				if (newBitmap != null) {
-					billboardLayout.setBackgroundDrawable(new BitmapDrawable(newBitmap));
-					layoutParams = new LayoutParams(UZCoreUtil.dipToPix(100),
-							UZCoreUtil.dipToPix(100));
+					billboardLayout.setBackgroundDrawable(new BitmapDrawable(bgImg));
+					layoutParams = new LayoutParams(UZCoreUtil.dipToPix(aWidth),
+							UZCoreUtil.dipToPix(aHeight));
 				}
 			}
 		} else {
@@ -149,42 +154,71 @@ public class Billboard {
 		if (getIconAlign().equals("left")) {
 			if (iconStr != null && !iconStr.isEmpty())
 				billboardLayout.addView(icon);
-			billboardLayout.addView(titleLayout());
+			billboardLayout.addView(titleLayout(aWidth, aHeight));
 		} else {
-			billboardLayout.addView(titleLayout());
+			billboardLayout.addView(titleLayout(aWidth, aHeight));
 			if (iconStr != null && !iconStr.isEmpty())
 				billboardLayout.addView(icon());
 		}
 		return billboardLayout;
 	}
 
-	private LinearLayout titleLayout() {
-		LinearLayout titleLayout = new LinearLayout(context);
-		LayoutParams layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width
-				- iconSize - 30), UZCoreUtil.dipToPix(height));
-		layoutParams.setMargins(UZCoreUtil.dipToPix(10), 0,
-				UZCoreUtil.dipToPix(10), 0);
+//	private LinearLayout titleLayout(int w, int h) {
+//		LinearLayout titleLayout = new LinearLayout(context);
+//		LayoutParams layoutParams = new LayoutParams(UZCoreUtil.dipToPix(width
+//				- iconSize - 30), UZCoreUtil.dipToPix(height));
+//		layoutParams.setMargins(UZCoreUtil.dipToPix(10), 0,
+//				UZCoreUtil.dipToPix(10), 0);
+//		titleLayout.setLayoutParams(layoutParams);
+//		titleLayout.setOrientation(LinearLayout.VERTICAL);
+//		
+//		LinearLayout titleLayout2 = new LinearLayout(context);
+//		LayoutParams layoutParams2 = new LayoutParams(UZCoreUtil.dipToPix(width
+//				- iconSize - 30), UZCoreUtil.dipToPix(height-10));
+//		titleLayout2.setGravity(Gravity.CENTER_VERTICAL);
+//		titleLayout2.setOrientation(LinearLayout.VERTICAL);
+//		titleLayout2.setLayoutParams(layoutParams2);
+//		titleLayout.addView(titleLayout2);
+//		titleLayout2.addView(title());
+//		titleLayout2.addView(subTitle());
+//		return titleLayout;
+//	}
+	
+	private @IdRes final int TITLE_ID = 0x1f0001;
+	private RelativeLayout titleLayout(int w, int h) {
+		RelativeLayout titleLayout = new RelativeLayout(context);
+		RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(UZUtility.dipToPix(w), UZUtility.dipToPix(h));
 		titleLayout.setLayoutParams(layoutParams);
-		titleLayout.setOrientation(LinearLayout.VERTICAL);
 		
-		LinearLayout titleLayout2 = new LinearLayout(context);
-		LayoutParams layoutParams2 = new LayoutParams(UZCoreUtil.dipToPix(width
-				- iconSize - 30), UZCoreUtil.dipToPix(height-10));
-		titleLayout2.setGravity(Gravity.CENTER_VERTICAL);
-		titleLayout2.setOrientation(LinearLayout.VERTICAL);
-		titleLayout2.setLayoutParams(layoutParams2);
-		titleLayout.addView(titleLayout2);
-		titleLayout2.addView(title());
-		titleLayout2.addView(subTitle());
+		RelativeLayout.LayoutParams titleParams = new RelativeLayout.LayoutParams(UZUtility.dipToPix(w), -2);
+		titleParams.topMargin = UZUtility.dipToPix(marginT);
+		TextView title = new TextView(context);
+		title.setId(TITLE_ID);
+		title.setText(getTitle());
+		title.setTextColor(getTitleColor());
+		title.setTextSize(getTitleSize());
+		//title.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+		titleLayout.addView(title, titleParams);
+		
+		RelativeLayout.LayoutParams subtitleParams = new RelativeLayout.LayoutParams(UZUtility.dipToPix(w), -2);
+		subtitleParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		subtitleParams.addRule(RelativeLayout.BELOW, TITLE_ID);
+		subtitleParams.bottomMargin = UZUtility.dipToPix(marginB);
+		TextView subTitle = new TextView(context);
+		subTitle.setText(getSubTitle());
+		subTitle.setTextColor(getSubTitleColor());
+		subTitle.setTextSize(getSubTitleSize());
+		//subTitle.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+		titleLayout.addView(subTitle, subtitleParams);
 		return titleLayout;
 	}
 
 	private TextView title() {
 		TextView title = new TextView(context);
-		title.setSingleLine();
+		//title.setSingleLine();
 		title.setEllipsize(TruncateAt.END);
-		title.setMaxWidth(UZCoreUtil.dipToPix(maxWidth) - 2 * iconMarginLeft
-				+ iconSize);
+//		title.setMaxWidth(UZCoreUtil.dipToPix(maxWidth) - 2 * iconMarginLeft
+//				+ iconSize);
 		title.setText(getTitle());
 		title.setTextColor(getTitleColor());
 		title.setTextSize(getTitleSize());
@@ -194,10 +228,10 @@ public class Billboard {
 
 	private TextView subTitle() {
 		TextView title = new TextView(context);
-		title.setSingleLine();
+		//title.setSingleLine();
 		title.setEllipsize(TruncateAt.END);
-		title.setMaxWidth(UZCoreUtil.dipToPix(maxWidth) - 2 * iconMarginLeft
-				+ iconSize);
+//		title.setMaxWidth(UZCoreUtil.dipToPix(maxWidth) - 2 * iconMarginLeft
+//				+ iconSize);
 		title.setText(getSubTitle());
 		title.setTextColor(getSubTitleColor());
 		title.setTextSize(getSubTitleSize());
@@ -213,10 +247,13 @@ public class Billboard {
 		ImageView icon = new ImageView(context);
 		LayoutParams layoutParams = new LayoutParams(
 				UZCoreUtil.dipToPix(iconSize), UZCoreUtil.dipToPix(iconSize));
-		layoutParams.setMargins(UZCoreUtil.dipToPix(iconMarginLeft),
-				UZCoreUtil.dipToPix(iconMarginTop),
-				UZCoreUtil.dipToPix(iconMarginLeft),
-				UZCoreUtil.dipToPix(iconMarginTop));
+//		layoutParams.setMargins(UZCoreUtil.dipToPix(iconMarginLeft),
+//				UZCoreUtil.dipToPix(iconMarginTop),
+//				UZCoreUtil.dipToPix(iconMarginLeft),
+//				UZCoreUtil.dipToPix(iconMarginTop));
+		layoutParams.leftMargin = UZCoreUtil.dipToPix(iconMarginLeft);
+		layoutParams.topMargin = UZCoreUtil.dipToPix(iconMarginTop);
+		layoutParams.rightMargin = UZCoreUtil.dipToPix(10);
 		icon.setLayoutParams(layoutParams);
 		if (getIcon() != null) {
 			icon.setImageBitmap(getIcon());

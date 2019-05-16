@@ -1,0 +1,196 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+	content="maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, initial-scale=1.0, width=device-width" />
+<meta name="format-detection"
+	content="telephone=no, email=no, date=no, address=no">
+<title>WinA</title>
+<link rel="stylesheet" type="text/css" href="css/api.css" />
+<link rel="stylesheet" type="text/css" href="css/box.css" />
+<script type="text/javascript" src="script/public.js"></script>
+<style>
+p {
+	color: #999;
+	padding: 5px;
+}
+</style>
+<script type="text/javascript">
+	var map = null;
+	apiready = function() {
+		map = api.require('bMap');
+		jsmethod_open();
+	}
+	function jsmethod_open() {
+		map.open({
+			rect : {
+				x : 0,
+				y : 0,
+				w : 320,
+				h : 300
+			},
+			center : {
+				lon : 116.4021310000,
+				lat : 39.9994480000
+			},
+			zoomLevel : 10,
+			showUserLocation : true,
+			fixedOn : api.frameName,
+			fixed : true
+		}, function(ret) {
+			if (ret.status) {
+				alert('地图打开成功');
+			}
+		});
+	}
+	function jsmethod_kk() {
+		var map = api.require('bMap');
+		map.startSearchGPS(function(ret) {
+			api.alert({
+				msg : JSON.stringify(ret)
+			});
+			if (ret.status) {
+				alert(ret.satelliteCount);
+			}
+		});
+	}
+	function jsmethod_autocomplete() {
+		var map = api.require('bMap');
+		map.autocomplete({
+			keyword : '北京东站'
+		}, function(ret, err) {
+			api.alert({
+				msg : JSON.stringify(ret)
+			});
+			api.alert({
+				msg : JSON.stringify(err)
+			});
+		});
+	}
+	function jsmethod_getNameFromCoords() {
+		var map = api.require('bMap');
+		map.getNameFromCoords({
+			lon : 116.384767,
+			lat : 39.989539
+		}, function(ret, err) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+			}
+		});
+	}
+	function jsmethod_setMaxAndMinZoomLevel() {
+		var map = api.require('bMap');
+		map.setMaxAndMinZoomLevel();
+	}
+	function jsmethod_setMaxAndMinZoomLevel2() {
+		var map = api.require('bMap');
+		map.setMaxAndMinZoomLevel({
+			maxLevel : 18,
+			minLevel : 3
+		});
+	}
+	function jsmethod_getZoomLevel() {
+		var map = api.require('bMap');
+		map.getZoomLevel(function(ret) {
+			alert(ret.level);
+		});
+	}
+	function jsmethod_searchInCity() {
+		var map = api.require('bMap');
+		map.searchInCity({
+			city : '福州市',
+			keyword : '马尾',
+			pageIndex : 0,
+			pageCapacity : 20
+		}, function(ret, err) {
+			if (ret.status) {
+				alert(JSON.stringify(ret));
+			} else {
+				alert(JSON.stringify(err));
+			}
+		});
+	}
+	function jsmethod_addMobileAnnotations() {
+		var map = api.require('bMap');
+		map.addMobileAnnotations({
+			annotations : [ {
+				id : 10,
+				lon : 116.297,
+				lat : 40.109,
+				icon : 'widget://image/bMap_car1.png'
+			}, {
+				id : 11,
+				lon : 116.98,
+				lat : 40.109,
+				icon : 'widget://image/bMap_car2.png'
+			}, {
+				id : 12,
+				lon : 115.30,
+				lat : 40.109,
+				icon : 'widget://image/bMap_car3.png'
+			}, {
+				id : 13,
+				lon : 116.297,
+				lat : 39.109,
+				icon : 'widget://image/bMap_car1.png'
+			}, {
+				id : 14,
+				lon : 116.98,
+				lat : 39.109,
+				icon : 'widget://image/bMap_car2.png'
+			}, {
+				id : 15,
+				lon : 115.30,
+				lat : 39.109,
+				icon : 'widget://image/bMap_car3.png'
+			} ]
+		});
+	}
+	function jsmethod_annotationExist() {
+
+		var map = api.require('bMap');
+		map.annotationExist({
+			id : 111
+		}, function(ret) {
+			alert(JSON.stringify(ret));
+		});
+	}
+</script>
+</head>
+<body>
+	<div id="wrap">
+		<div id="main">
+			<br>
+			<div class='itemtitle'>jsmethod_open</div>
+			<div class="clickbtn" tapmode="active" onclick="jsmethod_open()">jsmethod_open</div>
+			<div class='itemtitle'>jsmethod_kk</div>
+			<div class="clickbtn" tapmode="active" onclick="jsmethod_kk()">jsmethod_kk</div>
+			<div class='itemtitle'>jsmethod_autocomplete</div>
+			<div class="clickbtn" tapmode="active"
+				onclick="jsmethod_autocomplete()">jsmethod_autocomplete</div>
+			<div class='itemtitle'>jsmethod_getNameFromCoords</div>
+			<div class="clickbtn" tapmode="active"
+				onclick="jsmethod_getNameFromCoords()">jsmethod_autocomplete</div>
+			<div class='itemtitle'>jsmethod_setMaxAndMinZoomLevel2</div>
+			<div class="clickbtn" tapmode="active"
+				onclick="jsmethod_setMaxAndMinZoomLevel2()">jsmethod_setMaxAndMinZoomLevel2</div>
+			<div class='itemtitle'>jsmethod_setMaxAndMinZoomLevel</div>
+			<div class="clickbtn" tapmode="active"
+				onclick="jsmethod_setMaxAndMinZoomLevel()">jsmethod_setMaxAndMinZoomLevel</div>
+			<div class='itemtitle'>jsmethod_getZoomLevel</div>
+			<div class="clickbtn" tapmode="active"
+				onclick="jsmethod_getZoomLevel()">jsmethod_getZoomLevel</div>
+			<div class='itemtitle'>jsmethod_searchInCity</div>
+			<div class="clickbtn" tapmode="active"
+				onclick="jsmethod_searchInCity()">jsmethod_searchInCity</div>
+			<div class='itemtitle'>jsmethod_addMobileAnnotations</div>
+			<div class="clickbtn" tapmode="active"
+				onclick="jsmethod_addMobileAnnotations()">jsmethod_addMobileAnnotations</div>
+			<div class='itemtitle'>jsmethod_annotationExist</div>
+			<div class="clickbtn" tapmode="active"
+				onclick="jsmethod_annotationExist()">jsmethod_annotationExist</div>
+		</div>
+	</div>
+</body>
+</html>

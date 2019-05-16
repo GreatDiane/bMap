@@ -26,7 +26,6 @@ import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.model.LatLngBounds;
 import com.baidu.mapapi.search.route.MassTransitRoutePlanOption;
 import com.baidu.mapapi.search.route.PlanNode;
-import com.baidu.mapapi.search.route.TransitRoutePlanOption;
 import com.baidu.mapapi.search.route.DrivingRoutePlanOption.DrivingPolicy;
 import com.baidu.mapapi.search.route.TransitRoutePlanOption.TransitPolicy;
 import com.uzmap.pkg.uzcore.UZCoreUtil;
@@ -412,6 +411,22 @@ public class JsParamsUtil {
 		}
 		return styles.optInt("h", 160);
 	}
+	
+	public int getMarginT(UZModuleContext moduleContext) {
+		JSONObject styles = moduleContext.optJSONObject("styles");
+		if (styles == null) {
+			styles = new JSONObject();
+		}
+		return styles.optInt("marginT", 10);
+	}
+	
+	public int getMarginB(UZModuleContext moduleContext) {
+		JSONObject styles = moduleContext.optJSONObject("styles");
+		if (styles == null) {
+			styles = new JSONObject();
+		}
+		return styles.optInt("marginB", 10);
+	}
 
 	public int bubbleSubTitleSize(UZModuleContext moduleContext) {
 		JSONObject styles = moduleContext.optJSONObject("styles");
@@ -434,7 +449,7 @@ public class JsParamsUtil {
 		int width = -1;
 		if (styles != null) {
 			if (styles.isNull("w")) {
-				return -1;
+				return 160;
 			}
 			return styles.optInt("w", 160);
 		}
@@ -446,7 +461,7 @@ public class JsParamsUtil {
 		int width = -1;
 		if (styles != null) {
 			if (styles.isNull("h")) {
-				return -1;
+				return 90;
 			}
 			return styles.optInt("h", 90);
 		}

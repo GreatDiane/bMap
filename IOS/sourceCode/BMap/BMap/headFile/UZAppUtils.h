@@ -23,6 +23,8 @@
 
 #define isIOS7 [[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0
 
+@class UZWidget;
+
 @interface UZAppUtils : NSObject
 
 #pragma mark - Device info
@@ -30,7 +32,6 @@
 + (BOOL)deviceIsIPhone6;
 + (BOOL)isSimulator;
 + (BOOL)popoverSupported;
-+ (NSString *)initialInterfaceOrientation;
 + (NSString *)getUUID;
 
 #pragma mark - Paths
@@ -40,6 +41,9 @@
 + (NSString *)appLibraryCachesPath;
 + (NSString *)appDocumentPath;
 + (NSString *)filePathInDocument:(NSString *)fileName;
++ (NSString *)filePathInTmp:(NSString *)fileName;
++ (NSString *)getPathWithUZSchemeURL:(NSString *)url;
++ (NSString *)getPathWithUZSchemeURL:(NSString *)url baseUrl:(NSURL *)baseUrl widget:(UZWidget *)widget;
 
 #pragma mark - Util
 + (BOOL)isValidColor:(NSString *)colorStr;

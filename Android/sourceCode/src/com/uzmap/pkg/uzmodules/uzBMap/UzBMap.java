@@ -6,6 +6,10 @@
  */
 package com.uzmap.pkg.uzmodules.uzBMap;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,25 +19,21 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
-import android.app.PendingIntent;
-import android.app.PendingIntent.CanceledException;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.location.LocationManager;
-import android.net.Uri;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.View;
 
 import com.baidu.location.BDLocation;
 import com.baidu.mapapi.map.BaiduMap.OnBaseIndoorMapListener;
-import com.baidu.mapapi.map.BitmapDescriptor;
-import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.BaiduMap.SnapshotReadyCallback;
+import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.MapBaseIndoorMapInfo;
+import com.baidu.mapapi.map.TextureMapView;
 import com.baidu.mapapi.map.MapBaseIndoorMapInfo.SwitchFloorError;
-import com.baidu.mapapi.map.MyLocationConfiguration;
-import com.baidu.mapapi.map.MyLocationConfiguration.LocationMode;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
 import com.baidu.mapapi.search.poi.PoiDetailResult;
@@ -45,6 +45,7 @@ import com.baidu.mapapi.search.poi.PoiSearch;
 import com.uzmap.pkg.uzcore.UZWebView;
 import com.uzmap.pkg.uzcore.uzmodule.UZModule;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzkit.UZUtility;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapAnimationOverlay;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapBusLine;
 import com.uzmap.pkg.uzmodules.uzBMap.methods.MapCluster;
@@ -83,22 +84,54 @@ public class UzBMap extends UZModule {
 	public UzBMap(UZWebView webView) {
 		super(webView);
 	}
-	
+
 	public void jsmethod_openActivity(UZModuleContext moduleContext) {
 		startActivity(new Intent(context(), MapTestActivity.class));
 	}
 
 	public void jsmethod_open(UZModuleContext moduleContext) {
 		if (mMap == null) {
-			mMap = new MapOpen(this, moduleContext, context());
+			mMap = new MapOpen(this, moduleContext, mode, configPath, context());
 			mMap.open();
-			new MapEventListener(moduleContext, mMap, false)
-					.addDefaultEventListener();
+			new MapEventListener(moduleContext, mMap, false).addDefaultEventListener();
 		} else {
 			if (mMap != null) {
 				mMap.show();
 			}
 		}
+	}
+
+	private String mode = "4";
+	private String configPath;
+
+	public void jsmethod_customStyle(UZModuleContext moduleContext) {
+		if (!moduleContext.isNull("configPath")) {
+			configPath = makeRealPath(moduleContext.optString("configPath"));
+			mode = "0";
+		} else {
+			String customConfig = moduleContext.optString("customConfig", "night");
+			if (TextUtils.equals(customConfig, "night")) {
+				mode = "1";
+			} else if (TextUtils.equals(customConfig, "lightblue")) {
+				mode = "2";
+			} else if (TextUtils.equals(customConfig, "midnightblue")) {
+				mode = "3";
+			} else {
+				mode = "4";
+			}
+		}
+	}
+
+	/**
+	 * 切换自定义地图
+	 * 
+	 * @param moduleContext
+	 */
+	public void jsmethod_enableCustom(UZModuleContext moduleContext) {
+		if (TextUtils.equals(mode, "4")) {
+			return;
+		}
+		TextureMapView.setMapCustomEnable(moduleContext.optBoolean("enable", true));
 	}
 
 	public void jsmethod_close(UZModuleContext moduleContext) {
@@ -123,6 +156,84 @@ public class UzBMap extends UZModule {
 		if (mMap != null) {
 			mMap.hide();
 		}
+	}
+
+	/**
+	 * 截图
+	 * 
+	 * @param moduleContext
+	 */
+	public void jsmethod_snapshotMap(final UZModuleContext moduleContext) {
+		if (mMap != null) {
+			final String path = moduleContext.optString("path");
+			BaiduMap baiduMap = mMap.getBaiduMap();
+			if (moduleContext.isNull("rect")) {
+				baiduMap.snapshot(new SnapshotReadyCallback() {
+
+					@Override
+					public void onSnapshotReady(Bitmap bitmap) {
+						saveBitmap(moduleContext, bitmap, path);
+					}
+				});
+			}else {
+				JSONObject rectJson = moduleContext.optJSONObject("rect");
+				Rect rect = new Rect(UZUtility.dipToPix(rectJson.optInt("x")), UZUtility.dipToPix(rectJson.optInt("y")), UZUtility.dipToPix(rectJson.optInt("w")), UZUtility.dipToPix(rectJson.optInt("h")));
+				baiduMap.snapshotScope(rect, new SnapshotReadyCallback() {
+					
+					@Override
+					public void onSnapshotReady(Bitmap bitmap) {
+						saveBitmap(moduleContext, bitmap, path);
+					}
+				});
+			}
+			
+		}
+	}
+
+	public void saveBitmap(UZModuleContext moduleContext, Bitmap bitmap, String picName) {
+		File f = new File(makeRealPath(picName));
+		if (f.exists()) {
+			f.delete();
+		}
+		JSONObject result = new JSONObject();
+		try {
+			FileOutputStream out = new FileOutputStream(f);
+			bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+			out.flush();
+			out.close();
+			
+			result.put("status", true);
+			result.put("path", makeRealPath(picName));
+			moduleContext.success(result, false);
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			try {
+				result.put("status", false);
+				moduleContext.success(result, false);
+			} catch (JSONException e2) {
+				e2.printStackTrace();
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			try {
+				result.put("status", false);
+				moduleContext.success(result, false);
+			} catch (JSONException e2) {
+				e2.printStackTrace();
+			}
+		} catch (JSONException e) {
+			e.printStackTrace();
+			try {
+				result.put("status", false);
+				moduleContext.success(result, false);
+			} catch (JSONException e2) {
+				e2.printStackTrace();
+			}
+		}
+		
+		
 	}
 
 	public void jsmethod_setRect(UZModuleContext moduleContext) {
@@ -344,9 +455,8 @@ public class UzBMap extends UZModule {
 				if (mMapAnimationOverlay == null) {
 					mMapAnimationOverlay = new MapAnimationOverlay();
 				}
-				mMapAnimationOverlay.addMoveOverlay(new MoveOverlay(
-						moduleContext, anno.getMarker(), duration, new LatLng(
-								lat, lon)));
+				mMapAnimationOverlay.addMoveOverlay(
+						new MoveOverlay(moduleContext, anno.getMarker(), duration, new LatLng(lat, lon)));
 				mMapAnimationOverlay.startMove();
 			}
 		}
@@ -388,9 +498,10 @@ public class UzBMap extends UZModule {
 			mMapOverlay.setBubble(moduleContext, false);
 		}
 	}
-	
+
 	/**
 	 * 设置点击标注时弹出的气泡信息
+	 * 
 	 * @param moduleContext
 	 */
 	public void jsmethod_setWebBubble(UZModuleContext moduleContext) {
@@ -401,18 +512,19 @@ public class UzBMap extends UZModule {
 			mMapOverlay.setBubble(moduleContext, true);
 		}
 	}
-	
-	
+
 	/**
 	 * 添加网页气泡点击监听
+	 * 
 	 * @param moduleContext
 	 */
 	public void jsmethod_addWebBubbleListener(UZModuleContext moduleContext) {
 		BMapConfig.getInstance().setAddWebBubble(moduleContext);
 	}
-	
+
 	/**
 	 * 移除网页气泡点击监听
+	 * 
 	 * @param moduleContext
 	 */
 	public void jsmethod_removeWebBubbleListener(UZModuleContext moduleContext) {
@@ -451,10 +563,12 @@ public class UzBMap extends UZModule {
 			}
 		}
 	}
-	
+
 	private MapCluster mMapCluster;
+
 	/**
 	 * 往地图上添加聚合点
+	 * 
 	 * @param moduleContext
 	 */
 	public void jsmethod_addCluster(UZModuleContext moduleContext) {
@@ -465,9 +579,10 @@ public class UzBMap extends UZModule {
 			mMapCluster.addCluster(moduleContext);
 		}
 	}
-	
+
 	/**
 	 * 移除本次添加的聚合点
+	 * 
 	 * @param moduleContext
 	 */
 	public void jsmethod_removeCluster(UZModuleContext moduleContext) {
@@ -478,9 +593,10 @@ public class UzBMap extends UZModule {
 			mMapCluster.removeCluster();
 		}
 	}
-	
+
 	/**
 	 * 添加聚合点点击事件的监听
+	 * 
 	 * @param moduleContext
 	 */
 	public void jsmethod_addClusterListener(UZModuleContext moduleContext) {
@@ -507,6 +623,15 @@ public class UzBMap extends UZModule {
 				mMapGeometry = new MapGeometry(this, mMap.getBaiduMap());
 			}
 			mMapGeometry.addPolygon(moduleContext);
+		}
+	}
+
+	public void jsmethod_searchDistrict(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			if (mMapGeometry == null) {
+				mMapGeometry = new MapGeometry(this, mMap.getBaiduMap());
+			}
+			mMapGeometry.addDistrict(moduleContext);
 		}
 	}
 
@@ -544,8 +669,15 @@ public class UzBMap extends UZModule {
 			}
 		}
 	}
-	
-	
+
+	public void jsmethod_removeDistrict(UZModuleContext moduleContext) {
+		if (mMap != null) {
+			if (mMapGeometry != null) {
+				mMapGeometry.removeDistrict(moduleContext);
+
+			}
+		}
+	}
 
 	@SuppressLint("UseSparseArrays")
 	public void jsmethod_searchRoute(UZModuleContext moduleContext) {
@@ -564,8 +696,7 @@ public class UzBMap extends UZModule {
 				mRouteMap = new HashMap<Integer, OverlayManager>();
 			}
 			int id = moduleContext.optInt("id");
-			OverlayManager routeOverlay = new MapDrawRoute(this, moduleContext,
-					mSearchRouteMap, mMap.getBaiduMap())
+			OverlayManager routeOverlay = new MapDrawRoute(this, moduleContext, mSearchRouteMap, mMap.getBaiduMap())
 					.drawRoute(moduleContext);
 			mRouteMap.put(id, routeOverlay);
 		}
@@ -573,8 +704,7 @@ public class UzBMap extends UZModule {
 
 	public void jsmethod_removeRoute(UZModuleContext moduleContext) {
 		if (mMap != null && mRouteMap != null) {
-			List<Integer> ids = JsParamsUtil.getInstance().removeOverlayIds(
-					moduleContext);
+			List<Integer> ids = JsParamsUtil.getInstance().removeOverlayIds(moduleContext);
 			if (ids != null && ids.size() > 0) {
 				OverlayManager routeOverlay = null;
 				for (int id : ids) {
@@ -597,15 +727,13 @@ public class UzBMap extends UZModule {
 			if (mBusLineMap == null) {
 				mBusLineMap = new HashMap<Integer, BusLineOverlay>();
 			}
-			new MapBusLine().drawBusLine(moduleContext, mBusLineMap,
-					mMap.getBaiduMap());
+			new MapBusLine().drawBusLine(moduleContext, mBusLineMap, mMap.getBaiduMap());
 		}
 	}
 
 	public void jsmethod_removeBusRoute(UZModuleContext moduleContext) {
 		if (mBusLineMap != null) {
-			List<Integer> ids = JsParamsUtil.getInstance().removeOverlayIds(
-					moduleContext);
+			List<Integer> ids = JsParamsUtil.getInstance().removeOverlayIds(moduleContext);
 			if (ids != null && ids.size() > 0) {
 				OverlayManager routeOverlay = null;
 				for (int id : ids) {
@@ -715,10 +843,10 @@ public class UzBMap extends UZModule {
 		boolean status = isLocationOPen();
 		getLocationPermissionCallBack(moduleContext, status);
 	}
-	
+
 	/**
 	 * @param moduleContext
-	 * @see add by 2017年10月10日 12:28:02  控制底图标注的显示隐藏
+	 * @see add by 2017年10月10日 12:28:02 控制底图标注的显示隐藏
 	 */
 	public void jsmethod_setShowMapPoi(UZModuleContext moduleContext) {
 		if (mMap != null) {
@@ -726,20 +854,22 @@ public class UzBMap extends UZModule {
 			mMap.getBaiduMap().showMapPoi(showMapPoi);
 		}
 	}
+
 	/**
 	 * @param moduleContext
-	 * @see add by 2017年10月10日 12:28:02  设置最大缩放比例，取值范围：3-18级
+	 * @see add by 2017年10月10日 12:28:02 设置最大缩放比例，取值范围：3-18级
 	 */
 	public void jsmethod_setMaxAndMinZoomLevel(UZModuleContext moduleContext) {
 		if (mMap != null) {
 			int maxLevel = moduleContext.optInt("maxLevel", 15);
 			int minLevel = moduleContext.optInt("minLevel", 10);
-			mMap.getBaiduMap().setMaxAndMinZoomLevel(maxLevel,minLevel);
+			mMap.getBaiduMap().setMaxAndMinZoomLevel(maxLevel, minLevel);
 		}
 	}
-	
+
 	/**
 	 * 打开关闭室内地图
+	 * 
 	 * @param moduleContext
 	 */
 	public void jsmethod_setIndoorMap(UZModuleContext moduleContext) {
@@ -748,7 +878,7 @@ public class UzBMap extends UZModule {
 			mMap.getBaiduMap().setIndoorEnable(draggable);
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @param moduleContext
@@ -756,7 +886,7 @@ public class UzBMap extends UZModule {
 	public void jsmethod_addIndoorListener(final UZModuleContext moduleContext) {
 		if (mMap != null) {
 			mMap.getBaiduMap().setOnBaseIndoorMapListener(new OnBaseIndoorMapListener() {
-				
+
 				@Override
 				public void onBaseIndoorMapMode(boolean b, MapBaseIndoorMapInfo mapBaseIndoorMapInfo) {
 					try {
@@ -765,16 +895,17 @@ public class UzBMap extends UZModule {
 						result.put("strID", mapBaseIndoorMapInfo.getID());
 						result.put("strFloor", mapBaseIndoorMapInfo.getCurFloor());
 						moduleContext.success(result, false);
-					} catch (Exception e) {
-						// TODO: handle exception
+					} catch (JSONException e) {
+						e.printStackTrace();
 					}
 				}
 			});
 		}
 	}
-	
+
 	/**
 	 * 切换楼层
+	 * 
 	 * @param moduleContext
 	 */
 	public void jsmethod_switchIndoorMapFloor(UZModuleContext moduleContext) {
@@ -788,29 +919,30 @@ public class UzBMap extends UZModule {
 					JSONObject error = new JSONObject();
 					if (switchFloorError == SwitchFloorError.SWITCH_OK) {
 						success.put("status", true);
-					}else {
+					} else {
 						success.put("status", false);
 						if (switchFloorError == SwitchFloorError.FLOOR_INFO_ERROR) {
 							error.put("code", 1);
-						}else if (switchFloorError == SwitchFloorError.FLOOR_OVERLFLOW) {
+						} else if (switchFloorError == SwitchFloorError.FLOOR_OVERLFLOW) {
 							error.put("code", 3);
-						}else if (switchFloorError == SwitchFloorError.FOCUSED_ID_ERROR) {
+						} else if (switchFloorError == SwitchFloorError.FOCUSED_ID_ERROR) {
 							error.put("code", 2);
-						}else if (switchFloorError == SwitchFloorError.SWITCH_ERROR) {
+						} else if (switchFloorError == SwitchFloorError.SWITCH_ERROR) {
 							error.put("code", 1);
 						}
 					}
 					moduleContext.error(success, success, false);
 				}
 			}
-		} catch (Exception e) {
-			// TODO: handle exception
+		} catch (JSONException e) {
+			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	/**
 	 * 搜索室内地图内容
+	 * 
 	 * @param moduleContext
 	 */
 	public void jsmethod_indoorSearch(final UZModuleContext moduleContext) {
@@ -821,19 +953,19 @@ public class UzBMap extends UZModule {
 			int pageCapacity = moduleContext.optInt("pageCapacity", 10);
 			final PoiSearch poiSearch = PoiSearch.newInstance();
 			poiSearch.setOnGetPoiSearchResultListener(new OnGetPoiSearchResultListener() {
-				
+
 				@Override
 				public void onGetPoiResult(PoiResult poiResult) {
-					
+
 				}
-				
+
 				@Override
 				public void onGetPoiIndoorResult(PoiIndoorResult poiIndoorResult) {
 					try {
 						JSONObject result = new JSONObject();
 						JSONObject error = new JSONObject();
 						int status = poiIndoorResult.status;
-						
+
 						if (status == 0) {
 							result.put("status", true);
 							result.put("pageNum", poiIndoorResult.getPageNum());
@@ -841,7 +973,7 @@ public class UzBMap extends UZModule {
 							List<PoiIndoorInfo> list = poiIndoorResult.getmArrayPoiInfo();
 							if (list != null && list.size() > 0) {
 								JSONArray array = new JSONArray();
-								for(int i = 0; i < list.size(); i++) {
+								for (int i = 0; i < list.size(); i++) {
 									PoiIndoorInfo info = list.get(i);
 									JSONObject jsonInfo = new JSONObject();
 									jsonInfo.put("name", info.name);
@@ -868,42 +1000,34 @@ public class UzBMap extends UZModule {
 								result.put("poiIndoorInfoList", array);
 							}
 							moduleContext.error(result, error, false);
-						}else {
+						} else {
 							result.put("status", false);
 							result.put("code", poiIndoorResult.error.name());
 							moduleContext.error(result, error, false);
 						}
 						poiSearch.destroy();
-					} catch (Exception e) {
-						// TODO: handle exception
+					} catch (JSONException e) {
+						e.printStackTrace();
 					}
-					
+
 				}
-				
+
 				@Override
 				public void onGetPoiDetailResult(PoiDetailResult poiDetailResult) {
-					// TODO Auto-generated method stub
-					
+
 				}
 			});
-			PoiIndoorOption option = new PoiIndoorOption()
-					.poiIndoorBid(strID)
-					.poiIndoorWd(keyword)
-					.poiCurrentPage(pageIndex)
-					.poiPageSize(pageCapacity);
+			PoiIndoorOption option = new PoiIndoorOption().poiIndoorBid(strID).poiIndoorWd(keyword)
+					.poiCurrentPage(pageIndex).poiPageSize(pageCapacity);
 			poiSearch.searchPoiIndoor(option);
 		} catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
 		}
 	}
-	
-	
 
 	private boolean isLocationOPen() {
-		LocationManager locationManager = (LocationManager) context()
-				.getSystemService(Context.LOCATION_SERVICE);
-		boolean gps = locationManager
-				.isProviderEnabled(LocationManager.GPS_PROVIDER);
+		LocationManager locationManager = (LocationManager) context().getSystemService(Context.LOCATION_SERVICE);
+		boolean gps = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 		return gps;
 	}
 
@@ -912,11 +1036,13 @@ public class UzBMap extends UZModule {
 		super.onClean();
 		cleanMap();
 		cleanLocation();
+		mode = "4";
 	}
 
 	private void cleanMap() {
 		if (mMap != null) {
-			mMap.onDestory();
+			// mMap.onDestory();
+			mMap.close();
 			mMap = null;
 		}
 	}
@@ -942,8 +1068,7 @@ public class UzBMap extends UZModule {
 		});
 	}
 
-	private void isAnnoExistCallBack(UZModuleContext moduleContext,
-			boolean status) {
+	private void isAnnoExistCallBack(UZModuleContext moduleContext, boolean status) {
 		JSONObject ret = new JSONObject();
 		try {
 			ret.put("status", status);
@@ -963,8 +1088,7 @@ public class UzBMap extends UZModule {
 		}
 	}
 
-	private void getLocationPermissionCallBack(UZModuleContext moduleContext,
-			boolean enable) {
+	private void getLocationPermissionCallBack(UZModuleContext moduleContext, boolean enable) {
 		JSONObject ret = new JSONObject();
 		try {
 			ret.put("enable", enable);

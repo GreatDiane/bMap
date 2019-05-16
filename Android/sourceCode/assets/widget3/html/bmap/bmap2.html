@@ -1,0 +1,217 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=2.0,minimum-scale=1.0,user-scalable=1,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<title>bMap首页</title>
+	<link rel="stylesheet" type="text/css" href="../../css/api.css" />
+	<style>
+
+	</style>
+</head>
+
+<body>
+
+</body>
+<script type="text/javascript" src="../../script/api.js"></script>
+
+<script>
+	var bMap;
+	apiready = function() {
+		// 初始化地图
+		initMap();
+		// // // 初始化顶部和底部frame
+		// initTopAndRightFrame();
+	}
+
+	var lon, lat;
+
+	function initMap() {
+		bMap = api.require('bMap');
+		if (api.systemType === 'ios') {
+			// ios需要对模块初始化
+			bMap.initMapSDK(function(ret, err) {
+				if (ret.status) {
+					fnOpenbMap();
+				}
+			});
+		} else {
+			fnOpenbMap();
+		}
+	}
+
+	function initTopAndRightFrame() {
+		// 打开头部
+		api.openFrame({
+			name: 'bmap_frmtop',
+			url: './bmap_frmtop.html',
+			rect: {
+				x: 0,
+				y: 0,
+				h: 80 + api.safeArea.top,
+				w: api.winWidth
+			},
+			bounces: false,
+			bgColor: 'rgba(255,255,255,1)',
+			vScrollBarEnabled: false,
+			hScrollBarEnabled: false
+		});
+		// 打开中间点
+		api.openFrame({
+			name: 'bmap_center',
+			url: './bmap_center.html',
+			rect: {
+				x: api.winWidth / 2,
+				y: api.winHeight / 2,
+				h: 30,
+				w: 30
+			},
+			bounces: false,
+			bgColor: 'rgba(0,0,0,0)',
+			vScrollBarEnabled: false,
+			hScrollBarEnabled: false
+		});
+
+		// 打开底部
+		api.openFrame({
+			name: 'bmap_frmbottom',
+			url: './bmap_frmbottom.html',
+			rect: {
+				x: 5,
+				y: api.winHeight - 205,
+				w: api.winWidth - 10,
+				h: 200
+			},
+			bounces: false,
+			bgColor: 'rgba(255,255,255,0)',
+			vScrollBarEnabled: false,
+			hScrollBarEnabled: false
+		});
+	}
+
+	function fnOpenbMap() {
+		bMap.open({
+			rect: {
+				x: 0,
+				y: 0,
+				w: api.frameWidth,
+				h: api.frameHeight
+			},
+			center: {
+				lon: 116.4021310000,
+				lat: 39.9994480000
+			},
+			zoomLevel: 18,
+			showUserLocation: true,
+			// fixedOn: api.frameName,
+			fixed: true
+		}, function(ret) {
+			// 设置缩放比例
+			bMap.setMaxAndMinZoomLevel({
+				maxLevel: 18,
+				minLevel: 7
+			});
+			if (ret.status) {
+				// 自动定位到用户中心点
+				fnBmapShowUserLocation();
+			} else {
+				api.toast({
+					msg: '初始化地图失败',
+					duration: 2000,
+					location: 'bottom'
+				});
+			}
+		});
+	}
+
+	function fnBmapShowUserLocation() {
+		// 显示用户位置  箭头图标
+		bMap.showUserLocation({
+			isShow: true,
+			trackingMode: 'none'
+		});
+		// 监听地图拖动
+		bMap.addEventListener({
+			name: 'viewChange'
+		}, function(ret) {
+			if (ret.status) {
+				bMap.getCenter(function(ret) {
+					fnGetNameFromCoords(ret);
+				});
+			}
+		});
+		// 定位获取附近地址
+		setTimeout(function() {
+			fnGetLocation();
+		}, 300)
+	}
+
+
+	function fnGetLocation() {
+		bMap.getLocation({
+			accuracy: '100m',
+			autoStop: true,
+			filter: 1
+		}, function(ret, err) {
+			if (ret.status) {
+				// 获取附件地址
+				fnGetNameFromCoords(ret);
+			} else {
+				api.toast({
+					msg: '地图定位失败',
+					duration: 2000,
+					location: 'bottom'
+				});
+			}
+		});
+	}
+
+	//  设置开始地址
+	function fnGetNameFromCoords(ret) {
+		bMap.getNameFromCoords({
+			lon: ret.lon,
+			lat: ret.lat
+		}, function(ret, err) {
+			if (ret.status) {
+				$api.setStorage('retloglat', ret);
+				api.execScript({
+					frameName: 'bmap_frmbottom',
+					script: 'fnStrataAdress("' + ret.sematicDescription + '");'
+				});
+			} else {
+				api.toast({
+					msg: '获取地址信息失败',
+					duration: 2000,
+					location: 'bottom'
+				});
+			}
+		});
+	}
+
+	// 添加折线？
+	//
+	function fnAddLine() {
+		console.warn(11111);
+		bMap.addLine({
+			id: 1,
+			styles: {
+				borderColor: '#FF0000',
+				borderWidth: 3
+			},
+			points: [{
+				lon: 116.39432327,
+				lat: 39.98963192
+			}, {
+				lon: 116.49432328,
+				lat: 39.98963192
+			}, {
+				lon: 116.39432327,
+				lat: 39.88933191
+			}]
+		});
+	}
+</script>
+
+</html>

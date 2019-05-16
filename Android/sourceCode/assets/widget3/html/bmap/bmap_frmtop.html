@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=2.0,minimum-scale=1.0,user-scalable=1,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<title>头部</title>
+	<link rel="stylesheet" type="text/css" href="../../css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../../css/public.css" />
+	<style>
+		header {
+			position: relative;
+			width: 100%;
+			height: 80px;
+			background: #fff;
+		}
+
+		.header .user {
+			left: 0px;
+			top: 0px;
+			width: 40px;
+			height: 40px;
+			background: url(../../image/icon/icon_user.png);
+			background-position: center center;
+			background-size: 15px 15px;
+			background-repeat: no-repeat;
+		}
+
+		.header .title {
+			text-align: center;
+			font-size: 12px;
+			line-height: 45px;
+			color: #666;
+		}
+
+		.header .code {
+			width: 40px;
+			height: 40px;
+			background: url(../../image/icon/icon_news.png);
+			background-position: center center;
+			background-size: 15px 15px;
+			background-repeat: no-repeat;
+		}
+
+		.tab {
+			display: -webkit-box;
+			overflow: scroll;
+			padding: 5px 5px 10px 5px;
+			margin-right: 30px;
+			margin-left: 10px;
+		}
+
+		.tabli {
+			font-size: 12px;
+			color: #666;
+			position: relative;
+			padding: 0 20px 0 0px;
+		}
+
+		.more {
+			position: absolute;
+			right: 0;
+			bottom: 5px;
+			background: #fff;
+			padding-left: 5px;
+			width: 40px;
+			height: 40px;
+		}
+
+		.icon_more {
+			width: 40px;
+			height: 40px;
+			background: url(../../image/icon/icon_more.png);
+			background-position: center center;
+			background-size: 15px 15px;
+			background-repeat: no-repeat;
+		}
+	</style>
+</head>
+
+<body>
+	<header id="header">
+		<div class="header flex-wrap">
+			<div class="user" tapmode="active" onclick="fnOpenUser();"></div>
+			<div class="title flex-con">北京市</div>
+			<!-- class="code" -->
+			<div  tapmode onclick="fnOpenCode()">打开第二个地图</div>
+		</div>
+		<div class="tab">
+			<div class="tabli">快车</div>
+			<div class="tabli">单车</div>
+			<div class="tabli">出租车</div>
+			<div class="tabli">礼橙专车</div>
+			<div class="tabli">公交</div>
+			<div class="tabli">代驾</div>
+			<div class="tabli">豪华车</div>
+			<div class="tabli">安全须知</div>
+			<div class="tabli">自驾租车</div>
+			<div class="tabli">顺风车</div>
+			<div class="tabli">关爱出行</div>
+		</div>
+		<div class="more">
+			<div class="icon_more" tapmode onclick="fnOpenMore()"></div>
+		</div>
+	</header>
+</body>
+<script type="text/javascript" src="../../script/api.js"></script>
+
+<script>
+	apiready = function() {
+		var eHeader = $api.byId('header');
+		$api.fixStatusBar(eHeader);
+	}
+
+	function fnOpenMore() {
+		api.openFrame({
+			name: 'bmap_more_frm',
+			url: './bmap_more_frm.html',
+			rect: {
+				marginTop: 40 + api.safeArea.top,
+				marginBottom: 0,
+				marginLeft: 0,
+				marginRight: 0,
+			},
+			animation: {
+				type: "push",
+				subType: "from_top",
+				duration: 600
+			},
+			bounces: false,
+			bgColor: 'rgba(255,255,255,1)',
+			vScrollBarEnabled: true,
+			hScrollBarEnabled: true
+		});
+	}
+
+	function fnOpenCode() {
+    //  打开第二个地图？？
+    api.openWin({
+        name: 'bmap2',
+        url: './bmap2.html',
+        pageParam: {
+            name: 'test'
+        }
+    });
+
+	}
+</script>
+
+</html>

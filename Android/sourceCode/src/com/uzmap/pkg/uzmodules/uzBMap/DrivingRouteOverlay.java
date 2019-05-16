@@ -1,6 +1,5 @@
 package com.uzmap.pkg.uzmodules.uzBMap;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -108,7 +107,6 @@ public class DrivingRouteOverlay extends OverlayManager {
             
             List<LatLng> points = new ArrayList<LatLng>();
             ArrayList<Integer> traffics = new ArrayList<Integer>();
-            int totalTraffic = 0;
             for (int i = 0; i < stepNum ; i++) {
                 if (i == stepNum - 1) {
                     points.addAll(steps.get(i).getWayPoints());
@@ -116,7 +114,6 @@ public class DrivingRouteOverlay extends OverlayManager {
                     points.addAll(steps.get(i).getWayPoints().subList(0, steps.get(i).getWayPoints().size() - 1));
                 }
                 
-                totalTraffic += steps.get(i).getWayPoints().size() - 1;
                 if (steps.get(i).getTrafficList() != null && steps.get(i).getTrafficList().length > 0) {
                     for (int j = 0;j < steps.get(i).getTrafficList().length;j++) {
                         traffics.add(steps.get(i).getTrafficList()[j]);
@@ -124,16 +121,6 @@ public class DrivingRouteOverlay extends OverlayManager {
                 }
             }
             
-//            Bundle indexList = new Bundle();
-//            if (traffics.size() > 0) {
-//                int raffic[] = new int[traffics.size()];
-//                int index = 0;
-//                for (Integer tempTraff : traffics) {
-//                    raffic[index] = tempTraff.intValue();
-//                    index++;
-//                }
-//                indexList.putIntArray("indexs", raffic);
-//            }
             boolean isDotLine = false;
             
             if (traffics != null && traffics.size() > 0) {

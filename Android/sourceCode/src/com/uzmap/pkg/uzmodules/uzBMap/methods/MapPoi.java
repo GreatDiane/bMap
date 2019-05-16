@@ -32,7 +32,7 @@ import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
 import com.uzmap.pkg.uzmodules.uzBMap.utils.JsParamsUtil;
 
 public class MapPoi implements OnGetPoiSearchResultListener,
-		OnGetSuggestionResultListener {
+		OnGetSuggestionResultListener{
 	private JsParamsUtil mJsParamsUtil;
 	private UZModuleContext mModuleContext;
 
@@ -89,6 +89,7 @@ public class MapPoi implements OnGetPoiSearchResultListener,
 		search.setOnGetSuggestionResultListener(this);
 		search.requestSuggestion(suggestionSearchOption);
 	}
+	
 
 	@Override
 	public void onGetSuggestionResult(SuggestionResult result) {

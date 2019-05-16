@@ -6,12 +6,13 @@
  */
 package com.uzmap.pkg.uzmodules.uzBMap.mode;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.text.TextUtils;
-import android.text.TextUtils.TruncateAt;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -29,7 +30,6 @@ import android.widget.TextView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.baidu.location.a.l;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.lidroid.xutils.BitmapUtils;
@@ -118,12 +118,12 @@ public class Bubble {
 			if (bgImg != null) {
 				if (bWidth == -1 || bHeight == -1) {
 					bubbleLayout.setBackgroundDrawable(new BitmapDrawable(bgImg));
-					layoutParams = new LayoutParams(UZUtility.dipToPix(width), UZUtility.dipToPix(height));
+					layoutParams = new LayoutParams(width, height);
 				}else {
 					Bitmap newBitmap = JsParamsUtil.getInstance().createNewBitmap(bgImg, bWidth, bHeight);
 					if (newBitmap != null) {
 						bubbleLayout.setBackgroundDrawable(new BitmapDrawable(newBitmap));
-						layoutParams = new LayoutParams(0, 0);
+						layoutParams = new LayoutParams(bWidth, bHeight);
 					}
 				}
 			} else {
@@ -140,9 +140,9 @@ public class Bubble {
 				if (!TextUtils.isEmpty(iconStr)) {
 					bubbleLayout.addView(icon());
 				}
-				bubbleLayout.addView(titleLayout());
+				bubbleLayout.addView(titleLayout(bWidth, bHeight));
 			} else {
-				bubbleLayout.addView(titleLayout());
+				bubbleLayout.addView(titleLayout(bWidth, bHeight));
 				if (!TextUtils.isEmpty(iconStr)) {
 					bubbleLayout.addView(icon());
 				}
@@ -152,7 +152,10 @@ public class Bubble {
 			RelativeLayout bubbleLayout = new RelativeLayout(context);
 			RelativeLayout.LayoutParams bubbleParams = new RelativeLayout.LayoutParams(UZUtility.dipToPix(wWidth), UZUtility.dipToPix(wHeight));
 			WebView webView = new WebView(context);
-			RelativeLayout.LayoutParams webParams = new RelativeLayout.LayoutParams(-1, -1);
+			RelativeLayout.LayoutParams webParams = null;
+			ImageView imageView = new ImageView(context);
+			RelativeLayout.LayoutParams imageParams = null;
+			
 			if (UZUtility.isHtmlColor(bg)) {
 				bubbleLayout.setBackgroundColor(UZUtility.parseCssColor(bg));
 				webView.setBackgroundColor(UZUtility.parseCssColor(bg));
@@ -163,11 +166,21 @@ public class Bubble {
 					int height = bitmap.getHeight();
 					float scaleWidth = ((float) UZUtility.dipToPix(wWidth)) / width;
 				    float scaleHeight = ((float) UZUtility.dipToPix(wHeight)) / height;
-					Matrix matrix = new Matrix();  
+					Matrix matrix = new Matrix();
 				    matrix.postScale(scaleWidth, scaleHeight);
-				    Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true); 
-					bubbleLayout.setBackgroundDrawable(new BitmapDrawable(newBitmap));
-					webView.setBackgroundDrawable(new BitmapDrawable(newBitmap));
+				    Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
+				    webParams = new RelativeLayout.LayoutParams(newBitmap.getWidth(),newBitmap.getHeight());
+				    webParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+				    webView.setBackgroundColor(Color.TRANSPARENT);
+				    webView.setLayoutParams(webParams);
+				    
+				    imageView.setImageBitmap(newBitmap);
+				    imageParams = new RelativeLayout.LayoutParams(newBitmap.getWidth(), newBitmap.getHeight());
+				    imageParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+					imageView.setLayoutParams(imageParams);
+					
+					//bubbleLayout.setBackgroundDrawable(new BitmapDrawable(newBitmap));
+					bubbleLayout.setBackgroundResource(UZResourcesIDFinder.getResDrawableID("webbubble_bg"));
 				}else {
 					BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(UZResourcesIDFinder.getResDrawableID("mo_bmap_popupmap"));
 					Bitmap newBit = bitmapDescriptor.getBitmap();
@@ -175,8 +188,10 @@ public class Bubble {
 					webView.setBackgroundDrawable(new BitmapDrawable(newBit));
 				}
 			}
-			//bubbleLayout.setLayoutParams(bubbleParams);
-			//webView.setLayoutParams(webParams);
+			
+			bubbleLayout.setLayoutParams(bubbleParams);
+			bubbleLayout.addView(imageView);
+			bubbleLayout.addView(webView);
 			
 			url = moduleContext.makeRealPath(url);
 			// 这里需要判断url是否/绝对路径开头，如果是，则加上file://
@@ -195,7 +210,7 @@ public class Bubble {
 			} else {// 否则就加载data数据的片段
 				webView.getSettings().setJavaScriptEnabled(true);
 				webView.getSettings().setDefaultTextEncodingName("utf-8");
-				webView.loadDataWithBaseURL(url, data, "text/html", "utf-8", null);// TODO
+				webView.loadDataWithBaseURL(url, data, "text/html", "utf-8", null);
 			}
 			webView.setOnTouchListener(new OnTouchListener() {
 				
@@ -220,13 +235,13 @@ public class Bubble {
 					
 				}
 			});
-			bubbleLayout.addView(webView);
+			
 			return bubbleLayout;
 		}
 		
 	}
 
-	private LinearLayout titleLayout() {
+	private LinearLayout titleLayout(int w, int h) {
 		LinearLayout titleLayout = new LinearLayout(context);
 		titleLayout.setOnClickListener(new OnClickListener() {
 			@Override
@@ -234,14 +249,15 @@ public class Bubble {
 				mapOverlay.bubbleClickCallBack(getId(), "clickContent");
 			}
 		});
-		LayoutParams layoutParams = new LayoutParams(-2, -2);
+		LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(w, h);
 		//layoutParams.setMargins(UZCoreUtil.dipToPix(10), 0, UZCoreUtil.dipToPix(10), 0);
 		//titleLayout.setGravity(Gravity.CENTER);
 		titleLayout.setLayoutParams(layoutParams);
 		titleLayout.setOrientation(LinearLayout.VERTICAL);
 		titleLayout.addView(title());
 		if (!TextUtils.isEmpty(getSubTitle())) {
-			titleLayout.addView(subTitle());
+			LinearLayout.LayoutParams subTitleParams = new LinearLayout.LayoutParams(w, -2);
+			titleLayout.addView(subTitle(), subTitleParams);
 		}
 		return titleLayout;
 	}
@@ -260,7 +276,7 @@ public class Bubble {
 
 	private TextView subTitle() {
 		TextView title = new TextView(context);
-		title.setSingleLine();
+		//title.setSingleLine();
 		//title.setEllipsize(TruncateAt.END);
 		//title.setMaxWidth(UZCoreUtil.dipToPix(maxWidth) - 2 * iconMarginLeft + iconW);
 		title.setText(getSubTitle());

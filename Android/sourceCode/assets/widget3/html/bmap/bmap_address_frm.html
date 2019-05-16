@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=2.0,minimum-scale=1.0,user-scalable=1,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<title>更多</title>
+	<link rel="stylesheet" type="text/css" href="../../css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../../css/public.css" />
+	<style>
+		body {
+			padding: 10px 10px 0 10px;
+		}
+
+		.list {
+			-webkit-box-shadow: #eee 0px 0px 10px;
+			-moz-box-shadow: #eee 0px 0px 10px;
+			box-shadow: #eee 0px 0px 10px;
+			border-radius: 2px;
+		}
+
+		.item {
+			padding: 15px;
+		}
+
+		.title {
+			font-size: 14px;
+			color: #333;
+			margin-bottom: 5px;
+		}
+
+		.titlebody {
+			font-size: 11px;
+			color: #666;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="list" v-cloak>
+		<template v-for="(list,index) in items">
+		<div class="item border-1px-bottom">
+			<div class="title">{{list.name}}</div>
+			<div class="titlebody">{{list.address}}</div>
+		</div>
+	</template>
+		<!-- <div class="item">
+			<div class="title">北京西站</div>
+			<div class="titlebody">北京市丰台区莲花池东路118号</div>
+		</div> -->
+	</div>
+</body>
+<script type="text/javascript" src="../../script/api.js"></script>
+<script type="text/javascript" src="../../script/vue.min.js"></script>
+<script>
+	apiready = function() {
+		fnInVue();
+	}
+
+	function fnInVue() {
+		window.ListVue = new Vue({
+			el: ".list",
+			data: {
+				items: [],
+			},
+			mounted: function() {
+				this.$nextTick(function() {
+					fnInit();
+				});
+			},
+			methods: {
+
+			}
+		});
+	}
+
+	var bMap;
+
+	function fnInit() {
+		bMap = api.require('bMap');
+		console.warn(JSON.stringify(api.pageParam));
+		if (api.pageParam.position === "start") {
+			var address = $api.getStorage('retloglat');
+			window.ListVue.items = address.poiList;
+		}
+	}
+
+	function fnCloseMore() {
+		api.closeFrame({
+			animation: {
+				type: "push",
+				subType: "from_bottom",
+				duration: 600
+			},
+		});
+	}
+</script>
+
+</html>

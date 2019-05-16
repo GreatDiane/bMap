@@ -1,9 +1,12 @@
 package com.uzmap.pkg.uzmodules.uzBMap;
 
-import com.uzmap.pkg.uzcore.uzmodule.UZModule;
+import java.io.IOException;
+import java.io.InputStream;
+
+import com.uzmap.pkg.uzcore.UZCoreUtil;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
 
-import android.R.integer;
+import android.content.Context;
 
 public class BMapConfig {
 	
@@ -27,6 +30,34 @@ public class BMapConfig {
 	
 	public UZModuleContext getAddWebBubble() {
 		return addWebBubbleModuleContext;
+	}
+	
+	public static void copyFile(Context context, int mode, String themeParent, String file) {
+		String fileName = "";
+		if (mode == 1) {
+			fileName = "blackNight";
+		}else if (mode == 2) {
+			fileName = "freshBlue";
+		}else if (mode == 3) {
+			fileName = "midnightBlue";
+		}
+		InputStream inputStream = null;
+		try {
+			inputStream = context.getAssets().open("customConfigdir/" + fileName + "/custom_config");
+			String data = UZCoreUtil.readString(inputStream);
+			UZCoreUtil.writeString(file, data, false);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				if (inputStream != null) {
+					inputStream.close();
+				}
+			} catch (IOException e2) {
+				e2.printStackTrace();
+			}
+			
+		}
 	}
 	
 

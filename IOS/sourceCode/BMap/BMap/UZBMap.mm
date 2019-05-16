@@ -19,18 +19,14 @@
 #import <BaiduMapAPI_Utils/BMKUtilsComponent.h>
 #import <objc/runtime.h>
 #import "BMKClusterManager.h"
+#import "UZBMKDistrictSearch.h"
+#import "UZBMKPolygon.h"
 
 #define MYBUNDLE_NAME @ "mapapi.bundle"
 #define MYBUNDLE_PATH [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent: MYBUNDLE_NAME]
 #define MYBUNDLE [NSBundle bundleWithPath: MYBUNDLE_PATH]
-/*
-typedef enum {
-    LOCATION_NONE = 0,   //nothing
-    LOCATION_GET,        //获取用户信息
-    LOCATION_SHOW,       //显示用户位置
-    LOCATION_GET_SHOW    //获取位置信息和显示用户位置
-} LocationType;
-*/
+#define BMK_SEARCH_NO_RESULT 0
+
 /*
  *点聚合Annotation
  */
@@ -189,7 +185,7 @@ typedef NSString *(^getRealPath)(NSString *imgPath);
 
 
 @interface UZBMap ()
-<BMKGeneralDelegate, BMKMapViewDelegate, BMKLocationServiceDelegate, BMKGeoCodeSearchDelegate, BMKRouteSearchDelegate, BMKPoiSearchDelegate, BMKBusLineSearchDelegate, BMKSuggestionSearchDelegate, MovingAnimationDelegate, BMKOfflineMapDelegate,UIGestureRecognizerDelegate> {
+<BMKGeneralDelegate, BMKMapViewDelegate, BMKLocationServiceDelegate, BMKGeoCodeSearchDelegate, BMKRouteSearchDelegate, BMKPoiSearchDelegate, BMKBusLineSearchDelegate, BMKSuggestionSearchDelegate, MovingAnimationDelegate, BMKOfflineMapDelegate,UIGestureRecognizerDelegate,BMKDistrictSearchDelegate> {
     //初始化的回调
     NSInteger initMapSDKcbId;
     //基础地图
@@ -198,7 +194,6 @@ typedef NSString *(^getRealPath)(NSString *imgPath);
     BMKLocationService *_locService;
     NSInteger startLocationCbid, getLocFromAddrCbid, getAddrFromLoc;
     BOOL shouldAutoStop, locationStarted, openShow, openSetCenter, showCurrentUserLoc;
-    //LocationType locType;
     //搜索对象
     UZBMKGeoCodeSearch *_geoSearch;
     //监听地图事件
@@ -249,6 +244,10 @@ typedef NSString *(^getRealPath)(NSString *imgPath);
 @property (nonatomic, strong) NSDictionary *clusterStyles;
 
 @property (nonatomic, assign) NSInteger webBubbleCbid;
+
+@property (nonatomic, assign) BOOL customEnable;
+@property (nonatomic, strong) NSMutableDictionary * districtDict;
+@property (nonatomic, assign) NSInteger searchDistrictCbid;
 
 @end
 
@@ -367,6 +366,13 @@ static char extendButtonKey;
 
 #pragma mark - 基础类接口 -
 
+- (NSMutableDictionary *)districtDict {
+    if (!_districtDict) {
+        _districtDict = [NSMutableDictionary dictionary];
+    }
+    return _districtDict;
+}
+
 - (void)getCurrentLocation:(NSDictionary *)paramsDict_ {
     NSInteger getClocCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
     [self initLocal];
@@ -482,7 +488,74 @@ static char extendButtonKey;
     ////还有一种方法就是获取到_locationView之后直接设置图片
     //displayParam.locationViewImgName=@"map_Indicating_icon";
     //[_baiduMapView updateLocationViewWithParam:displayParam];
+    
 }
+
+- (void)jsmethod_snapshotMap:(UZModuleMethodContext *)context {
+    if (!self.baiduMapView) {
+        return;
+    }
+    NSDictionary *rectInfo = [context.param dictValueForKey:@"rect" defaultValue:@{}];
+    float orgX = [rectInfo floatValueForKey:@"x" defaultValue:0];
+    float orgY = [rectInfo floatValueForKey:@"y" defaultValue:0];
+    float viewW = [rectInfo floatValueForKey:@"w" defaultValue:self.baiduMapView.bounds.size.width];
+    float viewH = [rectInfo floatValueForKey:@"h" defaultValue:self.baiduMapView.bounds.size.height];
+    CGRect defaultRect = CGRectMake(orgX, orgY, viewW, viewH);
+    
+    NSString *imgPath = [context.param stringValueForKey:@"path" defaultValue:@""];
+    if (imgPath.length == 0) {
+        return;
+    }
+    imgPath = [self getPathWithUZSchemeURL:imgPath];
+    NSString *pathStr = [imgPath stringByDeletingLastPathComponent];
+    NSString *extention = [[imgPath pathExtension] uppercaseString];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if (![fileManager fileExistsAtPath:pathStr]) {        //创建路径
+        [fileManager createDirectoryAtPath:pathStr withIntermediateDirectories:YES attributes:nil error:nil];
+    }
+    
+    UIImage *snapImage = [self.baiduMapView takeSnapshot:defaultRect];
+    
+    NSData *data = nil;
+    if ([extention isEqualToString:@"JPG"] || [extention isEqualToString:@"JPEG"]|| [extention isEqualToString:@"jpg"] || [extention isEqualToString:@"jpeg"]) {
+        data = UIImageJPEGRepresentation(snapImage, 1.0);
+    } else {
+        data = UIImagePNGRepresentation(snapImage);
+    }
+    BOOL status = NO;
+    if (data) {
+        status = [fileManager createFileAtPath:imgPath contents:data attributes:nil];
+    }
+    [context callbackWithRet:@{@"status":@(status),@"path":imgPath} err:nil delete:YES];
+}
+
+- (void)customStyle:(NSDictionary *)paramsDict_
+{
+    NSString * configPath = [paramsDict_ stringValueForKey:@"configPath" defaultValue:nil];
+    if (configPath && configPath.length) {
+        NSString * fullPath = [self getPathWithUZSchemeURL:configPath];
+        [BMKMapView customMapStyle:fullPath];
+    }else {
+        NSString * customConfig = [paramsDict_ stringValueForKey:@"customConfig" defaultValue:@"night"];
+        NSString * path;
+        if ([customConfig isEqualToString:@"lightblue"]) {
+            path = [[NSBundle mainBundle] pathForResource:@"res_bMap/custom_config_lightblue" ofType:@""];
+        }else if ([customConfig isEqualToString:@"midnightblue"]) {
+            path = [[NSBundle mainBundle] pathForResource:@"res_bMap/custom_config_midnightblue" ofType:@""];
+        }else {
+            path = [[NSBundle mainBundle] pathForResource:@"res_bMap/custom_config_night" ofType:@""];
+        }
+        [BMKMapView customMapStyle:path];
+    }
+}
+
+- (void)enableCustom:(NSDictionary *)paramsDict_
+{
+    BOOL enable = [paramsDict_ boolValueForKey:@"enable" defaultValue:YES];
+    [BMKMapView enableCustomMapStyle:enable];
+    self.customEnable = enable;
+}
+
 
 - (void)setRect:(NSDictionary *)paramsDict_ {
     if (!_baiduMapView) {
@@ -537,6 +610,11 @@ static char extendButtonKey;
 }
 
 - (void)close:(NSDictionary *)paramsDict_ {
+    if (self.customEnable) {
+        [BMKMapView enableCustomMapStyle:NO];
+        self.customEnable = NO;
+    }
+    
     [self removeCluster:nil];
     if (_allMovingAnno) {
         [_allMovingAnno removeAllObjects];
@@ -1110,32 +1188,14 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
         return;
     }
     if ([nameStr isEqualToString:@"longPress"]) {//长按监听
-        if (longPressCbid != -1) {
-            [self deleteCallback:longPressCbid];
-        }
-        if (longPressCbid != -1) {
-            [self deleteCallback:longPressCbid];
-        }
         longPressCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
     } else if ([nameStr isEqualToString:@"viewChange"]) {//视角改变监听
-        if (viewChangeCbid != -1) {
-            [self deleteCallback:viewChangeCbid];
-        }
         viewChangeCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
     } else if ([nameStr isEqualToString:@"click"]) {//单击监听
-        if (singleTapCbid != -1) {
-            [self deleteCallback:singleTapCbid];
-        }
         singleTapCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
     } else if ([nameStr isEqualToString:@"dbclick"]) {//双击监听
-        if (dubbleTapCbid != -1) {
-            [self deleteCallback:dubbleTapCbid];
-        }
         dubbleTapCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
     } else if ([nameStr isEqualToString:@"zoom"]) {//双击监听
-        if (zoomCbid != -1) {
-            [self deleteCallback:zoomCbid];
-        }
         zoomCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
         [self.baiduMapView addObserver:self forKeyPath:@"zoomLevel" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld context:nil];
     }
@@ -1167,29 +1227,15 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
         return;
     }
     if ([nameStr isEqualToString:@"longPress"]) {//移除长按监听
-        if (longPressCbid != -1) {
-            [self deleteCallback:longPressCbid];
-        }
         longPressCbid = -1;
     } else if ([nameStr isEqualToString:@"viewChange"]) {//移除视角改变监听
-        if (viewChangeCbid >= 0) {
-            [self deleteCallback:viewChangeCbid];
-        }
         viewChangeCbid = -1;
     } else if ([nameStr isEqualToString:@"click"]) {//移除单击监听
-        if (singleTapCbid != -1) {
-            [self deleteCallback:singleTapCbid];
-        }
         singleTapCbid = -1;
     } else if ([nameStr isEqualToString:@"dbclick"]) {//移除双击监听
-        if (dubbleTapCbid != -1) {
-            [self deleteCallback:dubbleTapCbid];
-        }
         dubbleTapCbid = -1;
     } else if ([nameStr isEqualToString:@"zoom"]) {
-        if (zoomCbid != -1) {
-            [self deleteCallback:zoomCbid];
-        }
+        zoomCbid = -1;
     }
 }
 
@@ -1583,9 +1629,6 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
     if (![bgImgStr isKindOfClass:[NSString class]] || bgImgStr.length==0) {
         return;
     }
-    if (addBillboardCbid >= 0) {
-        [self deleteCallback:addBillboardCbid];
-    }
     addBillboardCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
     UZbMapAnnotation *annotation = [[UZbMapAnnotation alloc] init];
     CLLocationCoordinate2D coor;
@@ -1665,9 +1708,6 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
     NSString *moveId = [paramsDict_ stringValueForKey:@"id" defaultValue:nil];
     if (![moveId isKindOfClass:[NSString class]] || moveId.length==0) {
         return;
-    }
-    if (moveAnnoCbid >= 0) {
-        [self deleteCallback:moveAnnoCbid];
     }
     moveAnnoCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
     float moveDuration = [paramsDict_ floatValueForKey:@"duration" defaultValue:1];
@@ -2101,6 +2141,107 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
 #pragma mark -
 #pragma mark 搜索类接口
 #pragma mark -
+- (void)searchDistrict:(NSDictionary *)paramsDict_ {
+    NSInteger searchDistrictCbid = [paramsDict_ integerValueForKey:@"cbId" defaultValue:-1];
+    self.searchDistrictCbid = searchDistrictCbid;
+    NSString * districtId = [paramsDict_ stringValueForKey:@"id" defaultValue:nil];
+    if (!districtId || !districtId.length) {
+        return;
+    }
+    NSString * city = [paramsDict_ stringValueForKey:@"city" defaultValue:nil];
+    if (!city || !city.length) {
+        return;
+    }
+    NSString * district = [paramsDict_ stringValueForKey:@"district" defaultValue:nil];
+    NSDictionary * style = [paramsDict_ dictValueForKey:@"style" defaultValue:@{}];
+    
+    BMKDistrictSearchOption * districtOption = [[BMKDistrictSearchOption alloc] init];
+    districtOption.city = city;
+    districtOption.district = district;
+    
+    UZBMKDistrictSearch * districtSearch = [[UZBMKDistrictSearch alloc] init];
+    districtSearch.delegate = self;
+    districtSearch.districtId = districtId;
+    districtSearch.style = style;
+    BOOL success = [districtSearch districtSearch:districtOption];
+    if (success) {
+    } else {
+        if (searchDistrictCbid > 0) {
+            NSDictionary * dataDict = @{
+                                        @"success" : @(NO)
+                                        };
+            NSDictionary * errDict = @{
+                                        @"code" : @(BMK_SEARCH_NO_RESULT)
+                                        };
+            [self sendResultEventWithCallbackId:searchDistrictCbid dataDict:dataDict errDict:errDict doDelete:YES];
+        }
+    }
+}
+
+- (void)removeDistrict:(NSDictionary *)paramsDict_ {
+    NSString * districtId = [paramsDict_ stringValueForKey:@"id" defaultValue:nil];
+    if (!districtId || !districtId.length) {
+        return;
+    }
+    NSMutableArray * polygonArr = [self.districtDict objectForKey:districtId];
+    if (polygonArr && [polygonArr isKindOfClass:[NSMutableArray class]]) {
+        for (UZBMKPolygon * polygon in polygonArr) {
+            [self.baiduMapView removeOverlay:polygon];
+        }
+        [self.districtDict removeObjectForKey:districtId];
+    }
+}
+
+- (void)onGetDistrictResult:(BMKDistrictSearch *)searcher result:(BMKDistrictResult *)result errorCode:(BMKSearchErrorCode)error {
+    //BMKSearchErrorCode错误码，BMK_SEARCH_NO_ERROR：检索结果正常返回
+    if (error == BMK_SEARCH_NO_ERROR) {
+        UZBMKDistrictSearch * search = (UZBMKDistrictSearch *)searcher;
+        NSMutableArray * polygonArr = [NSMutableArray array];
+        for (NSString * path in result.paths) {
+            UZBMKPolygon * polygon = [self transferPathStringToPolygon:path];
+            polygon.style = search.style;
+            [self.baiduMapView addOverlay:polygon];
+            [polygonArr addObject:polygon];
+        }
+        [self.districtDict setObject:polygonArr forKey:search.districtId];
+        self.baiduMapView.centerCoordinate = result.center;
+        if (self.searchDistrictCbid > 0) {
+            NSDictionary * dataDict = @{
+                                        @"success" : @(YES)
+                                        };
+            [self sendResultEventWithCallbackId:self.searchDistrictCbid dataDict:dataDict errDict:nil doDelete:YES];
+        }
+    }else {
+        if (self.searchDistrictCbid > 0) {
+            NSDictionary * dataDict = @{
+                                        @"success" : @(NO)
+                                        };
+            NSDictionary * errDict = @{
+                                       @"code" : @(error)
+                                       };
+            [self sendResultEventWithCallbackId:self.searchDistrictCbid dataDict:dataDict errDict:errDict doDelete:YES];
+        }
+    }
+}
+
+- (UZBMKPolygon *)transferPathStringToPolygon:(NSString *)path {
+    NSUInteger pathCount = [path componentsSeparatedByString:@";"].count;
+    if (pathCount > 0) {
+        BMKMapPoint points[pathCount];
+        NSArray *pointsArray = [path componentsSeparatedByString:@";"];
+        for (NSUInteger i = 0; i < pathCount; i ++) {
+            if ([pointsArray[i] rangeOfString:@","].location != NSNotFound) {
+                NSArray *coordinates = [pointsArray[i] componentsSeparatedByString:@","];
+                points[i] = BMKMapPointMake([coordinates.firstObject doubleValue], [coordinates .lastObject doubleValue]);
+            }
+        }
+
+        UZBMKPolygon * polygon = [[UZBMKPolygon alloc] init];
+        [polygon setPolygonWithPoints:points count:pathCount];
+        return polygon;
+    }
+    return nil;
+}
 
 - (void)searchRoute:(NSDictionary *)paramsDict_ {
     NSString *routeId = [paramsDict_ stringValueForKey:@"id" defaultValue:nil];
@@ -2411,6 +2552,7 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
     citySearchOption.pageSize = pageCapacity;
     citySearchOption.city= city;
     citySearchOption.keyword = keyword;
+    
     if (!_poisearch) {
         _poisearch = [[UZBMKPoiSearch alloc]init];
         _poisearch.delegate = self;
@@ -3106,6 +3248,21 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
     }
 }
  - (BMKOverlayView *)mapView:(BMKMapView *)mapView viewForOverlay:(id <BMKOverlay>)overlay {//地图添加覆盖物代理
+     if ([overlay isKindOfClass:[UZBMKPolygon class]]) {
+         UZBMKPolygon * polygon = (UZBMKPolygon *)overlay;
+         NSString * fillColor = [polygon.style stringValueForKey:@"fillColor" defaultValue:@"rgba(0,0,0,0)"];
+         NSString * strokeColor = [polygon.style stringValueForKey:@"strokeColor" defaultValue:@"#ff0000"];
+         float lineWidth = [polygon.style floatValueForKey:@"lineWidth" defaultValue:1];
+         BOOL lineDash = [polygon.style boolValueForKey:@"lineDash" defaultValue:NO];
+         
+         BMKPolygonView * polygonView = [[BMKPolygonView alloc] initWithOverlay:overlay];
+         polygonView.strokeColor = [UZAppUtils colorFromNSString:strokeColor];
+         polygonView.fillColor = [UZAppUtils colorFromNSString:fillColor];
+         polygonView.lineWidth = lineWidth;
+         polygonView.lineDash = lineDash;
+         return polygonView;
+     }
+     
      if ([overlay isKindOfClass:[BMKPolyline class]]) {//添加直线
          UZBMKPolyline *temp = (UZBMKPolyline *)overlay;
          if (temp.lineType == 1) {
@@ -4509,9 +4666,13 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
     
     float boardWidth = [stylesInfo floatValueForKey:@"w" defaultValue:160];
     
+    float titleMarginT = [stylesInfo floatValueForKey:@"marginT" defaultValue:10];
+    
+    float subtitleMarginB = [stylesInfo floatValueForKey:@"marginB" defaultValue:-1];
+    
     //位置参数
     float labelW, labelH, labelX ,labelY;
-    labelY = 10;
+    labelY = titleMarginT;
     labelH = 20;
     labelW = 100;
     //插图
@@ -4522,8 +4683,6 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
             BMapAsyncImageView *asyImg = [[BMapAsyncImageView alloc]init];
             [asyImg loadImage:illusPath];
             if (aligment.length>0 && [aligment isEqualToString:@"right"]) {
-//                rect = CGRectMake(115, 5, 35, 50);
-//                labelX = 10;
                 if (boardWidth > 60) {
                     labelX = 10;
                     labelW = boardWidth - 35 - 10 - 5 - 10;
@@ -4533,8 +4692,6 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
                     labelX = CGRectGetMinX(rect) - 5 - labelW;
                 }
             } else {
-//                rect = CGRectMake(10, 5, 35, 50);
-//                labelX = 50;
                 if (boardWidth > 60) {
                     labelX = 50;
                     labelW = boardWidth - 35 - 10 - 5 - 10;
@@ -4551,8 +4708,6 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
             UIImageView *illusImg = [[UIImageView alloc]init];
             illusImg.image = [UIImage imageWithContentsOfFile:realIllusPath];
             if (aligment.length>0 && [aligment isEqualToString:@"right"]) {
-//                rect = CGRectMake(115, 5, 35, 50);
-//                labelX = 10;
                 if (boardWidth > 60) {
                     labelX = 10;
                     labelW = boardWidth - 35 - 10 - 5 - 10;
@@ -4562,8 +4717,6 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
                     labelX = CGRectGetMinX(rect) - 5 - labelW;
                 }
             } else {
-//                rect = CGRectMake(10, 5, 35, 50);
-//                labelX = 50;
                 if (boardWidth > 60) {
                     labelX = 50;
                     labelW = boardWidth - 35 - 10 - 5 - 10;
@@ -4577,8 +4730,6 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
             [pinAnnotationView addSubview:illusImg];
         }
     } else {
-//        labelX = 10;
-//        labelW = 140;
         if (boardWidth > 20) {
             labelX = 10;
             labelW = boardWidth - labelX * 2;
@@ -4601,7 +4752,12 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
     [pinAnnotationView addSubview:titleLab];
     //子标题
     NSString *subTitle = [contentInfo stringValueForKey:@"subTitle" defaultValue:nil];
-    UILabel *subTitleLab = [[UILabel alloc]initWithFrame:CGRectMake(labelX, labelY+labelH, labelW, labelH)];
+    float subtitleY = labelY+labelH;
+    if (subtitleMarginB >= 0) {
+        subtitleY = pinAnnotationView.bounds.size.height - subtitleMarginB - labelH;
+    }
+    
+    UILabel *subTitleLab = [[UILabel alloc]initWithFrame:CGRectMake(labelX, subtitleY, labelW, labelH)];//
     subTitleLab.text = subTitle;
     subTitleLab.backgroundColor = [UIColor clearColor];
     subTitleLab.font = [UIFont systemFontOfSize:subtitleSize];
@@ -4631,6 +4787,7 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
         //网页气泡的背景图片
         UIImageView * bubblleBgImgView = [[UIImageView alloc]init];
         [popBubbleView addSubview:bubblleBgImgView];
+        
         //气泡上的网页
         UIWebView *webView = [[UIWebView alloc]init];
         webView.scalesPageToFit = NO;//自动对页面进行缩放以适应屏幕
@@ -4807,7 +4964,15 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
     [popView addSubview:titleLab];
     //子标题
     NSString *subTitle = [contentInfo stringValueForKey:@"subTitle" defaultValue:nil];
-    UILabel *subTitleLab = [[UILabel alloc]initWithFrame:CGRectMake(labelX, labelY+labelH+5, labelW, labelH)];
+        
+    NSDictionary *attribute = @{NSFontAttributeName: [UIFont systemFontOfSize:subtitleSize]};
+    CGSize labelSize = [subTitle boundingRectWithSize:CGSizeMake(labelW, 5000) options: NSStringDrawingTruncatesLastVisibleLine | NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading attributes:attribute context:nil].size;
+    if (labelSize.height < labelH) {
+        labelSize.height = labelH;
+    }
+        
+    UILabel *subTitleLab = [[UILabel alloc]initWithFrame:CGRectMake(labelX, labelY+labelH+5, labelW, labelSize.height)];
+    subTitleLab.numberOfLines = 0;//表示label可以多行显示
     subTitleLab.text = subTitle;
     subTitleLab.backgroundColor = [UIColor clearColor];
     subTitleLab.font = [UIFont systemFontOfSize:subtitleSize];
@@ -4818,6 +4983,10 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
     pView.frame = CGRectMake(0, 0, bubbleLong, bubbleHeight);
     pinAnnotationView.paopaoView = pView;
     }
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(nonnull UIGestureRecognizer *)otherGestureRecognizer {
+    return YES;
 }
 
 - (BMKAnnotationView *)getDefaultAnnotaionWith:(UZbMapAnnotation *)tempAnnot andMap:(BMKMapView *)mapView {//添加布告牌、标注
@@ -5490,6 +5659,9 @@ static BMKLocationViewDisplayParam * extracted(UZBMap *object) {
                 [dict setObject:phone forKey:@"phone"];
             }
             //[dict setObject:[NSNumber numberWithInt:poi.epoitype] forKey:@"poiType"];//POI类型，0:普通点 1:公交站 2:公交线路 3:地铁站 4:地铁线路
+//            if (poi.hasDetailInfo) {
+//                NSLog(@"类型---%@",poi.detailInfo.type);
+//            }
             [dictAry addObject:dict];
         }
         [cbDict setObject:@(result.totalPOINum) forKey:@"totalNum"];

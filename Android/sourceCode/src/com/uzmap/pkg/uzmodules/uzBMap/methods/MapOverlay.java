@@ -283,9 +283,11 @@ public class MapOverlay {
 		int maxWidth = mJsParamsUtil.getScreenWidth((Activity)mUzBMap.context()) - UZCoreUtil.dipToPix(50);
 		int width = mJsParamsUtil.getWidth(moduleContext);
 		int height = mJsParamsUtil.getHeight(moduleContext);
+		int marginT = mJsParamsUtil.getMarginT(moduleContext);
+		int marginB = mJsParamsUtil.getMarginB(moduleContext);
 		return new Billboard(moduleContext, context, bubbleId, bgImg, title,
 				subTitle, icon, iconStr, titleSize, subTitleSize, titleColor,
-				subTitleColor, iconAlign, maxWidth, width, height, this);
+				subTitleColor, iconAlign, maxWidth, width, height, this, marginT, marginB);
 	}
 
 	private void addMarkerClickListener() {

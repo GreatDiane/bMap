@@ -5,8 +5,6 @@
 APICloud 的 bMap 模块是对百度地图移动端开放 SDK 进行的一次封装。目的是为了让 APICloud 的广大开发者只需用 html+js 即可快速、高效的集成百度移动端地图到自己的 App 内。所以需在百度开放平台提供的 SDK 基础上，按照 APICloud 平台的模块开发规范，对百度地图的 SDK 提供的接口进行一层封装。本模块只对百度地图的常用接口进行了封装，其中涉及到 UI 的部分功能无法完全彻底的封装。因此开源此模块源码，原生开发者可以在此模块的基础上继续完善该模块的其它接口。比如扩展地图上添加自定义气泡的接口，让前端开发者很快地在 APICloud 上开发出各式各样、效果炫酷的 App。
 
 # **模块接口文档**
-
-
 /*
 Title: bMap
 Description: bMap
@@ -20,6 +18,8 @@ Description: bMap
 
 [initMapSDK](#initMapSDK)
 [open](#open)
+[customStyle](#customStyle)
+[enableCustom](#enableCustom)
 [close](#close)
 [show](#show)
 [hide](#hide)
@@ -43,7 +43,6 @@ Description: bMap
 [setOverlook](#setOverlook)
 [setScaleBar](#setScaleBar)
 [setCompass](#setCompass)
-[setCompass](#setCompass)
 [setHeatMap](#setHeatMap)
 [setBuilding](#setBuilding)
 [setRegion](#setRegion)
@@ -57,6 +56,7 @@ Description: bMap
 [startSearchGPS](#startSearchGPS)
 [stopSearchGPS](#stopSearchGPS)
 [getCurrentLocation](#getCurrentLocation)
+[snapshotMap](#snapshotMap)
 
 </div>
 
@@ -87,6 +87,12 @@ Description: bMap
 [addMobileAnnotations](#addMobileAnnotations)
 [moveAnnotation](#moveAnnotation)
 [removeAnnotations](#removeAnnotations)
+[addCluster](#addCluster)
+[removeCluster](#removeCluster)
+[addClusterListener](#addClusterListener)
+[setWebBubble](#setWebBubble)
+[addWebBubbleListener](#addWebBubbleListener)
+[removeWebBubbleListener](#removeWebBubbleListener)
 
 </div>
 
@@ -117,6 +123,8 @@ Description: bMap
 [searchNearby](#searchNearby)
 [searchInBounds](#searchInBounds)  
 [autocomplete](#autocomplete)
+[searchDistrict](#searchDistrict)
+[removeDistrict](#removeDistrict)
 
 </div>
 
@@ -137,6 +145,10 @@ Description: bMap
 [removeOfflineListener](#removeOfflineListener)
 
 </div>
+
+# 论坛示例
+
+为帮助用户更好更快的使用模块，论坛维护了一个[示例](https://community.apicloud.com/bbs/forum.php?mod=viewthread&tid=34879&page=1&extra=#pid188020)，示例中包含示例代码、知识点讲解、注意事项等，供您参考。 
 
 # **概述**
 
@@ -164,7 +176,8 @@ Description: bMap
 
 bMap 模块封装了百度地图的原生 SDK，集成了百度地图常用基本接口；手机版原生地图，不同于 js 地图，相对于js地图而言，本模块封装的原生手机地图更加流畅迅速、动画效果更加逼真。使用此模块可轻松把百度地图集成到自己的app内，实现百度地图常用的定位、关键字搜索、周边搜索、自定义标注及气泡、查公交路线等各种功能；另外本模块已支持百度地图离线版本。
 
-若某些带UI的接口不能满足开发设计需求，开发者（借助于原生开发者）可在本模块基础上修改少量原生代码，随心所欲的自定义百度地图所具有的原生功能，简单、轻松、快捷、高效、迅速集成百度地图，将自己的 app 和百度地图实现无缝链接。
+若某些带UI的接口不能满足开发设计需求，开发者（借助于原生开发者）可在本模块基础上修改少量原生代码，随心所欲的自定义百度地图所具有的原生功能，简单、轻松、快捷、高效、迅速集成百度地图，将自己的 app 和百度地图实现无缝链接。模块原生代码开源地址为：[https://github.com/apicloudcom/bMap](https://github.com/apicloudcom/bMap)
+
 
 **模块使用攻略**
 
@@ -202,9 +215,9 @@ bMap 模块封装了百度地图的原生 SDK，集成了百度地图常用基�
  
  **iOS如果需要自定义当前位置图标需要自定义模块**
 
-制作方法如下：下载 bMap 模块 zip 包并解压（请到[APICloud网站](https://docs.apicloud.com/Client-API/Open-SDK/bMap)下载），将自己的图片放到 zip 包内 target 目录下的 mapapi.bundle里的images目录内。然后重新压缩为 zip 包文件上传自定义模块，云编译时勾选该模块。请到[APICloud网站](https://docs.apicloud.com/Client-API/Open-SDK/bMap)下载安卓平台模块包。
+制作方法如下：下载 [bMap](/img/docImage/bMapAppendix/ios/bMap.zip) 模块 zip 包并解压，将自己的图片放到 zip 包内 target 目录下的 mapapi.bundle里的images目录内。然后重新压缩为 zip 包文件上传自定义模块，云编译时勾选该模块。点击 [android](/img/docImage/bMapAppendix/android/bMap.zip) 下载安卓平台模块包。
  
-##**模块接口**
+## **模块接口**
 
 <div id="initMapSDK"></div>
 
@@ -378,6 +391,79 @@ iOS系统，Android系统
 
 可提供的1.0.0及更高版本
 
+
+<div id="customStyle"></div>
+
+# **customStyle**
+
+定制地图主题，需要在open接口调用前调用
+
+customStyle({params})
+
+## params
+
+configPath：
+
+- 类型：字符串类型
+- 描述：（可选项）主图文件路径，要求本地路径（widget://、fs://）(android不支持widget)，configPath优先级高于customConfig
+- 注：使用自定义主题时，请参照[百度个性地图](http://lbsyun.baidu.com/index.php?title=androidsdk/guide/create-map/custommap)来设置
+- 默认：使用模块内置主题
+
+customConfig：
+
+- 类型：字符串类型
+- 描述：（可选项）模块内置主题 
+ - night：黑夜
+ - lightblue：清新蓝
+ - midnightblue：午夜蓝
+- 默认：night
+
+
+## 示例代码
+
+```js
+var bMap = api.require('bMap');
+bMap.customStyle();
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.1.8及更高版本
+
+<div id="enableCustom"></div>
+
+# **enableCustom**
+
+打开/关闭定制主题，需要在open接口调用后才生效
+
+enableCustom({params})
+
+## params
+
+enable：
+
+- 类型：布尔类型
+- 描述：（可选项）是否打开定制主题
+- 默认：true
+
+
+## 示例代码
+
+```js
+var bMap = api.require('bMap');
+bMap.enableCustom();
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.1.8及更高版本
+
+
+
 <div id="close"></div>
 
 # **close**
@@ -519,6 +605,27 @@ filter：
 - 描述：（可选项）位置更新所需的最小距离（单位米），autoStop 为 true 时，此参数有效
 - 默认值：1.0
 
+enableLocInForeground：
+
+- 类型：布尔类型
+- 描述：(可选项) 开发者应用如果有后台定位需求，在退到后台的时候，为了保证定位可以在后台一直运行，可以设置为true，适配android 8后台无法定位问题，其他版本下也会提高定位进程存活率(ios不支持)
+- 默认值：false
+
+notification:
+
+- 类型：JSON对象
+- 描述：(必选项) 通知栏的提示，此字段只有在enableLocInForeground设置为true时有效。(百度为了app能够在后台持续定位，就得需要开启一个前台服务，要开启一个前台服务就得开启通知栏提示)(ios不支持)
+
+内部字段：
+
+```js
+{
+	id : 1,   //(必选项) 数字类型；为通知栏notifation设置唯一id，必须大于0
+	contentTitle :  //(必选项) 字符串类型；标题
+	contentText:    //(必选项) 字符串类型；内容
+}
+```
+
 ## callback(ret, err)
 
 ret：
@@ -571,6 +678,7 @@ bMap.getLocation({
 iOS系统，Android系统
 
 可提供的1.0.0及更高版本
+
 
 <div id="stopLocation"></div>
 
@@ -1375,6 +1483,7 @@ iOS系统，Android系统
 # **setCompass**
 
 设置百度地图指南针位置，**只有地图旋转或视角变化时才显示指南针**
+注:android默认会在地图旋转的时候显示指南针，不支持自定义位置
 
 setCompass({params})
 
@@ -1406,7 +1515,7 @@ map.setCompass({
 
 ## 可用性
 
-iOS系统，Android系统
+iOS系统
 
 可提供的1.0.0及更高版本
 
@@ -2025,8 +2134,71 @@ function(ret, err) {
 
 iOS系统，Android系统
 
-可提供的1.0.0及更高版本
+可提供的1.0.0及更高版本 
 
+
+<div id="snapshotMap"></div>
+
+# **snapshotMap**
+
+截图 **需调用 open 接口**
+
+snapshotMap(params, callback(ret))
+
+## params
+
+path:
+
+- 类型：字符串类型
+- 描述：图片保存的路径 支持fs://
+- 默认值：无
+
+rect：
+
+- 类型：JSON类型
+- 描述：截图区域；如果不写此参数，截全屏；注：开发者要确保rect的x <= w and y <= h，否则截屏失败
+- 默认值：无
+- 内部字段
+
+```
+x:   // 数字类型；左边开始区域
+y: // 数字类型；上边开始区域
+w:// 数字类型；右边截止区域
+h:// 数字类型；底部截止区域
+
+```
+
+## callback(ret)
+
+ret：
+
+- 类型：JSON 对象
+- 内部字段：
+
+```js
+{
+    status: true,               //布尔类型；是否获取成功，true|false
+    path:''                     //字符串类型；图片保存路径；status为true时有值
+}
+```
+
+## 示例代码
+
+```
+var bMap = api.require('bMap');
+bMap.snapshotMap(
+function(ret, err) {
+	if(ret.status){
+		alert(JSON.stringify(ret));
+	}
+});
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.2.1及更高版本
 
 <div id="setIndoorMap"></div>
 
@@ -2313,6 +2485,7 @@ annotations：
     lat: 39.134,               //数字类型；图标标注所在位置的纬度
     icon: 'widget://',         //（可选项）字符串类型；指定的标注图标，要求本地路径（fs://、widget://），若不传则显示公用的 icon 图标
     draggable: true            //（可选项）布尔类型；所添加的标注是否可被拖动，若不传则以公用的 draggable 为准
+    size: 30,                 //（可选项）数字类型；标注大小；默认：30(注：由于android上百度地图并没有提供接口来控制标注的大小，而是模块本身通过给定的宽高来计算缩放比来缩放背景图片(也就是icon参数)，以此来达到改变整个标注大小的目的，会有一定的偏差，所以在android上的处理方式是如果不传此参数，按照原图来展示）
 }]
 ```
 
@@ -2572,6 +2745,8 @@ styles：
                                     //取值范围：
                                     //left（图片居左）
                                     //right（图片居右）
+    w: 160,                 //（可选项）数字类型；气泡的宽；默认：title的长度，并且不会超过地图视图的宽度-64，不会小于160（注：android不会计算title的长度，传多少是多少;另：由于android上百度地图并没有提供接口来控制气泡的宽高，而是模块本身通过给定的宽高来计算缩放比来缩放背景图片(也就是bgImg参数)，以此来达到改变整个气泡大小的目的，会有一定的偏差，所以在android上的处理方式是如果不传此参数，按照原图来展示；h参数同理）
+    h: 90,                 //（可选项）数字类型；气泡的高；默认：90
 }
 ```
 
@@ -2743,10 +2918,14 @@ styles：
     titleSize: 14,                  //（可选项）数字类型；布告牌标题的文字大小；默认：16
     subTitleColor: '#000',          //（可选项）字符串类型；布告牌概述内容的文字颜色，支持rgb、rgba、#；默认：'#000'
     subTitleSize: 12,               //（可选项）数字类型；布告牌概述内容的文字大小；默认：16
+    marginT: 10,                    //（可选项）数字类型；标题距布告牌顶端的距离，有插图时标题的左右间距都固定为10；默认：10            
+    marginB: 15,                    //（可选项）数字类型；子标题距布告牌低端的距离，有插图时子标题的左右间距都固定为10；默认：原值
     illusAlign: 'left'              //（可选项）字符串类型；布告牌配图的显示位置；默认：'left'
                                     //取值范围：
                                     //left（图片居左）
                                     //right（图片居右）
+    w: 160,                 //（可选项）数字类型；气泡的宽；默认：160(注：由于android上百度地图并没有提供接口来控制布告牌的大小，而是模块本身通过给定的宽高来计算缩放比来缩放背景图片(也就是bgImg参数)，以此来达到改变整个布告牌大小的目的，会有一定的偏差，所以在android上的处理方式是如果不传此参数，按照原图来展示；h参数同理）
+    h: 75,                 //（可选项）数字类型；气泡的高；默认：75 
 }
 ```
 
@@ -2968,6 +3147,280 @@ map.removeAnnotations({
 iOS系统，Android系统
 
 可提供的1.0.0及更高版本
+
+
+<div id="addCluster"></div>
+
+# **addCluster**
+
+往地图上添加聚合点
+
+显示逻辑：
+
+可以添加多个点到地图上。缩放地图时，会自动根据当前显示区域，将多个点聚合成一个点显示在地图上，并显示该点包含多少个聚合点。聚合点无点击相应事件，单个点才有（通过addClusterListener接口监听）。聚合点及单个点的样式可通过 styles 参数控制。比如：在天安门广场添加了20个聚合点，当地图缩小到当前屏幕显示五环以内的北京时，天安门广场位置只显示一个点，点的标题显示为数字20。当地图放大到当前屏幕只显示天安门广场时才显示单个点，可以通过 addClusterListener 接口监听其单击事件。
+
+addCluster({params})
+
+## params
+
+styles：
+
+- 类型：JSON对象
+- 描述：（可选项）聚合点的样式配置
+- 内部字段：
+
+```js
+{
+   size: {          //（可选项）JSON对象；聚合点的大小(注:android上此参数只能设置pointBg为颜色的时候，单个标注的大小)
+      w:,           //（可选项）数字类型；聚合点的宽；默认：22.0
+      h:            //（可选项）数字类型；聚合点的高；默认：22.0
+   },
+   bg: {            //JSON对象；聚合点样式配置
+      pointBg:'',   //字符串类型；单个点的背景配置，支持rgba、rgb、#、img；默认:默认图标
+      grade:[],     //数组类型；聚合点等级组成的数组，（android不支持）如：[1,5,10]表示有2-5、6-10、10+（不包含10个以上点的聚合点）三个等级，每个等级的聚合点可配置不同的样式（对应bgs数组内的元素）。；默认：[1,5,10]
+      bgs:[],       //数组类型；各等级聚合点的背景配置，与grade一一对应，支持rgb、rgba、#、img（本地路径fs://、widget://）；（android不支持）默认：['蓝色','绿色','红色']
+      numberColors[]//数组类型；各等级聚合点显示的数字字体颜色，与grade一一对应，支持rgb、rgba、#；（android不支持）默认：['#fff','#fff','#fff']
+   }
+}
+```
+
+data：
+
+- 类型：字符串/数组类型
+- 描述：为字符串类型时表示点信息文件路径，要求本地路径（widget://、fs://）；若传数组类型则表示直接将点数据传给模块
+- 内部字段：
+
+```js
+[{
+  lat:,        //数字类型；点纬度
+  lon:,        //数字类型；点纬度
+  title:,      //字符串类型；点击后弹出气泡的标题
+  subtitle:,   //字符串类型；点击后弹出气泡的子标题
+  customID:    //字符串类型；点自定义ID
+}]
+```
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.addCluster({
+    styles: {
+       size: {
+           w: 22,
+           h: 22
+        },
+        corner: 11,
+        bg: {
+            point:'',
+            grade:[1,5,10],
+            bgs:['#0000ff','#00ff00','#ff0000'],
+            numberColors:['#fff','#fff','#fff']
+        }
+    },
+    data:[{
+        lat:39.989556,
+        lon:116.384731,
+        title:'泰翔商务楼',
+        subtitle:'',
+        customID:'65'
+    }]
+});
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.1.4及更高版本
+
+<div id="setWebBubble"></div>
+
+# **setWebBubble**
+
+设置点击标注时弹出的气泡信息
+
+setWebBubble({params})
+
+## params
+
+id：
+
+- 类型：数字
+- 描述：要设置气泡的标注 id
+
+url：
+
+- 类型：字符串
+- 描述：（可选项）弹出气泡的网页地址，用户点击标注时，模块在标注上弹出窗口（类似open一个frame，模块会用webview去加载此url的网页显示出来）,当data参数不为空时，url将做为baseUrl，data中的html引用的资源文件根路径以该url为基础。
+
+data：
+
+- 类型：字符串
+- 描述：（可选项）页面加载的数据内容，可以为html片段或者整张html文件的数据,当data为空或者不传的时候， 会将url地址作为整个加载进去
+
+size：
+
+- 类型：JSON对象
+- 描述：（可选项）气泡的大小配置
+- 内部字段
+
+```js
+{
+      width: 50,     //（可选项）数字类型；气泡的宽；默认：50
+      height: 50     //（可选项）数字类型；气泡的高；默认：50
+}
+```
+
+bg：
+
+- 类型：字符串
+- 描述：（可选项）弹出气泡的背景设置，支持rgb、rgba、#、img（要求本地路径，如：widget://、fs://）(android不支持rgb、rgba、#)
+- 默认：rgba(0,0,0,0)
+
+
+## 示例代码
+
+```js
+	var map = api.require('bMap');
+	map.setWebBubble({
+		id:1,
+		size : {
+			width:100,		
+			height:100		
+		},			
+		bg:'rgba(0,0,0,0.6)', // android此参数必须传背景图
+		url:'http://img6.ph.126.net',
+		data:'哈哈 <img src="hBiG96B8egigBULxUWcOpA==/109212290980771276.jpg">'
+	});
+```
+
+## 可用性
+
+iOS系统,android系统
+
+可提供的1.1.7及更高版本
+
+
+<div id="addWebBubbleListener"></div>
+
+# **addWebBubbleListener**
+
+添加网页气泡点击监听
+
+addWebBubbleListener(callback(ret))
+
+
+## callback(ret)
+
+ret：
+
+- 类型：JSON 对象
+- 内部字段：
+
+```js
+{
+    id: 1               //数字类型；用户点击气泡返回的id
+}
+```
+
+## 示例代码
+
+```js
+	var map = api.require('bMap');
+	map.addWebBubbleListener(function(ret){
+	    api.alert({msg:JSON.stringify(ret)});
+	});
+```
+
+## 可用性
+
+iOS系统,android系统
+
+可提供的1.1.7及更高版本
+
+
+
+<div id="removeWebBubbleListener"></div>
+
+# **removeWebBubbleListener**
+
+移除网页气泡点击监听
+
+removeWebBubbleListener(callback(ret))
+
+
+## 示例代码
+
+```js
+	var map = api.require('bMap');
+	map.removeWebBubbleListener();
+```
+
+## 可用性
+
+iOS系统，android系统
+
+可提供的1.1.7及更高版本
+
+
+<div id="removeCluster"></div>
+
+# **removeCluster**
+
+移除本次添加的聚合点
+
+removeCluster()
+
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.removeCluster();
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.1.4及更高版本
+
+
+<div id="addClusterListener"></div>
+
+# **addClusterListener**
+
+添加聚合点点击事件的监听
+
+addClusterListener(callback(ret))
+
+ret：
+
+- 类型：JSON 对象
+- 内部字段：
+
+```js
+{
+    customID:         //字符串类型；点击的标注的id
+}
+```
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.addClusterListener(function(ret){
+  api.alert({msg:JSON.stringify(ret)});
+});
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.1.4及更高版本
+
 
 <div id="addLine"></div>
 
@@ -3374,12 +3827,14 @@ type：
     - drive（开车）
     - transit（公交）
     - walk（步行）
+    - riding（骑行）
 
 policy：
 
 - 类型：字符串
-- 描述：（可选项）路线策略，**type 为 walk（步行）时，此参数可不传**
+- 描述：（可选项）路线策略，**type 为 walk（步行）或 riding（骑行）时，此参数可不传**
 - 默认值：'ebus_time_first/ecar_time_first'
+- 注：android从1.1.6版本开始公交换乘不支持(ebus_no_subway, ebus_time_first, ebus_transfer_first, ebus_walk_first字段)
 - 取值范围：
     - ecar_fee_first（驾乘检索策略常量：较少费用）
     - ecar_dis_first（驾乘检索策略常量：最短距离）
@@ -3389,6 +3844,16 @@ policy：
     - ebus_time_first（公交检索策略常量：时间优先）
     - ebus_transfer_first（公交检索策略常量：最少换乘）
     - ebus_walk_first（公交检索策略常量：最少步行距离）
+    - ebus_in_time (市内公交检索策略常量：时间短)(ios不支持)
+    - ebus_in_transfer (市内公交检索策略常量：少换乘)(ios不支持)
+    - ebus_in_walk (市内公交检索策略常量：少不行)(ios不支持)
+    - ebus_in_no_subway (市内公交检索策略常量：不坐地铁)(ios不支持)
+    - ebus_in_subway_first (市内公交检索策略常量：地铁优先)(ios不支持)
+    - ebus_in_suggest (市内公交检索策略常量：推荐)(ios不支持)
+    - ebus_out_price (跨城公交检索策略常量：价格低)(ios不支持)
+    - ebus_out_time (跨城公交检索策略常量：时间短)(ios不支持)
+    - ebus_out_start_early (跨城公交检索策略常量：出发早)(ios不支持)
+   
 
 start：
 
@@ -3415,6 +3880,12 @@ end：
     lat: 39.989576      //（可选项）数字类型；终点纬度
 }
 ```
+
+isSameCity:
+
+- 类型：布尔类型
+- 描述：起点和终点是否是同一城市，仅支持Android端
+- 注：当type为transit时，必须写此字段
 
 ## callback(ret, err)
 
@@ -3542,19 +4013,63 @@ index：
 - 描述：路线方案的索引，在 searchRoute 时返回的多个路线方案组成的数组中的索引
 - 默认值：0
 
+
 styles：
 
 - 类型：JSON 对象
 - 描述：路线样式设置
+- 注：android目前sdk不支持地铁类型，所以出行方式为地铁的均会以公交的方式来绘制了路线，包括节点
 - 内部字段：
 
 ```js
 {
-    start: {         
-       icon: ''      //（可选项）字符串类型；起点图标，有默认图标
+    start: {         //（可选项）JSON对象；起点样式配置，不传则不显示
+       icon: '',     //（可选项）字符串类型；起点图标，要求本地路径（fs://、widget://）;默认：百度
+       size:         //（可选项）数字类型；起点图标大小；默认：30 (android不支持)
     },
-    end: {           
-       icon: ''      //（可选项）字符串类型；终点图标，有默认图标
+    end: {           //（可选项）JSON对象；终点样式配置，不传则不显示
+       icon: '',     //（可选项）字符串类型；终点图标路径，要求本地路径（fs://、widget://）;默认：百度图标
+       size:         //（可选项）数字类型；终点图标大小；默认：30 (android不支持)
+    },
+    line: {          //（可选项）JSON对象；路线样式配置，不传则显示默认值  
+       color:'#0000FF', //（可选项）字符串类型；折线的颜色，支持rgb、rgba、#；默认值：'#0000FF'
+       width: 3,     //（可选项）数字类型；折线的宽度，默认：3
+       dash: false,     //（可选项）布尔类型；是否显示为虚线；默认：false
+       textureImg:'' //（可选项）字符串类型；纹理图片路径，要求本地路径（fs://、widget://）；默认：无
+    },
+    node: {          //（可选项）JSON类型；节点样式，不传则不显示。注意节点并不一定是转弯点。
+       size:,        //（可选项）数字类型；节点大小；默认：17 (android不支持)
+       icon:         //（可选项）字符串类型；节点图标，要求本地路径（fs://、widget://）;默认：百度图标
+    },
+    busLine: {       //（可选项）JSON对象；乘公交路时的线样式配置，不传则以line为准 ，仅当搜索路线类型为 transit 时有效
+       color:'#0000FF', //（可选项）字符串类型；折线的颜色，支持rgb、rgba、#；默认值：'#0000FF'
+       width: 3,     //（可选项）数字类型；折线的宽度，默认：3
+       dash: false,     //（可选项）布尔类型；是否显示为虚线；默认：false
+       textureImg:'' //（可选项）字符串类型；纹理图片路径，要求本地路径（fs://、widget://）；默认：无(android上当dash为true，此字段生效)
+    },
+    subwayLine: {    //（可选项）JSON对象；乘坐地铁时的路线样式配置，不传则以line为准 ，仅当搜索路线类型为 transit 时有效
+       color:'#0000FF', //（可选项）字符串类型；折线的颜色，支持rgb、rgba、#；默认值：'#0000FF'
+       width: 3,     //（可选项）数字类型；折线的宽度，默认：3
+       dash: false,     //（可选项）布尔类型；是否显示为虚线；默认：false
+       textureImg:'' //（可选项）字符串类型；纹理图片路径，要求本地路径（fs://、widget://）；默认：无(android上当dash为true，此字段生效)
+    },
+    walkLine: {      //（可选项）JSON对象；步行时的路线样式配置，不传则以line为准 ，仅当搜索路线类型为 transit 时有效
+       color:'#0000FF', //（可选项）字符串类型；折线的颜色，支持rgb、rgba、#；默认值：'#0000FF'
+       width: 3,     //（可选项）数字类型；折线的宽度，默认：3
+       dash: false,     //（可选项）布尔类型；是否显示为虚线；默认：false
+       textureImg:'' //（可选项）字符串类型；纹理图片路径，要求本地路径（fs://、widget://）；默认：无(android上当dash为true，此字段生效)
+    },
+    busNode: {       //（可选项）JSON类型；切换为公交时节点样式，不传则显示默认值，仅当搜索路线类型为 transit 时有效
+       size:,        //（可选项）数字类型；节点大小；默认：17
+       icon:         //（可选项）字符串类型；节点图标，要求本地路径（fs://、widget://）;默认：百度图标
+    },
+    subwayNode: {    //（可选项）JSON类型；切换为地铁时节点样式，不传则显示默认值，仅当搜索路线类型为 transit 时有效
+       size:,        //（可选项）数字类型；节点大小；默认：17
+       icon:         //（可选项）字符串类型；节点图标，要求本地路径（fs://、widget://）;默认：百度图标
+    },
+    walkNode: {      //（可选项）JSON类型；切换为步行时节点样式，不传则显示默认值，仅当搜索路线类型为 transit 时有效
+       size:,        //（可选项）数字类型；节点大小；默认：17
+       icon:         //（可选项）字符串类型；节点图标，要求本地路径（fs://、widget://）;默认：百度图标
     }
 }
 ```
@@ -4295,6 +4810,145 @@ iOS系统，Android系统
 
 可提供的1.0.0及更高版本
 
+<div id="searchDistrict"></div>
+
+# **searchDistrict**
+
+行政区边界检索绘制，**需要先调用 open 接口**
+
+searchDistrict({params}, callback(ret, err))
+
+## params
+id：
+
+- 类型：字符串
+- 描述：搜索的行政区id,removeDistrict时使用
+
+city：
+
+- 类型：字符串
+- 描述：城市名字
+
+district：
+
+- 类型：字符串
+- 描述：（可选项）区县名字
+
+style：
+
+- 类型：JSON 对象
+- 描述：边界样式设置
+- 内部字段：
+
+```js
+{
+   fillColor: '',     //（可选项）字符串类型；填充颜色，支持rgb、rgba、#；默认：'rgba(0,0,0,0)'
+   strokeColor: '',   //（可选项）字符串类型；画笔颜色，支持rgb、rgba、#；默认：'#ff0000'
+   lineWidth: 1,     //（可选项）数值类型；画笔宽度；默认：1
+   lineDash: true,    //（可选项）布尔类型；是否为虚线样式；默认：false
+}
+```
+
+## callback(ret, err)
+
+ret：
+
+- 类型：JSON 对象
+- 内部字段：
+
+```js
+{
+    success: true,           //布尔型；true||false       
+}
+```
+err：
+
+- 类型：JSON 对象
+- 内部字段：
+
+```js
+{
+    code: 0           //数字类型；错误码
+                      //0 检索失败
+                      //1 检索词有歧义      
+                      //2 检索地址有岐义
+                      //3 该城市不支持公交搜索                    
+                      //4 不支持跨城市公交
+                      //5 没有找到检索结果                    
+                      //6 起终点太近                    
+                      //7 key错误
+                      //8 网络连接错误
+                      //9 网络连接超时
+                      //10 还未完成鉴权，请在鉴权通过后重试
+                      //11 室内图ID错误
+                      //12 室内图检索楼层错误
+                      //13 起终点不在支持室内路线的室内图内
+                      //14 起终点不在同一个室内
+                      //15 参数错误
+                      //16 服务器错误
+  }
+```
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.searchDistrict({
+                        id : '0',
+                        city: '北京',
+                        district: '朝阳区',
+                        style : {
+                            //fillColor : '#ff0000',
+                            //strokeColor : '#00ff00',
+                            lineWidth : 3
+                        }
+                    },function(ret,err){
+                    if(ret.success){
+                   		 alert(JSON.stringify(ret));
+                    }else {
+                   		 alert(JSON.stringify(err));
+                    }
+                });
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.1.9及更高版本
+
+<div id="removeDistrict"></div>
+
+# **removeDistrict**
+
+移除行政区边界
+
+removeDistrict({params})
+
+## params
+
+id：
+
+- 类型：字符串
+- 描述：searchDistrict传入的id
+
+
+## 示例代码
+
+```js
+var map = api.require('bMap');
+map.removeDistrict({
+                    id: '0'
+                  }
+            );
+```
+
+## 可用性
+
+iOS系统，Android系统
+
+可提供的1.1.9及更高版本
+
 <div id="getHotCityList"></div>
 
 # **getHotCityList**
@@ -4786,12 +5440,12 @@ ret：
 {
     type: 0,                //数字类型；事件类型，取值范围如下：
                             //0：下载或更新
-                            //1：检测到的压缩包个数
-                            //2：当前解压的离线包
-                            //3：错误的离线包
+                            //1：检测到的压缩包个数(android不支持)
+                            //2：当前解压的离线包(android中此类型表示离线地图网络问题)
+                            //3：错误的离线包(android不支持)
                             //4：有新版本
-                            //5：扫描完毕
-                            //6：新增离线包
+                            //5：扫描完毕(android不支持)
+                            //6：新增离线包(android中此类型表示新安装离线地图事件)
     state:                  //数字类型；事件状态，
                             //当 type为 0 时，表示正在下载或更新城市id为state的离线包
                             //当 type 为1时，表示检测到state个离线压缩包
@@ -4880,3 +5534,8 @@ map.removeOfflineListener();
 iOS系统，Android系统
 
 可提供的1.0.0及更高版本
+
+# 论坛示例
+
+为帮助用户更好更快的使用模块，论坛维护了一个[示例](https://community.apicloud.com/bbs/forum.php?mod=viewthread&tid=34879&page=1&extra=#pid188020)，示例中包含示例代码、知识点讲解、注意事项等，供您参考。 
+

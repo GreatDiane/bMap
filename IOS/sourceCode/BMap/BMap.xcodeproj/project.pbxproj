@@ -26,6 +26,8 @@
 		25B3F58F20E2524C00256447 /* BaiduMapAPI_Location.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 25B3F58820E2524C00256447 /* BaiduMapAPI_Location.framework */; };
 		25B3F59020E2524C00256447 /* BaiduMapAPI_Radar.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 25B3F58920E2524C00256447 /* BaiduMapAPI_Radar.framework */; };
 		25B3F59120E2524C00256447 /* BaiduMapAPI_Search.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 25B3F58A20E2524C00256447 /* BaiduMapAPI_Search.framework */; };
+		6713456F221FC260009F2E9B /* UZBMKDistrictSearch.m in Sources */ = {isa = PBXBuildFile; fileRef = 6713456E221FC260009F2E9B /* UZBMKDistrictSearch.m */; };
+		67134572221FCC38009F2E9B /* UZBMKPolygon.m in Sources */ = {isa = PBXBuildFile; fileRef = 67134571221FCC38009F2E9B /* UZBMKPolygon.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -90,6 +92,10 @@
 		25B3F58820E2524C00256447 /* BaiduMapAPI_Location.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BaiduMapAPI_Location.framework; path = ../../../../Module/bMap/target/BaiduMapAPI_Location.framework; sourceTree = "<group>"; };
 		25B3F58920E2524C00256447 /* BaiduMapAPI_Radar.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BaiduMapAPI_Radar.framework; path = ../../../../Module/bMap/target/BaiduMapAPI_Radar.framework; sourceTree = "<group>"; };
 		25B3F58A20E2524C00256447 /* BaiduMapAPI_Search.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BaiduMapAPI_Search.framework; path = ../../../../Module/bMap/target/BaiduMapAPI_Search.framework; sourceTree = "<group>"; };
+		6713456D221FC260009F2E9B /* UZBMKDistrictSearch.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UZBMKDistrictSearch.h; sourceTree = "<group>"; };
+		6713456E221FC260009F2E9B /* UZBMKDistrictSearch.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UZBMKDistrictSearch.m; sourceTree = "<group>"; };
+		67134570221FCC38009F2E9B /* UZBMKPolygon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UZBMKPolygon.h; sourceTree = "<group>"; };
+		67134571221FCC38009F2E9B /* UZBMKPolygon.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UZBMKPolygon.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,6 +141,10 @@
 				03A5B0FB1B8DDE9E00BB6A2C /* imgeCache */,
 				03A5B10C1B8DDE9E00BB6A2C /* UZBMap.h */,
 				03A5B10D1B8DDE9E00BB6A2C /* UZBMap.mm */,
+				6713456D221FC260009F2E9B /* UZBMKDistrictSearch.h */,
+				6713456E221FC260009F2E9B /* UZBMKDistrictSearch.m */,
+				67134570221FCC38009F2E9B /* UZBMKPolygon.h */,
+				67134571221FCC38009F2E9B /* UZBMKPolygon.m */,
 				03932FA01B9ED78800E30AB9 /* UZBMKPolyline.h */,
 				03932FA11B9ED78800E30AB9 /* UZBMKPolyline.m */,
 				03FCBA981B95907300A20DC5 /* UZBMKGeoCodeSearch.h */,
@@ -297,9 +307,11 @@
 				03A5B1171B8DDE9E00BB6A2C /* UZBMap.mm in Sources */,
 				03A5B11A1B8DDE9E00BB6A2C /* UZBMKPoiSearch.m in Sources */,
 				03FCBA9A1B95907300A20DC5 /* UZBMKGeoCodeSearch.m in Sources */,
+				67134572221FCC38009F2E9B /* UZBMKPolygon.m in Sources */,
 				25892030213937FF000ACC80 /* BMKClusterQuadtree.m in Sources */,
 				25892031213937FF000ACC80 /* BMKClusterManager.m in Sources */,
 				2589202F213937FF000ACC80 /* BMKClusterItem.m in Sources */,
+				6713456F221FC260009F2E9B /* UZBMKDistrictSearch.m in Sources */,
 				25892032213937FF000ACC80 /* BMKClusterAlgorithm.m in Sources */,
 				03A5B1181B8DDE9E00BB6A2C /* UZbMapAnnotation.m in Sources */,
 				03A5B1161B8DDE9E00BB6A2C /* BMapAsyncImageView.m in Sources */,

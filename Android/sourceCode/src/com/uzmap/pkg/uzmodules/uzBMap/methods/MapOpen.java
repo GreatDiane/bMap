@@ -6,6 +6,7 @@
  */
 package com.uzmap.pkg.uzmodules.uzBMap.methods;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +20,7 @@ import android.graphics.Point;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
 import android.view.ViewParent;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.AbsoluteLayout;
@@ -41,10 +40,10 @@ import com.baidu.mapapi.map.InfoWindow;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
-import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationConfiguration.LocationMode;
 import com.baidu.mapapi.map.MyLocationData;
+import com.baidu.mapapi.map.TextureMapView;
 import com.baidu.mapapi.map.UiSettings;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.model.LatLngBounds;
@@ -52,6 +51,7 @@ import com.uzmap.pkg.uzcore.UZCoreUtil;
 import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
 import com.uzmap.pkg.uzkit.UZUtility;
+import com.uzmap.pkg.uzmodules.uzBMap.BMapConfig;
 import com.uzmap.pkg.uzmodules.uzBMap.UzBMap;
 import com.uzmap.pkg.uzmodules.uzBMap.location.LocationInterface;
 import com.uzmap.pkg.uzmodules.uzBMap.location.LocationUtil;
@@ -65,7 +65,7 @@ public class MapOpen implements LocationInterface {
 	private UZModuleContext mModuleContext;
 	private Context mContext;
 	private JsParamsUtil mJsParamsUtil;
-	private MapView mMapView;
+	private TextureMapView mMapView;
 	private BaiduMap mBaiduMap;
 	private LocationUtil mLocationUtil;
 	private boolean mIsFirstLoc = true;
@@ -83,11 +83,13 @@ public class MapOpen implements LocationInterface {
 	private int mY;
 	private int mW;
 	private int mH;
-
-	public MapOpen(UzBMap mUzBMap, UZModuleContext mModuleContext,
-			Context mContext) {
+	private String configPath;
+	private String mode;
+	public MapOpen(UzBMap mUzBMap, UZModuleContext mModuleContext, String mode, String configPath, Context mContext) {
 		this.mUzBMap = mUzBMap;
 		this.mModuleContext = mModuleContext;
+		this.mode = mode;
+		this.configPath = configPath;
 		this.mContext = mContext;
 		mLocationUtil = new LocationUtil(mContext, mModuleContext, this);
 		mJsParamsUtil = JsParamsUtil.getInstance();
@@ -102,7 +104,8 @@ public class MapOpen implements LocationInterface {
 	}
 
 	public void open() {
-		mMapView = new MapView(mContext);
+		setMapCustomStyle(mode);
+		mMapView = new TextureMapView(mContext);
 		requestParentDisallowInterceptTouchEvent(true);
 		mMapView.showScaleControl(false);
 		mMapView.showZoomControls(false);
@@ -111,6 +114,32 @@ public class MapOpen implements LocationInterface {
 		setCenter();
 		location();
 		insertView();
+	}
+	
+	private void setMapCustomStyle(String mode) {
+		String themeParent = mUzBMap.context().getFilesDir().getAbsolutePath();
+		File file = null;
+		if (TextUtils.equals(mode, "1")) {
+			file = new File(themeParent, "customConfigdir/blackNight/custom_config");//黑夜模式
+			if (!file.exists()) {
+				BMapConfig.copyFile(mUzBMap.context(), 1, themeParent, file.getAbsolutePath());
+			}
+			TextureMapView.setCustomMapStylePath(file.getAbsolutePath());
+		}else if (TextUtils.equals(mode, "2")) {
+			file = new File(themeParent, "customConfigdir/freshBlue/custom_config");//清新蓝
+			if (!file.exists()) {
+				BMapConfig.copyFile(mUzBMap.context(), 2, themeParent, file.getAbsolutePath());
+			}
+			TextureMapView.setCustomMapStylePath(file.getAbsolutePath());
+		}else if (TextUtils.equals(mode, "3")) {
+			file = new File(themeParent, "customConfigdir/midnightBlue/custom_config");//午夜蓝
+			if (!file.exists()) {
+				BMapConfig.copyFile(mUzBMap.context(), 3, themeParent, file.getAbsolutePath());
+			}
+			TextureMapView.setCustomMapStylePath(file.getAbsolutePath());
+		}else if (TextUtils.equals(mode, "0")) {
+			TextureMapView.setCustomMapStylePath(configPath);
+		}
 	}
 
 	private void initBaiduMap() {
@@ -277,14 +306,21 @@ public class MapOpen implements LocationInterface {
 
 	private void stopLocation() {
 		mLocationUtil.stopLocation();
-		mBaiduMap.setMyLocationEnabled(false);
+		if (mBaiduMap != null) {
+			mBaiduMap.setMyLocationEnabled(false);
+		}
+		
 	}
 
 	public void onDestory() {
 		stopLocation();
-		mMapView.onPause();
-//		mMapView.onDestroy();
-		mMapView = null;
+		if (mMapView != null) {
+			mMapView.onPause();
+			mMapView.onDestroy();
+			//mUzBMap.removeViewFromCurWindow(mMapView);
+			mMapView = null;
+		}
+		
 		if (mOrientationListener != null) {
 			mOrientationListener.stop();
 			mOrientationListener = null;
@@ -292,6 +328,7 @@ public class MapOpen implements LocationInterface {
 	}
 
 	public void close() {
+		TextureMapView.setMapCustomEnable(false);
 		mUzBMap.removeViewFromCurWindow(mMapView);
 		onDestory();
 	}
@@ -524,11 +561,11 @@ public class MapOpen implements LocationInterface {
 		this.mInfoWindow = mInfoWindow;
 	}
 
-	public MapView getMapView() {
+	public TextureMapView getMapView() {
 		return mMapView;
 	}
 
-	public void setMapView(MapView mMapView) {
+	public void setMapView(TextureMapView mMapView) {
 		this.mMapView = mMapView;
 	}
 

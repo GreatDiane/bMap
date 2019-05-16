@@ -14,7 +14,6 @@ import com.baidu.mapapi.map.Polyline;
 import com.baidu.mapapi.map.PolylineOptions;
 import com.baidu.mapapi.search.route.MassTransitRouteLine;
 import com.baidu.mapapi.search.route.MassTransitRouteLine.TransitStep.StepVehicleInfoType;
-import com.uzmap.pkg.uzkit.UZUtility;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -308,7 +307,6 @@ public class MassTransitRouteOverlay extends OverlayManager {
 
 	@Override
 	public boolean onPolylineClick(Polyline polyline) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 }

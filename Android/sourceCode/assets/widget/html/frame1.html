@@ -29,64 +29,6 @@
 </body>
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript">
-	apiready = function(){
-		var bMap = api.require("bMap");
-		bMap.open({
-			rect: {
-				x: 0,
-				y: 250,
-				w: 320,
-				h: 300
-			},
-			center: {
-				lon: 116.4021310000,
-				lat: 39.9994480000
-			},
-			zoomLevel: 10,
-			showUserLocation: true,
-			fixedOn: api.frameName,
-			fixed: false
-		}, function(ret) {
-			if (ret.status) {
-				alert('地图打开成功');
-				var button = api.require("UIButton");
-
-				button.open({
-					rect: {
-						x: 100,
-						y: 300,
-						w: 80,
-						h: 50
-					},
-					corner: 5,
-					bg: {
-						normal: '#000000',
-						highlight: '#ff0000',
-						active: '#adf000'
-					},
-					title: {
-						size: 14,
-						highlight: '高亮状态标题',
-						active: '选中后标题',
-						normal: '常态标题',
-						highlightColor: '#000000',
-						activeColor: '#000adf',
-						normalColor: '#ff0000',
-						alignment: 'center'
-					},
-					fixedOn: api.frameName,
-					fixed: true,
-					move: true
-				}, function(ret, err) {
-					if (ret) {
-						alert(JSON.stringify(ret));
-					} else {
-						alert(JSON.stringify(err));
-					}
-				});
-
-			}
-		});
-	};
+	
 </script>
 </html>

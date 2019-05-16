@@ -1,6 +1,5 @@
 package com.uzmap.pkg.uzmodules.uzBMap.overlay;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -186,7 +185,6 @@ public class WalkingRouteOverlay extends OverlayManager {
 
     @Override
     public boolean onPolylineClick(Polyline polyline) {
-        // TODO Auto-generated method stub
         return false;
     }
 }

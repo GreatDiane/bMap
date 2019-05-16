@@ -2,10 +2,10 @@ package com.uzmap.pkg.uzmodules.uzBMap;
 
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
+
+import java.io.File;
 
 import com.baidu.mapapi.SDKInitializer;
-import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
 import com.uzmap.pkg.uzcore.uzmodule.AppInfo;
 import com.uzmap.pkg.uzcore.uzmodule.ApplicationDelegate;
 
@@ -27,27 +27,38 @@ public class EasDelegate extends ApplicationDelegate {
 
 	@Override
 	public void onApplicationCreate(Context context, AppInfo info) {
-		//TODO 请在这个函数中初始化需要在Application的onCreate中初始化的东西
 		SDKInitializer.initialize(context);
+		String themeParent = context.getFilesDir().getAbsolutePath();
+		File file1 = new File(themeParent, "customConfigdir/blackNight/custom_config");//黑夜模式
+		if (!file1.exists()) {
+			BMapConfig.copyFile(context, 1, themeParent, file1.getAbsolutePath());
+		}
+		File file2 = new File(themeParent, "customConfigdir/freshBlue/custom_config");//清新蓝
+		if (!file2.exists()) {
+			BMapConfig.copyFile(context, 2, themeParent, file2.getAbsolutePath());
+		}
+		File file3 = new File(themeParent, "customConfigdir/midnightBlue/custom_config");//午夜蓝
+		if (!file3.exists()) {
+			BMapConfig.copyFile(context, 3, themeParent, file3.getAbsolutePath());
+		}
 	}
+	
+	
 
 	@Override
 	public void onActivityResume(Activity activity, AppInfo info) {
 		//APP从后台回到前台时，APICloud引擎将通过该函数回调事件
-		//TODO 请在这个函数中实现你需要的逻辑，无则忽略
 		
 	}
 
 	@Override
 	public void onActivityPause(Activity activity, AppInfo info) {
 		//APP从前台退到后台时，APICloud引擎将通过该函数回调事件
-		//TODO 请在这个函数中实现你需要的逻辑，无则忽略
 	}
 
 	@Override
 	public void onActivityFinish(Activity activity, AppInfo info) {
 		//APP即将结束运行时，APICloud引擎将通过该函数回调事件
-		//TODO 请在这个函数中实现你需要的逻辑，无则忽略
 	}
 
 }

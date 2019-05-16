@@ -2,175 +2,196 @@
 <html>
 
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="maximum-scale=2.0,minimum-scale=1.0,user-scalable=1,width=device-width,initial-scale=1.0" />
-	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
-	<title>slidPane</title>
-	<link rel="stylesheet" type="text/css" href="../css/api.css" />
-	<style>
-		body {
-			padding-top: 20px;
-		}
-	</style>
+<meta charset="utf-8">
+<meta name="viewport"
+	content="maximum-scale=2.0,minimum-scale=1.0,user-scalable=1,width=device-width,initial-scale=1.0" />
+<meta name="format-detection"
+	content="telephone=no,email=no,date=no,address=no">
+<title>slidPane</title>
+<link rel="stylesheet" type="text/css" href="../css/api.css" />
+<style>
+body {
+	padding-top: 20px;
+}
+</style>
 </head>
 
 <body>
 	<a href="http://www.baidu.com">打开百度</a>
 	<div class="header">
 		<a class="menu" tapmode="" onclick="sliding()"></a>
-		<div class="title" onclick="open_bmap()">
-			open_bmap
-		</div>
+		<div class="title" onclick="open_bmap()">open_bmap</div>
 		<a></a>
 	</div>
-	<br/>
-	<div class="title" onclick="open_activity()">
-			open_activity
-		</div>
-		<br/><br/>
+	
+	<br />
+	<div class="title" onclick="snapshotMap()">截图</div>
+	<br />
+	<br />
+	<div class="title" onclick="open_activity()">open_activity</div>
+	<br />
+	<div class="title" onclick="searchDistrict()">searchDistrict</div>
+	<br />
+	<br />
 	<div class="title" onclick="setLocationConfig()">
-			setLocationConfig
-		</div><br/>
-	<div class="title" onclick="setIndoorMap()">
-			setIndoorMap
-		</div><br/>
-	<button onclick="start()">
-			start
-	</button>
-	<br/>
-	<br/>
-	<br/>
-	<button onclick="getOfflineCityList()">
-			getOfflineCityList
-	</button>
-	<br/>
-	<br/>
-	<br/>
-	<button type="button" onclick="openFrame()" name="button">openFrame</button><br/><br/>
-	<button onclick="getRegion()">
-			getRegion
-		</button><br/><br/>
-	<button onclick="getLocation()">
-			getLocation
-		</button><br/><br/>
-	<button onclick="addOfflineListener()">
-			addOfflineListener
-		</button><br/><br/>
-	<button onclick="removeRoute()">
-			removeRoute
-		</button><br/><br/>
-	<button onclick="test()">
-			test
-		</button><br/><br/>
-	<button onclick="close1()">
-			close1
-		</button><br/><br/>
-	<button onclick="searchInCity()">
-			searchInCity
-		</button><br/><br/>
-	<button onclick="searchRoute()">
-			searchRoute
-		</button><br/><br/>
-	<button onclick="UIButton_open()">
-			UIButton_open
-		</button><br/><br/>
-	
-	<button onclick="addCluster()">
-			addCluster
-	</button><br/><br/>
-	
-	<button onclick="removeCluster()">
-			removeCluster
-	</button><br/><br/>
-		
-	<button onclick="getCurrentLocation()">
-			getCurrentLocation
-		</button><br/><br/>
-	<button onclick="addBillboard()">addBillboard</button><br/><br/>
-	<button onclick="addAnnotations()">addAnnotations</button><br/><br/>
-	<button onclick="setBubble()">setBubble</button><br/><br/>
-	<button onclick="addMobileAnnotations()">addMobileAnnotations</button><br/><br/>
-	<button onclick="removeAnnotations()">removeAnnotations</button><br/><br/>
-	
-	<button type="button" name="button" onclick="openWinbMap()">openWinbMap</button><br/><br/>
-	<button type="button" onclick="openSlidLayout()" name="button">openSlidLayout</button><br/><br/>
-	<button type="button" onclick="getHotCityList()" name="button">getHotCityList</button><br/><br/>
-	
-	<button type="button" onclick="getCoordsFromName()" name="button">getCoordsFromName</button><br/><br/>
+		setLocationConfig</div>
+	<br />
+	<div class="title" onclick="setIndoorMap()">setIndoorMap</div>
+	<br />
+	<button onclick="start()">start</button>
+	<br />
+	<br />
+	<br />
+	<button onclick="getOfflineCityList()">getOfflineCityList</button>
+	<br />
+	<br />
+	<br />
+	<button type="button" onclick="openFrame()" name="button">openFrame</button>
+	<br />
+	<br />
+	<button onclick="getRegion()">getRegion</button>
+	<br />
+	<br />
+	<button onclick="getLocation()">getLocation</button>
+	<br />
+	<br />
+	<button onclick="addOfflineListener()">addOfflineListener</button>
+	<br />
+	<br />
+	<button onclick="removeRoute()">removeRoute</button>
+	<br />
+	<br />
+	<button onclick="test()">test</button>
+	<br />
+	<br />
+	<button onclick="close1()">close1</button>
+	<br />
+	<br />
+	<button onclick="searchInCity()">searchInCity</button>
+	<br />
+	<br />
+	<button onclick="searchRoute()">searchRoute</button>
+	<br />
+	<br />
+	<button onclick="UIButton_open()">UIButton_open</button>
+	<br />
+	<br />
+
+	<button onclick="addCluster()">addCluster</button>
+	<br />
+	<br />
+
+	<button onclick="removeCluster()">removeCluster</button>
+	<br />
+	<br />
+
+	<button onclick="getCurrentLocation()">getCurrentLocation</button>
+	<br />
+	<br />
+	<button onclick="addBillboard()">addBillboard</button>
+	<br />
+	<br />
+	<button onclick="addAnnotations()">addAnnotations</button>
+	<br />
+	<br />
+	<button onclick="setBubble()">setBubble</button>
+	<br />
+	<br />
+	<button onclick="addMobileAnnotations()">addMobileAnnotations</button>
+	<br />
+	<br />
+	<button onclick="removeAnnotations()">removeAnnotations</button>
+	<br />
+	<br />
+
+	<button type="button" name="button" onclick="openWinbMap()">openWinbMap</button>
+	<br />
+	<br />
+	<button type="button" onclick="openSlidLayout()" name="button">openSlidLayout</button>
+	<br />
+	<br />
+	<button type="button" onclick="getHotCityList()" name="button">getHotCityList</button>
+	<br />
+	<br />
+
+	<button type="button" onclick="getCoordsFromName()" name="button">getCoordsFromName</button>
+	<br />
+	<br />
 	<script type="text/javascript" src="../script/api.js"></script>
 	<script>
-	
-	
-		function open_activity(){
+		function open_activity() {
 			bMap.openActivity();
 		}
-		
-		function getCoordsFromName(){
-			bMap.getCoordsFromName({city:'昆明市', address:'昆明市广瑞中心'}, function(ret, err){
+
+		function getCoordsFromName() {
+			bMap.getCoordsFromName({
+				city : '昆明市',
+				address : '昆明市广瑞中心'
+			}, function(ret, err) {
 				alert(JSON.stringify(ret));
 			});
 		}
-		
-		function getHotCityList(){
-			bMap.getHotCityList(function(ret){
+
+		function getHotCityList() {
+			bMap.getHotCityList(function(ret) {
 				console.log(JSON.stringify(ret));
 				alert(JSON.stringify(ret));
 			})
 		}
-		
+
 		function openSlidLayout() {
 			api.openSlidLayout({
-				type: 'all',
-				leftEdge: 80,
-				rightEdge: 60,
-				fixedPane: {
-					name: 'win1',
-					url: 'frame1.html',
-					bgColor: '#fff',
-					bounces: true,
-					vScrollBarEnabled: true,
-					hScrollBarEnabled: false
+				type : 'all',
+				leftEdge : 80,
+				rightEdge : 60,
+				fixedPane : {
+					name : 'win1',
+					url : 'frame1.html',
+					bgColor : '#fff',
+					bounces : true,
+					vScrollBarEnabled : true,
+					hScrollBarEnabled : false
 				},
-				slidPane: {
-					name: 'win2',
-					url: 'frame2.html',
-					bgColor: '#fff',
-					bounces: true,
-					vScrollBarEnabled: true,
-					hScrollBarEnabled: false
+				slidPane : {
+					name : 'win2',
+					url : 'frame2.html',
+					bgColor : '#fff',
+					bounces : true,
+					vScrollBarEnabled : true,
+					hScrollBarEnabled : false
 				}
 			}, function(ret, err) {
 
 			});
 
 		}
-		
-		function setIndoorMap(){
+
+		function setIndoorMap() {
 			bMap.setIndoorMap({
-    				draggable: false
-			});
-		}
-		
-		function setLocationConfig(){
-			bMap.showUserLocation({
-    				isShow: true,
-    				trackingMode: 'none',
-    				imagePath:'/storage/emulated/0/qq.png'
+				draggable : false
 			});
 		}
 
-		function getOfflineCityList(){
-			
-			bMap.getOfflineCityList(function(ret){
-			    if(ret.status){
-			        alert(JSON.stringify(ret)); 
-			    }
+		function setLocationConfig() {
+			bMap.showUserLocation({
+				isShow : true,
+				trackingMode : 'none',
+				imagePath : '/storage/emulated/0/qq.png'
 			});
 		}
-		
+
+		function getOfflineCityList() {
+
+			bMap.getOfflineCityList(function(ret) {
+				if (ret.status) {
+					alert(JSON.stringify(ret));
+				}
+			});
+		}
+
 		function sliding() {
 			api.openSlidPane({
-				type: 'left'
+				type : 'left'
 			});
 		}
 
@@ -179,25 +200,41 @@
 			bMap = api.require('bMap');
 			//api.setRefreshHeaderInfo();
 		};
+		
+		function snapshotMap(){
+			var map = api.require('bMap');
+			var parmas = {
+				path:'fs://tim1.jpg',
+				rect:{
+					left:10,
+					top:10,
+					right:20,
+					bottom:20
+				}
+			};
+			map.snapshotMap(parmas, function(ret){
+				alert(JSON.stringify(ret));
+			});
+		}
 
 		function addAnnotations() {
 			var map = api.require('bMap');
 			map.addAnnotations({
-				annotations: [{
-					id: 1,
-					lon: 116.297,
-					lat: 40.109
+				annotations : [ {
+					id : 1,
+					lon : 116.297,
+					lat : 40.109
 				}, {
-					id: 2,
-					lon: 116.29,
-					lat: 40.109
+					id : 2,
+					lon : 116.29,
+					lat : 40.109
 				}, {
-					id: 3,
-					lon: 116.298,
-					lat: 40.11
-				}],
-				icon: 'widget://image/aiil.jpg',
-				draggable: true
+					id : 3,
+					lon : 116.298,
+					lat : 40.11
+				} ],
+				icon : 'widget://image/aiil.jpg',
+				draggable : true
 			}, function(ret) {
 				if (ret) {
 					//alert(ret.id);
@@ -205,58 +242,58 @@
 				}
 			});
 		}
-		
-		function setBubble(){
+
+		function setBubble() {
 			var map = api.require('bMap');
 			map.setBubble({
-			   id: 1,
-                bgImg: 'widget://image/abg.jpg',
-                content: {
-                    title: '标注1',
-                    subTitle: '这是第1个标注',
-                    illus: 'widget://image/abg.jpg'
-                },
-                styles: {
-                    titleColor: '#009900',
-                    titleSize: 14,
-                    subTitleColor: '#999',
-                    subTitleSize: 12,
-                    illusAlign: 'left'
-                }
-			}, function(ret){
-				
+				id : 1,
+				bgImg : 'widget://image/abg.jpg',
+				content : {
+					title : '标注1',
+					subTitle : '这是第1个标注这是第1个标注这是第1个标注这是第1个标注这是第1个标注这是第1个标注',
+					illus : 'widget://image/abg.jpg'
+				},
+				styles : {
+					titleColor : '#009900',
+					titleSize : 14,
+					subTitleColor : '#999',
+					subTitleSize : 12,
+					illusAlign : 'left'
+				}
+			}, function(ret) {
+
 			});
 		}
 
 		function addMobileAnnotations() {
 			var map = api.require('bMap');
 			map.addMobileAnnotations({
-				annotations: [{
-					id: 10,
-					lon: 116.297,
-					lat: 40.109,
-					icon: 'widget://image/aiil.jpg'
-				}]
+				annotations : [ {
+					id : 10,
+					lon : 116.297,
+					lat : 40.109,
+					icon : 'widget://image/aiil.jpg'
+				} ]
 			});
 		}
 
 		function removeAnnotations() {
 			var map = api.require('bMap');
 			map.removeAnnotations({
-				ids: [10]
+				ids : [ 10 ]
 			});
 		}
 
 		function getLocation() {
 			bMap.getLocation({
-				accuracy: '100m',
-				autoStop: true,
-				filter: 1,
-				enableLocInForeground:true,
-				notification:{
-					id:1,
-					contentTitle:'This is Title',
-					contentText:'This is Content'
+				accuracy : '100m',
+				autoStop : true,
+				filter : 1,
+				enableLocInForeground : true,
+				notification : {
+					id : 1,
+					contentTitle : 'This is Title',
+					contentText : 'This is Content'
 				}
 			}, function(ret, err) {
 				if (ret.status) {
@@ -264,8 +301,8 @@
 					lon = ret.lon;
 					lat = ret.lat;
 					bMap.getNameFromCoords({
-						lon: lon,
-						lat: lat
+						lon : lon,
+						lat : lat
 					}, function(ret, err) {
 						if (ret.status) {
 							alert(JSON.stringify(ret));
@@ -283,69 +320,99 @@
 
 		function open_bmap() {
 			bMap.open({
-				rect: {
-					x: 0,
-					y: 250,
-					w: 320,
-					h: 300
+				rect : {
+					x : 0,
+					y : 250,
+					w : 320,
+					h : 300
 				},
-				zoomLevel: 10,
-				showUserLocation: true,
-				fixedOn: api.frameName,
-				fixed: false
+				zoomLevel : 10,
+				showUserLocation : true,
+				fixedOn : api.frameName,
+				fixed : false
 			}, function(ret) {
 				if (ret.status) {
 					bMap.setCenter({
-		                coords: {
-		                    lon: 116.4021310000,
-		                    lat: 39.9994480000
-		                },
-		                animation: false
-		            });
-					
+						coords : {
+							lon : 116.4021310000,
+							lat : 39.9994480000
+						},
+						animation : false
+					});
+
 					addAnnotations();
 				}
 			});
 		}
-		
-		function addCluster(){
+
+		function addCluster() {
 			var bMap = api.require('bMap');
 			var params = {
-				styles:{
-					size:{w:100, h:100},
-					bg:{pointBg:'#000000'}
+				styles : {
+					size : {
+						w : 100,
+						h : 100
+					},
+					bg : {
+						pointBg : '#000000'
+					}
 				},
-				data:[
-					{lat: 39.963175, lon:116.400244, customID:1},
-					{lat: 39.942821, lon:116.369199, customID:2},
-					{lat: 39.939723, lon:116.425541, customID:3},
-					{lat: 39.906965, lon:116.401394, customID:4},
-					{lat: 39.956965, lon:116.331394, customID:5},
-					{lat: 39.886965, lon:116.441394, customID:6},
-					{lat: 39.996965, lon:116.411394, customID:7}
-				]
-				
+				data : [ {
+					lat : 39.963175,
+					lon : 116.400244,
+					customID : 1
+				}, {
+					lat : 39.942821,
+					lon : 116.369199,
+					customID : 2
+				}, {
+					lat : 39.939723,
+					lon : 116.425541,
+					customID : 3
+				}, {
+					lat : 39.906965,
+					lon : 116.401394,
+					customID : 4
+				}, {
+					lat : 39.956965,
+					lon : 116.331394,
+					customID : 5
+				}, {
+					lat : 39.886965,
+					lon : 116.441394,
+					customID : 6
+				}, {
+					lat : 39.996965,
+					lon : 116.411394,
+					customID : 7
+				} ]
+
 			};
-			
+
 			var params1 = {
-				styles:{
-					size:{w:100, h:100},
-					bg:{pointBg:'#9AC0CD'}
+				styles : {
+					size : {
+						w : 100,
+						h : 100
+					},
+					bg : {
+						pointBg : '#9AC0CD'
+					}
 				},
-				data:'widget://res/judian.txt',
+				data : 'widget://res/judian.txt',
 			};
-			
+
 			bMap.addCluster(params1);
 		}
-		
-		function removeCluster(){
+
+		function removeCluster() {
 			var bMap = api.require('bMap');
 			bMap.removeCluster();
 		}
 
 		function start() {
 			bMap.start({
-				cityID: 196
+				cityID : 196
 			}, function(ret) {
 				if (ret.status) {
 					alert(JSON.stringify(ret));
@@ -360,80 +427,95 @@
 		}
 
 		function test() {
-			bMap.getLocation({
-				accuracy: '100m',
-				autoStop: true,
-				filter: 1
-			}, function(ret, err) {
-				if (ret.status) {
-					bMap.open({
-						rect: {
-							x: 0,
-							y: 100,
-							w: 300,
-							h: 350
-						},
-						center: {
-							lon: ret.lon,
-							lat: ret.lat
-								//                                                        lon: 116.403838,
-								//                                                lat: 39.914437
-						},
-						zoomLevel: 14,
-						showUserLocation: true,
-						//fixedOn : _f, // 别忘了设置这个
-						fixed: true
-					}, function(retb) {
-						if (retb.status) {
-							bMap.setTraffic({
-								traffic: true
-							});
-							bMap.searchRoute({
-								id: 1,
-								type: 'transit',
-								policy: 'ebus_no_subway',
-								start: {
-									lon: 116.377960,
-									lat: 39.983734,
-									description: '起点 泰翔商务楼'
-								},
-								end: {
-									lon: 116.343483,
-									lat: 40.042171,
-									description: '终点 君安家园西区'
-								}
-							}, function(retc, errb) {
-								if (retc.status) {
-									bMap.drawRoute({
-										id: 1,
-										autoresizing: true,
-										index: 0,
-										styles: {
-											start: {
-												icon: 'widget://image/start.png'
-											},
-											end: {
-												icon: 'widget://image/end.png'
-											}
-										}
-									}, function(rete) {
-										//alert(JSON.stringify(rete));
-									});
+			bMap
+					.getLocation(
+							{
+								accuracy : '100m',
+								autoStop : true,
+								filter : 1
+							},
+							function(ret, err) {
+								if (ret.status) {
+									bMap
+											.open(
+													{
+														rect : {
+															x : 0,
+															y : 100,
+															w : 300,
+															h : 350
+														},
+														center : {
+															lon : ret.lon,
+															lat : ret.lat
+														//                                                        lon: 116.403838,
+														//                                                lat: 39.914437
+														},
+														zoomLevel : 14,
+														showUserLocation : true,
+														//fixedOn : _f, // 别忘了设置这个
+														fixed : true
+													},
+													function(retb) {
+														if (retb.status) {
+															bMap.setTraffic({
+																traffic : true
+															});
+															bMap
+																	.searchRoute(
+																			{
+																				id : 1,
+																				type : 'transit',
+																				policy : 'ebus_no_subway',
+																				start : {
+																					lon : 116.377960,
+																					lat : 39.983734,
+																					description : '起点 泰翔商务楼'
+																				},
+																				end : {
+																					lon : 116.343483,
+																					lat : 40.042171,
+																					description : '终点 君安家园西区'
+																				}
+																			},
+																			function(
+																					retc,
+																					errb) {
+																				if (retc.status) {
+																					bMap
+																							.drawRoute(
+																									{
+																										id : 1,
+																										autoresizing : true,
+																										index : 0,
+																										styles : {
+																											start : {
+																												icon : 'widget://image/start.png'
+																											},
+																											end : {
+																												icon : 'widget://image/end.png'
+																											}
+																										}
+																									},
+																									function(
+																											rete) {
+																										//alert(JSON.stringify(rete));
+																									});
+																				} else {
+																					alert(errb.code);
+																				}
+																			});
+														}
+													});
 								} else {
-									alert(errb.code);
+									alert(err.code);
 								}
 							});
-						}
-					});
-				} else {
-					alert(err.code);
-				}
-			});
 		}
 
 		function removeRoute() {
 			bMap.removeRoute({
-				ids: [1]
+				ids : [ 1 ]
 			});
 		}
 
@@ -443,10 +525,10 @@
 
 		function searchInCity() {
 			bMap.searchInCity({
-				city: '河北',
-				keyword: '张家口',
-				pageIndex: 0,
-				pageCapacity: 20
+				city : '河北',
+				keyword : '张家口',
+				pageIndex : 0,
+				pageCapacity : 20
 			}, function(ret, err) {
 				if (ret.status) {
 					alert(JSON.stringify(ret));
@@ -458,47 +540,47 @@
 
 		function searchRoute() {
 			bMap.searchRoute({
-				id: 1,
-				type: 'drive',
-				policy: 'ecar_fee_first',
-				start: {
-					lon: 116.3878017416,
-					lat: 39.9827863000
+				id : 1,
+				type : 'drive',
+				policy : 'ecar_fee_first',
+				start : {
+					lon : 116.3878017416,
+					lat : 39.9827863000
 				},
-				end: {
-					lon: 116.4192830034,
-					lat: 40.0815870097
+				end : {
+					lon : 116.4192830034,
+					lat : 40.0815870097
 				}
 			}, function(ret, err) {
 				if (ret.status) {
 					api.alert({
-						msg: JSON.stringify(ret)
+						msg : JSON.stringify(ret)
 					});
 					bMap.drawRoute({
-						id: 1,
-						autoresizing: false,
-						index: 0,
-						styles: {
-							start: {
-								icon: 'widget://image/start.png'
+						id : 1,
+						autoresizing : false,
+						index : 0,
+						styles : {
+							start : {
+								icon : 'widget://image/start.png'
 							},
-							end: {
-								icon: 'widget://image/end.png'
+							end : {
+								icon : 'widget://image/end.png'
 							},
-							line:{
-								color:'#DDA0DD', //（可选项）字符串类型；折线的颜色，支持rgb、rgba、#；默认值：'#000'
-							    width: 5,     //（可选项）数字类型；折线的宽度，默认：1
-							    dash: true,     //（可选项）布尔类型；是否显示为虚线；默认：false
+							line : {
+								color : '#DDA0DD', //（可选项）字符串类型；折线的颜色，支持rgb、rgba、#；默认值：'#000'
+								width : 5, //（可选项）数字类型；折线的宽度，默认：1
+								dash : false, //（可选项）布尔类型；是否显示为虚线；默认：false
 							},
-							node:{
-								size:5,
-								icon:'widget://image/node.png'
+							node : {
+								size : 5,
+								icon : 'widget://image/node.png'
 							}
 						}
 					}, function(ret) {
 						alert(1);
 						api.alert({
-							msg: JSON.stringify(ret)
+							msg : JSON.stringify(ret)
 						});
 					});
 				}
@@ -514,31 +596,31 @@
 		function UIButton_open() {
 			var button = api.require('UIButton');
 			button.open({
-				rect: {
-					x: 100,
-					y: 600,
-					w: 80,
-					h: 50
+				rect : {
+					x : 100,
+					y : 600,
+					w : 80,
+					h : 50
 				},
-				corner: 5,
-				bg: {
-					normal: '#000000',
-					highlight: '#ff0000',
-					active: '#adf000'
+				corner : 5,
+				bg : {
+					normal : '#000000',
+					highlight : '#ff0000',
+					active : '#adf000'
 				},
-				title: {
-					size: 14,
-					highlight: '高亮状态标题',
-					active: '选中后标题',
-					normal: '常态标题',
-					highlightColor: '#000000',
-					activeColor: '#000adf',
-					normalColor: '#ff0000',
-					alignment: 'center'
+				title : {
+					size : 14,
+					highlight : '高亮状态标题',
+					active : '选中后标题',
+					normal : '常态标题',
+					highlightColor : '#000000',
+					activeColor : '#000adf',
+					normalColor : '#ff0000',
+					alignment : 'center'
 				},
-				fixedOn: api.frameName,
-				fixed: true,
-				move: true
+				fixedOn : api.frameName,
+				fixed : true,
+				move : true
 			}, function(ret, err) {
 				if (ret) {
 					alert(JSON.stringify(ret));
@@ -551,23 +633,27 @@
 		function addBillboard() {
 			var map = api.require('bMap');
 			map.addBillboard({
-				id: 4,
-				coords: {
-					lon: 116.233,
-					lat: 39.134
+				id : 4,
+				coords : {
+					lon : 116.233,
+					lat : 39.134
 				},
-				bgImg: 'widget://image/bMapTest.png',
-				content: {
-					title: '大标题大标题大标题大标题',
-					subTitle: '概述内容概述内容概述内容',
-					illus: 'http://ico.ooopic.com/ajax/iconpng/?id=145044.png'
+				bgImg : 'widget://image/bg1.png',
+				content : {
+					title : '添加布告牌',
+					subTitle : '布告牌描述内容eeeeid = 4',
+					illus : 'widget://image/illus.png'
 				},
-				styles: {
-					titleColor: '#000',
-					titleSize: 16,
-					subTitleColor: '#999',
-					subTitleSize: 12,
-					illusAlign: 'left'
+				styles : {
+					titleColor : '#000',
+					titleSize : 16,
+					subTitleColor : '#104E8B',
+					subTitleSize : 15,
+					marginT: 30,                    //（可选项）数字类型；标题距布告牌顶端的距离，有插图时标题的左右间距都固定为10；默认：10            
+    					marginB: 35,    				// 
+					illusAlign : 'left',
+					w: 150,                 //（可选项）数字类型；气泡的宽；默认：160
+    					h: 105,  
 				}
 			}, function(ret) {
 				if (ret) {
@@ -578,10 +664,10 @@
 
 		function openWinbMap() {
 			api.openWin({
-				name: 'page1',
-				url: 'bMap.html',
-				pageParam: {
-					name: 'test'
+				name : 'page1',
+				url : 'bMap.html',
+				pageParam : {
+					name : 'test'
 				}
 			});
 
@@ -589,23 +675,41 @@
 
 		function openFrame() {
 			api.openFrame({
-				name: 'page2',
-				url: 'frame4.html',
-				rect: {
-					x: 0,
-					y: 0,
-					w: 320,
-					h: 480
+				name : 'page2',
+				url : 'frame4.html',
+				rect : {
+					x : 0,
+					y : 0,
+					w : 320,
+					h : 480
 				},
-				pageParam: {
-					name: 'test'
+				pageParam : {
+					name : 'test'
 				},
-				bounces: true,
-				bgColor: 'rgba(0,0,0,0)',
-				vScrollBarEnabled: true,
-				hScrollBarEnabled: true
+				bounces : true,
+				bgColor : 'rgba(0,0,0,0)',
+				vScrollBarEnabled : true,
+				hScrollBarEnabled : true
 			});
 
+		}
+		
+		function searchDistrict(){
+			var map = api.require('bMap');
+			var params = {
+					id:10,
+					city:'北京市', 
+					district:"海淀区",
+					style:{
+						fillColor:"#AAFFFF00",
+						strokeColor:"#000000",
+						lineWidth:3,
+						lineDash:false
+					}
+			};
+			map.searchDistrict(params, function(ret){
+				console.log(JSON.stringify(ret));
+			});
 		}
 	</script>
 </body>

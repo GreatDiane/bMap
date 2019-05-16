@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="maximum-scale=2.0,minimum-scale=1.0,user-scalable=1,width=device-width,initial-scale=1.0" />
+	<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+	<title>底部</title>
+	<link rel="stylesheet" type="text/css" href="../../css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../../css/public.css" />
+	<style>
+		html,
+		body {
+			background-color: inherit;
+		}
+
+		.search {
+			position: relative;
+		}
+
+		.icon {
+			width: 20px;
+			height: 30px;
+			background: url(../../image/icon/icon_center.png);
+			background-position: center center;
+			background-size: 20px 30px;
+			background-repeat: no-repeat;
+		}
+	</style>
+</head>
+
+<body>
+
+		<div class="center" tapmode onclick="fnShowCenter()">
+			<div class="icon"></div>
+		</div>
+
+</body>
+<script type="text/javascript" src="../../script/api.js"></script>
+<script>
+	var eStartaddress,eEndaddress;
+	apiready = function() {
+		eStartaddress = $api.byId('startaddress');
+	}
+
+	function fnShowCenter() {
+		api.execScript({
+			name: 'bmap',
+			script: 'fnBmapShowUserLocation();'
+		});
+	}
+
+	function fnStrataAdress(address) {
+		eStartaddress.innerHTML = address;
+	}
+
+	function fnOpenStart() {
+		api.openWin({
+			name: 'bmap_address',
+			url: './bmap_address.html',
+			pageParam: {
+				name: 'test'
+			},
+			animation: {
+				type: "movein",
+				subType: "from_bottom",
+				duration: 600
+			},
+			bgColor: 'rgba(255,255,255,1)',
+		});
+	}
+
+	function fnOpenEnd() {
+		api.openWin({
+			name: 'bmap_address',
+			url: './bmap_address.html',
+			animation: {
+				type: "movein",
+				subType: "from_bottom",
+				duration: 600
+			},
+			bgColor: 'rgba(255,255,255,1)',
+		});
+	}
+</script>
+
+</html>
